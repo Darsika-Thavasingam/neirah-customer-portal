@@ -24,4 +24,17 @@ export class CustomerPortalController {
 
     return this.customerPortalService.getCurrentCustomer(userId);
   }
+
+  @Get('dashboard')
+  async getDashboard(
+    @Headers('x-user-id') userId?: string,
+  ) {
+    if (!userId) {
+      throw new UnauthorizedException(
+        'x-user-id header is required',
+      );
+    }
+
+    return this.customerPortalService.getDashboard(userId);
+  }
 }
