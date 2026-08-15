@@ -203,4 +203,40 @@ export class ProjectsService {
 
     return project;
   }
+
+  async getProjectUpdates(userId: string, projectId: string) {
+    const customerId = await this.getCustomerId(userId);
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        customerId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.prisma.projectUpdate.findMany({
+      where: {
+        projectId: project.id,
+        visibility: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        title: true,
+        update: true,
+        postedBy: true,
+        attachment: true,
+        createdAt: true,
+      },
+    });
+  }
 }

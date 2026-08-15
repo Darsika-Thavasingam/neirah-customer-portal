@@ -26,6 +26,23 @@ export class ProjectsController {
     return this.projectsService.getProjects(userId);
   }
 
+  @Get(':projectId/updates')
+  async getProjectUpdates(
+    @Headers('x-user-id') userId: string | undefined,
+    @Param('projectId') projectId: string,
+  ) {
+    if (!userId) {
+      throw new UnauthorizedException(
+        'x-user-id header is required',
+      );
+    }
+
+    return this.projectsService.getProjectUpdates(
+      userId,
+      projectId,
+    );
+  }
+
   @Get(':projectId')
   async getProject(
     @Headers('x-user-id') userId: string | undefined,
