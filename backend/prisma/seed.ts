@@ -102,6 +102,37 @@ async function main() {
       },
     ],
   });
+      await prisma.projectUpdate.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        title: 'Structural Work Progress Update',
+        update:
+          'Structural work has reached 45% completion and is progressing according to the planned schedule.',
+        postedBy: 'Kasun Perera',
+        visibility: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        title: 'Foundation Work Completed',
+        update:
+          'Foundation construction has been completed successfully. The project has now moved into the structural work phase.',
+        postedBy: 'Kasun Perera',
+        visibility: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        title: 'Site Preparation Completed',
+        update:
+          'Initial site preparation and groundwork have been completed successfully.',
+        postedBy: 'Kasun Perera',
+        visibility: true,
+      },
+    ],
+  });
 
   await prisma.customerNotification.create({
     data: {
