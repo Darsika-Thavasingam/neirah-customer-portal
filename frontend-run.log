@@ -1,0 +1,9 @@
+
+> frontend@0.1.0 start
+> next start
+
+▲ Next.js 16.3.1
+- Local:         http://localhost:3000
+- Network:       http://172.30.100.122:3000
+✓ Ready in 252ms
+✓ Running next.config.ts took 54ms

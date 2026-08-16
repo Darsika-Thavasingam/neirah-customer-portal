@@ -11,6 +11,16 @@ type ProjectUpdate = {
   createdAt: string;
 };
 
+type Milestone = {
+  id: string;
+  name: string;
+  description: string | null;
+  plannedDate: string | null;
+  actualCompletionDate: string | null;
+  status: string;
+  progress: number;
+};
+
 type ProjectDetails = {
   id: string;
   projectCode: string;
@@ -23,16 +33,31 @@ type ProjectDetails = {
   projectManagerContact: string | null;
   recentUpdate: string | null;
   updatedAt: string;
+  milestones: Milestone[];
 };
 
-const PROJECT_ID = "8f2d9dbe-9d3c-4d1b-a73a-7e1d2a1b4a23";
-const USER_ID = "cb87a213-f633-4659-84c8-e356f8a145d8";
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
+const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatStatus(status: string) {
   return status
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getStatusBadgeStyle(status: string) {
+  switch (status.toUpperCase()) {
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "IN_PROGRESS":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "DELAYED":
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    case "UPCOMING":
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
 }
 
 export default function Home() {
@@ -47,6 +72,16 @@ export default function Home() {
 
     async function fetchProjectData() {
       try {
+        if (!PROJECT_ID || !USER_ID) {
+          setError(
+            "Project configuration is missing. Set NEXT_PUBLIC_PROJECT_ID and NEXT_PUBLIC_USER_ID in your environment."
+          );
+          setUpdatesError(
+            "Project configuration is missing. Set NEXT_PUBLIC_PROJECT_ID and NEXT_PUBLIC_USER_ID in your environment."
+          );
+          return;
+        }
+
         const headers = {
           "x-user-id": USER_ID,
         };
@@ -192,6 +227,82 @@ export default function Home() {
                     className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                     style={{ width: `${project.progress}%` }}
                   />
+                </div>
+              </div>
+
+              {/* Day 5 Step 1: Project Milestones */}
+              <div className="rounded-xl border bg-white p-5">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Project Milestones
+                </h3>
+
+                <div className="mt-5 space-y-4">
+                  {!project.milestones || project.milestones.length === 0 ? (
+                    <p className="text-gray-500">No milestones are available yet.</p>
+                  ) : (
+                    project.milestones.map((milestone) => (
+                      <div
+                        key={milestone.id}
+                        className="rounded-lg border bg-gray-50 p-4"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">
+                              {milestone.name}
+                            </h4>
+                            {milestone.description && (
+                              <p className="mt-1 text-sm text-gray-600">
+                                {milestone.description}
+                              </p>
+                            )}
+                          </div>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadgeStyle(
+                              milestone.status
+                            )}`}
+                          >
+                            {formatStatus(milestone.status)}
+                          </span>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="mb-2 flex items-center justify-between text-sm">
+                            <span className="text-gray-500">Progress</span>
+                            <span className="font-semibold text-gray-900">
+                              {milestone.progress}%
+                            </span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                            <div
+                              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                              style={{ width: `${milestone.progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {(milestone.plannedDate || milestone.actualCompletionDate) && (
+                          <div className="mt-3 flex flex-wrap gap-4 border-t pt-3 text-xs text-gray-500">
+                            {milestone.plannedDate && (
+                              <span>
+                                Planned:{" "}
+                                <strong className="text-gray-700">
+                                  {new Date(milestone.plannedDate).toLocaleDateString()}
+                                </strong>
+                              </span>
+                            )}
+                            {milestone.actualCompletionDate && (
+                              <span>
+                                Completed:{" "}
+                                <strong className="text-gray-700">
+                                  {new Date(milestone.actualCompletionDate).toLocaleDateString()}
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
