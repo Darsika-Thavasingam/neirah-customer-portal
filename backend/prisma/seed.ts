@@ -7,7 +7,20 @@ const adapter = new PrismaPg({
 });
 
 const prisma = new PrismaClient({ adapter });
+
 async function main() {
+  console.log('Cleaning existing data...');
+  await prisma.customerNotification.deleteMany({});
+  await prisma.projectPhoto.deleteMany({});
+  await prisma.projectUpdate.deleteMany({});
+  await prisma.milestone.deleteMany({});
+  await prisma.customerProjectAccess.deleteMany({});
+  await prisma.customerPortalAccess.deleteMany({});
+  await prisma.project.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.customer.deleteMany({});
+  await prisma.tenant.deleteMany({});
+
   console.log('Seeding database...');
 
   const tenant = await prisma.tenant.create({
@@ -102,7 +115,8 @@ async function main() {
       },
     ],
   });
-      await prisma.projectUpdate.createMany({
+
+  await prisma.projectUpdate.createMany({
     data: [
       {
         tenantId: tenant.id,
@@ -130,6 +144,35 @@ async function main() {
           'Initial site preparation and groundwork have been completed successfully.',
         postedBy: 'Kasun Perera',
         visibility: true,
+      },
+    ],
+  });
+
+  await prisma.projectPhoto.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        photoUrl: 'https://placehold.co/800x500?text=Site+Preparation',
+        caption: 'Site preparation and groundwork completed.',
+        category: 'Site Preparation',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        photoUrl: 'https://placehold.co/800x500?text=Foundation',
+        caption: 'Foundation construction completed.',
+        category: 'Foundation',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        photoUrl: 'https://placehold.co/800x500?text=Structural+Work',
+        caption: 'Current structural work in progress.',
+        category: 'Structural Work',
+        isCustomerVisible: true,
       },
     ],
   });

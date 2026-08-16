@@ -21,6 +21,13 @@ type Milestone = {
   progress: number;
 };
 
+type ProjectPhoto = {
+  id: string;
+  photoUrl: string;
+  caption: string | null;
+  uploadedAt: string;
+};
+
 type ProjectDetails = {
   id: string;
   projectCode: string;
@@ -34,6 +41,7 @@ type ProjectDetails = {
   recentUpdate: string | null;
   updatedAt: string;
   milestones: Milestone[];
+  photos: ProjectPhoto[];
 };
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
@@ -230,7 +238,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Day 5 Step 1: Project Milestones */}
               <div className="rounded-xl border bg-white p-5">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Project Milestones
@@ -302,6 +309,45 @@ export default function Home() {
                         )}
                       </div>
                     ))
+                  )}
+                </div>
+              </div>
+
+              {/* Day 5 Step 2: Project Photos */}
+              <div className="rounded-xl border bg-white p-5">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Project Photos
+                </h3>
+
+                <div className="mt-5">
+                  {!project.photos || project.photos.length === 0 ? (
+                    <p className="text-gray-500">No project photos are available yet.</p>
+                  ) : (
+                    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                      {project.photos.map((photo) => (
+                        <article
+                          key={photo.id}
+                          className="overflow-hidden rounded-lg border bg-gray-50"
+                        >
+                          <img
+                            src={photo.photoUrl}
+                            alt={photo.caption ?? "Project photo"}
+                            className="h-48 w-full object-cover"
+                          />
+                          <div className="p-4">
+                            {photo.caption && (
+                              <p className="font-medium text-gray-900">
+                                {photo.caption}
+                              </p>
+                            )}
+                            <p className="mt-2 text-xs text-gray-500">
+                              Uploaded{" "}
+                              {new Date(photo.uploadedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
