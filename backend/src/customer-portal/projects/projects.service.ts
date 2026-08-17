@@ -128,6 +128,9 @@ export class ProjectsService {
         },
 
         photos: {
+          where: {
+            isCustomerVisible: true,
+          },
           orderBy: {
             uploadedAt: 'desc',
           },
@@ -135,11 +138,15 @@ export class ProjectsService {
             id: true,
             photoUrl: true,
             caption: true,
+            category: true,
             uploadedAt: true,
           },
         },
 
         documents: {
+          where: {
+            isCustomerVisible: true,
+          },
           orderBy: {
             uploadedAt: 'desc',
           },
@@ -236,6 +243,41 @@ export class ProjectsService {
         postedBy: true,
         attachment: true,
         createdAt: true,
+      },
+    });
+  }
+
+  async getProjectPhotos(userId: string, projectId: string) {
+    const customerId = await this.getCustomerId(userId);
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        customerId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.prisma.projectPhoto.findMany({
+      where: {
+        projectId: project.id,
+        isCustomerVisible: true,
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+      select: {
+        id: true,
+        photoUrl: true,
+        caption: true,
+        category: true,
+        uploadedAt: true,
       },
     });
   }

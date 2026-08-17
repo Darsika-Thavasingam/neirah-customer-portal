@@ -11,6 +11,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Cleaning existing data...');
   await prisma.customerNotification.deleteMany({});
+  await prisma.customerVisibleDocument.deleteMany({});
   await prisma.projectPhoto.deleteMany({});
   await prisma.projectUpdate.deleteMany({});
   await prisma.milestone.deleteMany({});
@@ -177,12 +178,54 @@ async function main() {
     ],
   });
 
+  await prisma.customerVisibleDocument.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        category: 'Contract',
+        fileName: 'Construction Agreement.pdf',
+        fileUrl:
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        category: 'Progress Report',
+        fileName: 'August Progress Report.pdf',
+        fileUrl:
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        category: 'Approved Drawings',
+        fileName: 'Approved Project Drawings.pdf',
+        fileUrl:
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: project.id,
+        category: 'Internal',
+        fileName: 'Internal Cost Report.pdf',
+        fileUrl:
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: false,
+      },
+    ],
+  });
+
   await prisma.customerNotification.create({
     data: {
       tenantId: tenant.id,
       customerId: customer.id,
       title: 'Welcome to the Customer Portal',
-      message: 'Your project information is now available through the Neirah Customer Portal.',
+      message:
+        'Your project information is now available through the Neirah Customer Portal.',
       type: 'INFO',
     },
   });

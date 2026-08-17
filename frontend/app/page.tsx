@@ -21,6 +21,14 @@ type Milestone = {
   progress: number;
 };
 
+type ProjectDocument = {
+  id: string;
+  fileName: string;
+  category: string;
+  fileUrl: string;
+  uploadedAt: string;
+};
+
 type ProjectPhoto = {
   id: string;
   photoUrl: string;
@@ -41,6 +49,7 @@ type ProjectDetails = {
   recentUpdate: string | null;
   updatedAt: string;
   milestones: Milestone[];
+  documents: ProjectDocument[];
   photos: ProjectPhoto[];
 };
 
@@ -307,6 +316,47 @@ export default function Home() {
                             )}
                           </div>
                         )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Day 6 Step 2: Project Documents */}
+              <div className="rounded-xl border bg-white p-5">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Project Documents
+                </h3>
+
+                <div className="mt-5 space-y-3">
+                  {!project.documents || project.documents.length === 0 ? (
+                    <p className="text-gray-500">No documents are available yet.</p>
+                  ) : (
+                    project.documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex flex-col gap-3 rounded-lg border bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <span className="inline-block rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                            {doc.category}
+                          </span>
+                          <h4 className="mt-1 font-semibold text-gray-900">
+                            {doc.fileName}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            Uploaded{" "}
+                            {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-blue-700"
+                        >
+                          View Document
+                        </a>
                       </div>
                     ))
                   )}
