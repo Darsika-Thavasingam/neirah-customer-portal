@@ -10,6 +10,13 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Cleaning existing data...');
+
+  // Delete dependent child records first in reverse order of FK constraints
+  await prisma.quotationItem.deleteMany({});
+  await prisma.quotation.deleteMany({});
+  await prisma.contract.deleteMany({});
+
+  // Delete project and customer dependent entities
   await prisma.customerNotification.deleteMany({});
   await prisma.customerVisibleDocument.deleteMany({});
   await prisma.projectPhoto.deleteMany({});
@@ -17,6 +24,8 @@ async function main() {
   await prisma.milestone.deleteMany({});
   await prisma.customerProjectAccess.deleteMany({});
   await prisma.customerPortalAccess.deleteMany({});
+
+  // Delete primary parent entities
   await prisma.project.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.customer.deleteMany({});
@@ -218,54 +227,70 @@ async function main() {
       },
     ],
   });
+
   await prisma.quotation.create({
-  data: {
-    tenantId: tenant.id,
-    customerId: customer.id,
-    projectId: project.id,
-    quotationNumber: 'QT-2026-001',
-    date: new Date('2026-08-15'),
-    validUntil: new Date('2026-09-15'),
-    subtotal: 5000000,
-    tax: 900000,
-    discount: 100000,
-    total: 5800000,
-    status: 'SENT',
-    terms: 'Payment according to the agreed project schedule.',
-    notes: 'This quotation is prepared for the ABC Office Complex project.',
-    items: {
-      create: [
-        {
-          description: 'Foundation Construction',
-          quantity: 1,
-          unit: 'Lump Sum',
-          unitPrice: 2000000,
-          tax: 360000,
-          discount: 0,
-          total: 2360000,
-        },
-        {
-          description: 'Structural Work',
-          quantity: 1,
-          unit: 'Lump Sum',
-          unitPrice: 2500000,
-          tax: 450000,
-          discount: 100000,
-          total: 2850000,
-        },
-        {
-          description: 'Site Preparation',
-          quantity: 1,
-          unit: 'Lump Sum',
-          unitPrice: 500000,
-          tax: 90000,
-          discount: 0,
-          total: 590000,
-        },
-      ],
+    data: {
+      tenantId: tenant.id,
+      customerId: customer.id,
+      projectId: project.id,
+      quotationNumber: 'QT-2026-001',
+      date: new Date('2026-08-15'),
+      validUntil: new Date('2026-09-15'),
+      subtotal: 5000000,
+      tax: 900000,
+      discount: 100000,
+      total: 5800000,
+      status: 'SENT',
+      terms: 'Payment according to the agreed project schedule.',
+      notes: 'This quotation is prepared for the ABC Office Complex project.',
+      items: {
+        create: [
+          {
+            description: 'Foundation Construction',
+            quantity: 1,
+            unit: 'Lump Sum',
+            unitPrice: 2000000,
+            tax: 360000,
+            discount: 0,
+            total: 2360000,
+          },
+          {
+            description: 'Structural Work',
+            quantity: 1,
+            unit: 'Lump Sum',
+            unitPrice: 2500000,
+            tax: 450000,
+            discount: 100000,
+            total: 2850000,
+          },
+          {
+            description: 'Site Preparation',
+            quantity: 1,
+            unit: 'Lump Sum',
+            unitPrice: 500000,
+            tax: 90000,
+            discount: 0,
+            total: 590000,
+          },
+        ],
+      },
     },
-  },
-});
+  });
+
+  await prisma.contract.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: customer.id,
+      projectId: project.id,
+      contractNumber: 'CT-2026-001',
+      contractDate: new Date('2026-08-15'),
+      contractValue: 5800000,
+      startDate: new Date('2026-08-16'),
+      completionDate: new Date('2027-02-15'),
+      status: 'ACTIVE',
+      documentUrl: null,
+    },
+  });
 
   await prisma.customerNotification.create({
     data: {
