@@ -43,6 +43,23 @@ export class ProjectsController {
     );
   }
 
+  @Get(':projectId/photos')
+  async getProjectPhotos(
+    @Headers('x-user-id') userId: string | undefined,
+    @Param('projectId') projectId: string,
+  ) {
+    if (!userId) {
+      throw new UnauthorizedException(
+        'x-user-id header is required',
+      );
+    }
+
+    return this.projectsService.getProjectPhotos(
+      userId,
+      projectId,
+    );
+  }
+
   @Get(':projectId')
   async getProject(
     @Headers('x-user-id') userId: string | undefined,
