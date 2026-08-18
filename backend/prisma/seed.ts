@@ -11,12 +11,17 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Cleaning existing data...');
 
-  // Delete dependent child records first in reverse order of FK constraints
+  // 1. Delete payment & invoice items first
+  await prisma.payment.deleteMany({});
+  await prisma.invoiceItem.deleteMany({});
+  await prisma.invoice.deleteMany({});
+
+  // 2. Delete contract & quotation child records
   await prisma.quotationItem.deleteMany({});
   await prisma.quotation.deleteMany({});
   await prisma.contract.deleteMany({});
 
-  // Delete project and customer dependent entities
+  // 3. Delete project & customer dependent entities
   await prisma.customerNotification.deleteMany({});
   await prisma.customerVisibleDocument.deleteMany({});
   await prisma.projectPhoto.deleteMany({});
@@ -25,7 +30,7 @@ async function main() {
   await prisma.customerProjectAccess.deleteMany({});
   await prisma.customerPortalAccess.deleteMany({});
 
-  // Delete primary parent entities
+  // 4. Delete primary parent entities last
   await prisma.project.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.customer.deleteMany({});
@@ -289,6 +294,59 @@ async function main() {
       completionDate: new Date('2027-02-15'),
       status: 'ACTIVE',
       documentUrl: null,
+    },
+  });
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: customer.id,
+      projectId: project.id,
+      invoiceNumber: 'INV-2026-001',
+      invoiceDate: new Date('2026-08-15'),
+      dueDate: new Date('2026-09-15'),
+      contractReference: 'CT-2026-001',
+      subtotal: 5000000,
+      tax: 900000,
+      discount: 100000,
+      total: 5800000,
+      paidAmount: 2000000,
+      status: 'PARTIALLY_PAID',
+      documentUrl: null,
+      items: {
+        create: [
+          {
+            description: 'Structural Work',
+            quantity: 1,
+            rate: 2500000,
+            tax: 450000,
+            discount: 100000,
+            total: 2850000,
+          },
+          {
+            description: 'Foundation Construction',
+            quantity: 1,
+            rate: 2000000,
+            tax: 360000,
+            discount: 0,
+            total: 2360000,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.payment.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: customer.id,
+      invoiceId: invoice.id,
+      paymentReference: 'PAY-2026-001',
+      paymentDate: new Date('2026-08-16'),
+      paymentMethod: 'Bank Transfer',
+      amount: 2000000,
+      status: 'COMPLETED',
+      receiptReference: 'RCT-2026-001',
     },
   });
 

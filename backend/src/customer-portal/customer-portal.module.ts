@@ -6,9 +6,11 @@ import { ProjectsService } from './projects/projects.service';
 import { QuotationsController } from './quotations/quotations.controller';
 import { QuotationsService } from './quotations/quotations.service';
 import { ContractsModule } from './contracts/contracts.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
-  imports: [ContractsModule],
+  imports: [ContractsModule, InvoicesModule, PaymentsModule],
   controllers: [CustomerPortalController, ProjectsController, QuotationsController],
   providers: [CustomerPortalService, ProjectsService, QuotationsService]
 })

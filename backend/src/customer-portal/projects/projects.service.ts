@@ -95,6 +95,15 @@ export class ProjectsService {
         recentUpdate: true,
         updatedAt: true,
 
+        customer: {
+          select: {
+            companyName: true,
+            contactName: true,
+            email: true,
+            phone: true,
+          },
+        },
+
         milestones: {
           orderBy: {
             createdAt: 'asc',
