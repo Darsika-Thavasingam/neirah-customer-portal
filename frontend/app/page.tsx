@@ -36,6 +36,13 @@ type ProjectPhoto = {
   uploadedAt: string;
 };
 
+type CustomerSummary = {
+  companyName: string | null;
+  contactName: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
 type ProjectDetails = {
   id: string;
   projectCode: string;
@@ -48,6 +55,7 @@ type ProjectDetails = {
   projectManagerContact: string | null;
   recentUpdate: string | null;
   updatedAt: string;
+  customer?: CustomerSummary | null;
   milestones: Milestone[];
   documents: ProjectDocument[];
   photos: ProjectPhoto[];
@@ -75,6 +83,29 @@ function getStatusBadgeStyle(status: string) {
     default:
       return "bg-gray-100 text-gray-700 border-gray-200";
   }
+}
+
+function formatCustomerContact(customer: CustomerSummary | null | undefined) {
+  if (!customer) {
+    return "Not provided";
+  }
+
+  const contactName = customer.contactName?.trim();
+  const phone = customer.phone?.trim();
+
+  if (contactName && phone) {
+    return `${contactName} • ${phone}`;
+  }
+
+  if (contactName) {
+    return contactName;
+  }
+
+  if (phone) {
+    return phone;
+  }
+
+  return "Not provided";
 }
 
 export default function Home() {
@@ -426,7 +457,7 @@ export default function Home() {
                     <div className="flex justify-between gap-4 border-b pb-2">
                       <dt className="text-gray-500">Contact</dt>
                       <dd className="font-medium text-gray-900 text-right">
-                        {project.projectManagerContact ?? "Not provided"}
+                        {formatCustomerContact(project.customer)}
                       </dd>
                     </div>
                   </dl>
