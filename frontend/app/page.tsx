@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type ProjectUpdate = {
   id: string;
@@ -86,24 +87,14 @@ function getStatusBadgeStyle(status: string) {
 }
 
 function formatCustomerContact(customer: CustomerSummary | null | undefined) {
-  if (!customer) {
-    return "Not provided";
-  }
+  if (!customer) return "Not provided";
 
   const contactName = customer.contactName?.trim();
   const phone = customer.phone?.trim();
 
-  if (contactName && phone) {
-    return `${contactName} • ${phone}`;
-  }
-
-  if (contactName) {
-    return contactName;
-  }
-
-  if (phone) {
-    return phone;
-  }
+  if (contactName && phone) return `${contactName} • ${phone}`;
+  if (contactName) return contactName;
+  if (phone) return phone;
 
   return "Not provided";
 }
@@ -130,9 +121,7 @@ export default function Home() {
           return;
         }
 
-        const headers = {
-          "x-user-id": USER_ID,
-        };
+        const headers = { "x-user-id": USER_ID };
 
         const [projectResponse, updatesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${PROJECT_ID}`, {
@@ -157,25 +146,18 @@ export default function Home() {
         const projectData: ProjectDetails = await projectResponse.json();
         const updatesData: ProjectUpdate[] = await updatesResponse.json();
 
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setProject(projectData);
         setUpdates(updatesData);
       } catch (err) {
         console.error(err);
-
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setError("Unable to load project overview.");
         setUpdatesError("Unable to load project updates.");
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
 
@@ -188,19 +170,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-100">
-      <header className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-6 py-5">
+      <header className="border-b bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-5">
           <h1 className="text-2xl font-bold text-gray-900">
             Neirah Customer Portal
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-gray-500">
             Construction project progress and updates
           </p>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <section className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <section className="mb-8 rounded-xl border bg-white p-6 shadow-sm">
           {loading && (
             <div className="py-4">
               <p className="text-gray-500">Loading project overview...</p>
@@ -208,7 +190,7 @@ export default function Home() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
               <p className="text-red-700">{error}</p>
             </div>
           )}
@@ -254,14 +236,15 @@ export default function Home() {
                   <p className="text-xs uppercase tracking-wide text-gray-500">
                     Project ID
                   </p>
-                  <p className="mt-2 font-semibold text-gray-900 break-all">
+                  <p className="mt-2 break-all font-semibold text-gray-900">
                     {project.id}
                   </p>
                 </div>
               </div>
 
+              {/* Progress Bar */}
               <div className="rounded-xl border bg-slate-50 p-5">
-                <div className="flex items-center justify-between mb-2">
+                <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-700">
                     Construction Progress
                   </p>
@@ -278,6 +261,44 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Project Navigation Links */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Link
+                  href={`/projects/${project.id}/documents`}
+                  className="flex items-center justify-between rounded-xl border bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                >
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      Project Documents
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      View contracts, reports, and blueprints
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600">
+                    View Documents ({project.documents?.length ?? 0}) →
+                  </span>
+                </Link>
+
+                <Link
+                  href={`/projects/${project.id}/photos`}
+                  className="flex items-center justify-between rounded-xl border bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                >
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      Project Photos
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Browse construction photo gallery
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600">
+                    View Gallery ({project.photos?.length ?? 0}) →
+                  </span>
+                </Link>
+              </div>
+
+              {/* Milestones */}
               <div className="rounded-xl border bg-white p-5">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Project Milestones
@@ -285,7 +306,7 @@ export default function Home() {
 
                 <div className="mt-5 space-y-4">
                   {!project.milestones || project.milestones.length === 0 ? (
-                    <p className="text-gray-500">No milestones are available yet.</p>
+                    <p className="text-gray-500">No milestones available yet.</p>
                   ) : (
                     project.milestones.map((milestone) => (
                       <div
@@ -327,13 +348,16 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {(milestone.plannedDate || milestone.actualCompletionDate) && (
+                        {(milestone.plannedDate ||
+                          milestone.actualCompletionDate) && (
                           <div className="mt-3 flex flex-wrap gap-4 border-t pt-3 text-xs text-gray-500">
                             {milestone.plannedDate && (
                               <span>
                                 Planned:{" "}
                                 <strong className="text-gray-700">
-                                  {new Date(milestone.plannedDate).toLocaleDateString()}
+                                  {new Date(
+                                    milestone.plannedDate
+                                  ).toLocaleDateString()}
                                 </strong>
                               </span>
                             )}
@@ -341,7 +365,9 @@ export default function Home() {
                               <span>
                                 Completed:{" "}
                                 <strong className="text-gray-700">
-                                  {new Date(milestone.actualCompletionDate).toLocaleDateString()}
+                                  {new Date(
+                                    milestone.actualCompletionDate
+                                  ).toLocaleDateString()}
                                 </strong>
                               </span>
                             )}
@@ -353,86 +379,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Day 6 Step 2: Project Documents */}
-              <div className="rounded-xl border bg-white p-5">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Project Documents
-                </h3>
-
-                <div className="mt-5 space-y-3">
-                  {!project.documents || project.documents.length === 0 ? (
-                    <p className="text-gray-500">No documents are available yet.</p>
-                  ) : (
-                    project.documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex flex-col gap-3 rounded-lg border bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <span className="inline-block rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                            {doc.category}
-                          </span>
-                          <h4 className="mt-1 font-semibold text-gray-900">
-                            {doc.fileName}
-                          </h4>
-                          <p className="text-xs text-gray-500">
-                            Uploaded{" "}
-                            {new Date(doc.uploadedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-blue-700"
-                        >
-                          View Document
-                        </a>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Day 5 Step 2: Project Photos */}
-              <div className="rounded-xl border bg-white p-5">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Project Photos
-                </h3>
-
-                <div className="mt-5">
-                  {!project.photos || project.photos.length === 0 ? (
-                    <p className="text-gray-500">No project photos are available yet.</p>
-                  ) : (
-                    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                      {project.photos.map((photo) => (
-                        <article
-                          key={photo.id}
-                          className="overflow-hidden rounded-lg border bg-gray-50"
-                        >
-                          <img
-                            src={photo.photoUrl}
-                            alt={photo.caption ?? "Project photo"}
-                            className="h-48 w-full object-cover"
-                          />
-                          <div className="p-4">
-                            {photo.caption && (
-                              <p className="font-medium text-gray-900">
-                                {photo.caption}
-                              </p>
-                            )}
-                            <p className="mt-2 text-xs text-gray-500">
-                              Uploaded{" "}
-                              {new Date(photo.uploadedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
+              {/* Key Details & Recent Update */}
               <div className="grid gap-6 lg:grid-cols-2">
                 <div className="rounded-xl border bg-white p-5">
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -442,21 +389,21 @@ export default function Home() {
                   <dl className="mt-4 space-y-3 text-sm">
                     <div className="flex justify-between gap-4 border-b pb-2">
                       <dt className="text-gray-500">Current Phase</dt>
-                      <dd className="font-medium text-gray-900 text-right">
+                      <dd className="text-right font-medium text-gray-900">
                         {project.currentPhase ?? "Not specified"}
                       </dd>
                     </div>
 
                     <div className="flex justify-between gap-4 border-b pb-2">
                       <dt className="text-gray-500">Project Manager</dt>
-                      <dd className="font-medium text-gray-900 text-right">
+                      <dd className="text-right font-medium text-gray-900">
                         {project.projectManagerName ?? "Not assigned"}
                       </dd>
                     </div>
 
                     <div className="flex justify-between gap-4 border-b pb-2">
                       <dt className="text-gray-500">Contact</dt>
-                      <dd className="font-medium text-gray-900 text-right">
+                      <dd className="text-right font-medium text-gray-900">
                         {formatCustomerContact(project.customer)}
                       </dd>
                     </div>
@@ -468,7 +415,7 @@ export default function Home() {
                     Recent Update
                   </h3>
 
-                  <p className="mt-4 text-gray-700 leading-7">
+                  <p className="mt-4 leading-7 text-gray-700">
                     {project.recentUpdate ?? "No recent update available."}
                   </p>
                 </div>
@@ -477,25 +424,26 @@ export default function Home() {
           )}
         </section>
 
+        {/* Project Feed Updates */}
         <section>
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
               Project Updates
             </h2>
 
-            <p className="text-gray-500 mt-1">
+            <p className="mt-1 text-gray-500">
               Latest progress updates from the project team.
             </p>
           </div>
 
           {updatesError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6">
               <p className="text-red-700">{updatesError}</p>
             </div>
           )}
 
           {!updatesError && updates.length === 0 && !loading && (
-            <div className="bg-white rounded-xl border p-6">
+            <div className="rounded-xl border bg-white p-6">
               <p className="text-gray-500">
                 No project updates are available yet.
               </p>
@@ -506,16 +454,16 @@ export default function Home() {
             {updates.map((item) => (
               <article
                 key={item.id}
-                className="bg-white rounded-xl border shadow-sm p-6"
+                className="rounded-xl border bg-white p-6 shadow-sm"
               >
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-semibold text-gray-900">
                     {item.title}
                   </h3>
 
-                  <p className="text-gray-600 leading-7">{item.update}</p>
+                  <p className="leading-7 text-gray-600">{item.update}</p>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-3">
+                  <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-500">
                     <span>
                       Posted by:{" "}
                       <strong className="text-gray-700">
@@ -533,7 +481,7 @@ export default function Home() {
                       href={item.attachment}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-sm mt-2"
+                      className="mt-2 text-sm text-blue-600 hover:underline"
                     >
                       View attachment
                     </a>

@@ -290,4 +290,48 @@ export class ProjectsService {
       },
     });
   }
+
+  async getProjectDocuments(userId: string, projectId: string) {
+    const customerId = await this.getCustomerId(userId);
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        customerId,
+      },
+      select: {
+        id: true,
+        tenantId: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.prisma.customerVisibleDocument.findMany({
+      where: {
+        projectId: project.id,
+        tenantId: project.tenantId,
+        isCustomerVisible: true,
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+      select: {
+        id: true,
+        category: true,
+        fileName: true,
+        fileUrl: true,
+        uploadedAt: true,
+        project: {
+          select: {
+            id: true,
+            projectCode: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
 }
