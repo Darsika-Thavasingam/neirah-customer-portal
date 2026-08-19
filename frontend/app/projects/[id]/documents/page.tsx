@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import StatusBadge from "../../../components/StatusBadge";
+import { getActiveUserId } from '../../../lib/auth';
 
 type ProjectDocument = {
   id: string;
@@ -29,7 +30,6 @@ export default function ProjectDocumentsPage() {
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  const userId = process.env.NEXT_PUBLIC_USER_ID;
 
   useEffect(() => {
     if (!projectId) return;
@@ -39,7 +39,7 @@ export default function ProjectDocumentsPage() {
         setLoading(true);
         setError("");
 
-        if (!userId) {
+        if (!getActiveUserId()) {
           throw new Error("Customer portal user is not configured.");
         }
 
@@ -47,7 +47,7 @@ export default function ProjectDocumentsPage() {
           `${apiUrl}/api/v1/customer-portal/projects/${projectId}/documents`,
           {
             headers: {
-              "x-user-id": userId,
+              "x-user-id": getActiveUserId(),
             },
           }
         );
@@ -75,7 +75,7 @@ export default function ProjectDocumentsPage() {
     };
 
     fetchDocuments();
-  }, [projectId, apiUrl, userId]);
+  }, [projectId, apiUrl]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-GB", {

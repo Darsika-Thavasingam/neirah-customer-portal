@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { getActiveUserId } from '../../../lib/auth';
 
 type ProjectUpdate = {
   id: string;
@@ -15,9 +16,6 @@ type ProjectUpdate = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-const USER_ID =
-  process.env.NEXT_PUBLIC_USER_ID ||
-  "";
 
 export default function ProjectUpdatesPage() {
   const params = useParams();
@@ -38,7 +36,7 @@ export default function ProjectUpdatesPage() {
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`,
           {
             headers: {
-              "x-user-id": USER_ID,
+              "x-user-id": getActiveUserId(),
             },
             cache: "no-store",
           }

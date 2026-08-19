@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
+import { getActiveUserId } from '../../lib/auth';
 
 type InvoiceItem = {
   id: string;
@@ -54,7 +55,6 @@ type InvoiceDetails = {
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
 function formatCurrency(value: number | string | null | undefined) {
   const raw = Number(value ?? 0);
@@ -88,7 +88,7 @@ export default function InvoiceDetailPage() {
         setLoading(true);
         setError("");
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error("Customer portal user is not configured.");
         }
 
@@ -96,7 +96,7 @@ export default function InvoiceDetailPage() {
           `${API_BASE_URL}/api/v1/customer-portal/invoices/${invoiceId}`,
           {
             headers: {
-              "x-user-id": USER_ID,
+              "x-user-id": getActiveUserId(),
             },
             cache: "no-store",
           }

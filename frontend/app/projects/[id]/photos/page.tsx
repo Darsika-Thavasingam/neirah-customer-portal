@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import StatusBadge from "../../../components/StatusBadge";
+import { getActiveUserId } from '../../../lib/auth';
 
 type ProjectPhoto = {
   id: string;
@@ -18,9 +19,6 @@ const API_BASE = (() => {
   return url.endsWith("/api/v1") ? url : `${url.replace(/\/$/, "")}/api/v1`;
 })();
 
-const USER_ID =
-  process.env.NEXT_PUBLIC_USER_ID ||
-  "";
 
 export default function ProjectPhotosPage() {
   const params = useParams();
@@ -33,7 +31,7 @@ export default function ProjectPhotosPage() {
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error("Customer portal user is not configured.");
         }
 
@@ -41,7 +39,7 @@ export default function ProjectPhotosPage() {
           `${API_BASE}/customer-portal/projects/${projectId}/photos`,
           {
             headers: {
-              "x-user-id": USER_ID,
+              "x-user-id": getActiveUserId(),
             },
             cache: "no-store",
           }

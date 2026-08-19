@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import StatusBadge from "./components/StatusBadge";
+import { getActiveUserId, getActiveProjectId } from "./lib/auth";
 
 type ProjectUpdate = {
   id: string;
@@ -63,8 +64,6 @@ type ProjectDetails = {
   photos: ProjectPhoto[];
 };
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatCustomerContact(customer: CustomerSummary | null | undefined) {
@@ -92,7 +91,11 @@ export default function Home() {
 
     async function fetchProjectData() {
       try {
-        if (!PROJECT_ID || !USER_ID) {
+        // Read IDs dynamically so the demo switcher (localStorage) is respected
+        const userId = getActiveUserId();
+        const projectId = getActiveProjectId();
+
+        if (!projectId || !userId) {
           setError(
             "Project configuration is missing. Set NEXT_PUBLIC_PROJECT_ID and NEXT_PUBLIC_USER_ID in your environment."
           );
@@ -102,14 +105,14 @@ export default function Home() {
           return;
         }
 
-        const headers = { "x-user-id": USER_ID };
+        const headers = { "x-user-id": userId };
 
         const [projectResponse, updatesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${PROJECT_ID}`, {
+          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, {
             headers,
           }),
           fetch(
-            `${API_BASE_URL}/api/v1/customer-portal/projects/${PROJECT_ID}/updates`,
+            `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`,
             {
               headers,
             }

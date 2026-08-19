@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
+import { getActiveUserId } from '../lib/auth';
 
 type ProfileResponse = {
   customer: {
@@ -30,9 +31,6 @@ type ProfileResponse = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const USER_ID =
-  process.env.NEXT_PUBLIC_USER_ID ||
-  '09e6e881-dcbb-42b9-ae4f-e62a0f2e598c';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -45,7 +43,7 @@ export default function ProfilePage() {
         setLoading(true);
         setError('');
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error('Customer portal user is not configured.');
         }
 
@@ -53,7 +51,7 @@ export default function ProfilePage() {
           `${API_BASE_URL}/api/v1/customer-portal/access/me`,
           {
             headers: {
-              'x-user-id': USER_ID,
+              'x-user-id': getActiveUserId(),
             },
             cache: 'no-store',
           },

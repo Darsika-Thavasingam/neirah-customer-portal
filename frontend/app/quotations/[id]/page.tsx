@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import StatusBadge from "../../components/StatusBadge";
+import { getActiveUserId } from '../../lib/auth';
 
 type QuotationItem = {
   id: string;
@@ -49,7 +50,6 @@ type Quotation = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
 function formatAmount(value: string) {
   return `LKR ${Number(value).toLocaleString()}`;
@@ -70,7 +70,7 @@ export default function QuotationDetailPage() {
   useEffect(() => {
     async function fetchQuotation() {
       try {
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           setError(
             "Customer configuration is missing. Set NEXT_PUBLIC_USER_ID."
           );
@@ -81,7 +81,7 @@ export default function QuotationDetailPage() {
           `${API_BASE_URL}/api/v1/customer-portal/quotations/${quotationId}`,
           {
             headers: {
-              "x-user-id": USER_ID,
+              "x-user-id": getActiveUserId(),
             },
           }
         );

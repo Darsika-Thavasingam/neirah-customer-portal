@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
+import { getActiveUserId } from '../lib/auth';
 
 type Notification = {
   id: string;
@@ -19,7 +20,6 @@ type DashboardResponse = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID || '';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -32,7 +32,7 @@ export default function NotificationsPage() {
         setLoading(true);
         setError('');
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error('Customer portal user is not configured.');
         }
 
@@ -40,7 +40,7 @@ export default function NotificationsPage() {
           `${API_BASE_URL}/api/v1/customer-portal/dashboard`,
           {
             headers: {
-              'x-user-id': USER_ID,
+              'x-user-id': getActiveUserId(),
             },
             cache: 'no-store',
           },

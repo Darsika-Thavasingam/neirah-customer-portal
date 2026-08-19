@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import StatusBadge from '../../components/StatusBadge';
+import { getActiveUserId } from '../../lib/auth';
 
 type Contract = {
   id: string;
@@ -32,7 +33,6 @@ type Contract = {
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? '';
 
 export default function ContractDetailsPage() {
   const params = useParams();
@@ -48,7 +48,7 @@ export default function ContractDetailsPage() {
         setLoading(true);
         setError('');
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error('Customer portal user is not configured.');
         }
 
@@ -56,7 +56,7 @@ export default function ContractDetailsPage() {
           `${API_URL}/api/v1/customer-portal/contracts/${contractId}`,
           {
             headers: {
-              'x-user-id': USER_ID,
+              'x-user-id': getActiveUserId(),
             },
           },
         );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import StatusBadge from "../components/StatusBadge";
+import { getActiveUserId } from '../lib/auth';
 
 type Invoice = {
   id: string;
@@ -27,7 +28,6 @@ const API_BASE = (() => {
     : `${apiUrl.replace(/\/$/, "")}/api/v1`;
 })();
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -40,13 +40,13 @@ export default function InvoicesPage() {
         setLoading(true);
         setError("");
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error("Customer configuration is missing. Set NEXT_PUBLIC_USER_ID in your environment.");
         }
 
         const response = await fetch(`${API_BASE}/customer-portal/invoices`, {
           headers: {
-            "x-user-id": USER_ID,
+            "x-user-id": getActiveUserId(),
           },
           cache: "no-store",
         });

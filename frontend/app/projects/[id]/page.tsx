@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import StatusBadge from "../../components/StatusBadge";
+import { getActiveUserId } from '../../lib/auth';
 
 type ProjectUpdate = {
   id: string;
@@ -64,7 +65,7 @@ type ProjectDetails = {
   photos: ProjectPhoto[];
 };
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatCustomerContact(customer: CustomerSummary | null | undefined) {
@@ -95,13 +96,13 @@ export default function ProjectDetailsPage() {
 
     async function fetchProjectData() {
       try {
-        if (!projectId || !USER_ID) {
+        if (!projectId || !getActiveUserId()) {
           throw new Error(
             "Customer configuration is missing. Set NEXT_PUBLIC_USER_ID in your environment."
           );
         }
 
-        const headers = { "x-user-id": USER_ID };
+        const headers = { "x-user-id": getActiveUserId() };
 
         const [projectResponse, updatesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, {

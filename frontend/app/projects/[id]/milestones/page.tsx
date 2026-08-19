@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../../components/StatusBadge";
+import { getActiveUserId } from '../../../lib/auth';
 
 type Milestone = {
   id: string;
@@ -23,7 +24,6 @@ type Project = {
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
 export default function ProjectMilestonesPage() {
   const params = useParams();
@@ -39,14 +39,14 @@ export default function ProjectMilestonesPage() {
         setLoading(true);
         setError("");
 
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error("Customer portal user is not configured.");
         }
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`,
           {
-            headers: { "x-user-id": USER_ID },
+            headers: { "x-user-id": getActiveUserId() },
             cache: "no-store",
           }
         );

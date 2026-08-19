@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import StatusBadge from "../components/StatusBadge";
+import { getActiveUserId } from '../lib/auth';
 
 type Payment = {
   id: string;
@@ -28,7 +29,6 @@ type PaymentSummary = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
 function formatCurrency(value: number | string) {
   const amount = typeof value === "string" ? Number(value) : value;
@@ -58,14 +58,14 @@ export default function PaymentsPage() {
   useEffect(() => {
     async function fetchPaymentsData() {
       try {
-        if (!USER_ID) {
+        if (!getActiveUserId()) {
           throw new Error(
             "Customer configuration is missing. Set NEXT_PUBLIC_USER_ID in your environment."
           );
         }
 
         const headers = {
-          "x-user-id": USER_ID,
+          "x-user-id": getActiveUserId(),
         };
 
         const [paymentsResponse, summaryResponse] = await Promise.all([
