@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StatusBadge from "./components/StatusBadge";
 
 type ProjectUpdate = {
   id: string;
@@ -65,26 +66,6 @@ type ProjectDetails = {
 const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
 const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-function formatStatus(status: string) {
-  return status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function getStatusBadgeStyle(status: string) {
-  switch (status.toUpperCase()) {
-    case "COMPLETED":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    case "IN_PROGRESS":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "DELAYED":
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    case "UPCOMING":
-    default:
-      return "bg-gray-100 text-gray-700 border-gray-200";
-  }
-}
 
 function formatCustomerContact(customer: CustomerSummary | null | undefined) {
   if (!customer) return "Not provided";
@@ -169,93 +150,98 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <header className="border-b bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-5">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Neirah Customer Portal
+    <main className="min-h-screen bg-[#F7F9FC]">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header section */}
+        <div className="mb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
+            Dashboard
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
+            Project Overview
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Construction project progress and updates
+          <p className="mt-1 text-sm text-[#667085]">
+            Construction project progress, updates, and deliverables
           </p>
         </div>
-      </header>
 
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <section className="mb-8 rounded-xl border bg-white p-6 shadow-sm">
+        <section className="mb-8 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
           {loading && (
-            <div className="py-4">
-              <p className="text-gray-500">Loading project overview...</p>
+            <div className="py-4 text-center">
+              <p className="text-sm text-[#667085]">Loading project overview...</p>
             </div>
           )}
 
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-              <p className="text-red-700">{error}</p>
+            <div className="rounded-xl border border-[#FECDCA] bg-[#FEF3F2] p-4 text-sm font-semibold text-[#B42318]">
+              <p>{error}</p>
             </div>
           )}
 
           {!loading && project && (
             <div className="space-y-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-sm text-gray-500">Current Project</p>
-                <h2 className="text-3xl font-bold text-gray-900">
-                  {project.name}
-                </h2>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Current Project</p>
+                  <h2 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
+                    {project.name}
+                  </h2>
+                </div>
+                <StatusBadge status={project.status} />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-lg border bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                     Project Code
                   </p>
-                  <p className="mt-2 font-semibold text-gray-900">
+                  <p className="mt-1 font-semibold text-[#0B1220]">
                     {project.projectCode}
                   </p>
                 </div>
 
-                <div className="rounded-lg border bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                     Location
                   </p>
-                  <p className="mt-2 font-semibold text-gray-900">
+                  <p className="mt-1 font-semibold text-[#0B1220]">
                     {project.location ?? "Not specified"}
                   </p>
                 </div>
 
-                <div className="rounded-lg border bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                     Status
                   </p>
-                  <p className="mt-2 font-semibold text-gray-900">
-                    {formatStatus(project.status)}
-                  </p>
+                  <div className="mt-1">
+                    <StatusBadge status={project.status} />
+                  </div>
                 </div>
 
-                <div className="rounded-lg border bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                     Project ID
                   </p>
-                  <p className="mt-2 break-all font-semibold text-gray-900">
+                  <p className="mt-1 truncate font-mono text-xs font-semibold text-[#0B1220]">
                     {project.id}
                   </p>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="rounded-xl border bg-slate-50 p-5">
+              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-5">
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#475467]">
                     Construction Progress
                   </p>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-bold text-[#2563EB]">
                     {project.progress}%
                   </span>
                 </div>
 
-                <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-3 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
                   <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                    className="h-full rounded-full bg-[#2563EB] transition-all duration-500"
                     style={{ width: `${project.progress}%` }}
                   />
                 </div>
@@ -265,84 +251,78 @@ export default function Home() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <Link
                   href={`/projects/${project.id}/documents`}
-                  className="flex items-center justify-between rounded-xl border bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                  className="flex items-center justify-between rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-5 shadow-xs transition hover:border-[#2563EB]/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
                 >
                   <div>
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-bold text-[#0B1220]">
                       Project Documents
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-[#667085]">
                       View contracts, reports, and blueprints
                     </p>
                   </div>
-                  <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600">
+                  <span className="rounded-xl bg-[#EAF2FF] px-3.5 py-1.5 text-xs font-bold text-[#2563EB]">
                     View Documents ({project.documents?.length ?? 0}) →
                   </span>
                 </Link>
 
                 <Link
                   href={`/projects/${project.id}/photos`}
-                  className="flex items-center justify-between rounded-xl border bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                  className="flex items-center justify-between rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-5 shadow-xs transition hover:border-[#2563EB]/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
                 >
                   <div>
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-bold text-[#0B1220]">
                       Project Photos
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-[#667085]">
                       Browse construction photo gallery
                     </p>
                   </div>
-                  <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600">
+                  <span className="rounded-xl bg-[#EAF2FF] px-3.5 py-1.5 text-xs font-bold text-[#2563EB]">
                     View Gallery ({project.photos?.length ?? 0}) →
                   </span>
                 </Link>
               </div>
 
               {/* Milestones */}
-              <div className="rounded-xl border bg-white p-5">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
+                <h3 className="text-lg font-bold text-[#0B1220]">
                   Project Milestones
                 </h3>
 
                 <div className="mt-5 space-y-4">
                   {!project.milestones || project.milestones.length === 0 ? (
-                    <p className="text-gray-500">No milestones available yet.</p>
+                    <p className="text-sm text-[#667085]">No milestones available yet.</p>
                   ) : (
                     project.milestones.map((milestone) => (
                       <div
                         key={milestone.id}
-                        className="rounded-lg border bg-gray-50 p-4"
+                        className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <h4 className="font-semibold text-gray-900">
+                            <h4 className="font-bold text-[#0B1220]">
                               {milestone.name}
                             </h4>
                             {milestone.description && (
-                              <p className="mt-1 text-sm text-gray-600">
+                              <p className="mt-1 text-sm text-[#475467]">
                                 {milestone.description}
                               </p>
                             )}
                           </div>
-                          <span
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadgeStyle(
-                              milestone.status
-                            )}`}
-                          >
-                            {formatStatus(milestone.status)}
-                          </span>
+                          <StatusBadge status={milestone.status} />
                         </div>
 
                         <div className="mt-4">
-                          <div className="mb-2 flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Progress</span>
-                            <span className="font-semibold text-gray-900">
+                          <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#667085]">
+                            <span>Progress</span>
+                            <span className="text-[#0B1220]">
                               {milestone.progress}%
                             </span>
                           </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
                             <div
-                              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                              className="h-full rounded-full bg-[#067647] transition-all duration-300"
                               style={{ width: `${milestone.progress}%` }}
                             />
                           </div>
@@ -350,11 +330,11 @@ export default function Home() {
 
                         {(milestone.plannedDate ||
                           milestone.actualCompletionDate) && (
-                          <div className="mt-3 flex flex-wrap gap-4 border-t pt-3 text-xs text-gray-500">
+                          <div className="mt-3 flex flex-wrap gap-4 border-t border-[rgba(15,23,42,0.08)] pt-3 text-xs text-[#667085]">
                             {milestone.plannedDate && (
                               <span>
                                 Planned:{" "}
-                                <strong className="text-gray-700">
+                                <strong className="text-[#0B1220]">
                                   {new Date(
                                     milestone.plannedDate
                                   ).toLocaleDateString()}
@@ -364,7 +344,7 @@ export default function Home() {
                             {milestone.actualCompletionDate && (
                               <span>
                                 Completed:{" "}
-                                <strong className="text-gray-700">
+                                <strong className="text-[#067647]">
                                   {new Date(
                                     milestone.actualCompletionDate
                                   ).toLocaleDateString()}
@@ -381,41 +361,41 @@ export default function Home() {
 
               {/* Key Details & Recent Update */}
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-xl border bg-white p-5">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
+                  <h3 className="text-lg font-bold text-[#0B1220]">
                     Key Details
                   </h3>
 
                   <dl className="mt-4 space-y-3 text-sm">
-                    <div className="flex justify-between gap-4 border-b pb-2">
-                      <dt className="text-gray-500">Current Phase</dt>
-                      <dd className="text-right font-medium text-gray-900">
+                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
+                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Current Phase</dt>
+                      <dd className="text-right font-semibold text-[#0B1220]">
                         {project.currentPhase ?? "Not specified"}
                       </dd>
                     </div>
 
-                    <div className="flex justify-between gap-4 border-b pb-2">
-                      <dt className="text-gray-500">Project Manager</dt>
-                      <dd className="text-right font-medium text-gray-900">
+                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
+                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Project Manager</dt>
+                      <dd className="text-right font-semibold text-[#0B1220]">
                         {project.projectManagerName ?? "Not assigned"}
                       </dd>
                     </div>
 
-                    <div className="flex justify-between gap-4 border-b pb-2">
-                      <dt className="text-gray-500">Contact</dt>
-                      <dd className="text-right font-medium text-gray-900">
+                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
+                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Contact</dt>
+                      <dd className="text-right font-semibold text-[#0B1220]">
                         {formatCustomerContact(project.customer)}
                       </dd>
                     </div>
                   </dl>
                 </div>
 
-                <div className="rounded-xl border bg-white p-5">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
+                  <h3 className="text-lg font-bold text-[#0B1220]">
                     Recent Update
                   </h3>
 
-                  <p className="mt-4 leading-7 text-gray-700">
+                  <p className="mt-4 text-sm leading-relaxed text-[#475467]">
                     {project.recentUpdate ?? "No recent update available."}
                   </p>
                 </div>
@@ -427,24 +407,24 @@ export default function Home() {
         {/* Project Feed Updates */}
         <section>
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-bold text-[#0B1220]">
               Project Updates
             </h2>
 
-            <p className="mt-1 text-gray-500">
+            <p className="mt-1 text-sm text-[#667085]">
               Latest progress updates from the project team.
             </p>
           </div>
 
           {updatesError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-              <p className="text-red-700">{updatesError}</p>
+            <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
+              <p>{updatesError}</p>
             </div>
           )}
 
           {!updatesError && updates.length === 0 && !loading && (
-            <div className="rounded-xl border bg-white p-6">
-              <p className="text-gray-500">
+            <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
+              <p className="text-sm text-[#667085]">
                 No project updates are available yet.
               </p>
             </div>
@@ -454,19 +434,19 @@ export default function Home() {
             {updates.map((item) => (
               <article
                 key={item.id}
-                className="rounded-xl border bg-white p-6 shadow-sm"
+                className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition hover:shadow-md"
               >
                 <div className="flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-bold text-[#0B1220]">
                     {item.title}
                   </h3>
 
-                  <p className="leading-7 text-gray-600">{item.update}</p>
+                  <p className="text-sm leading-relaxed text-[#475467]">{item.update}</p>
 
-                  <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-500">
+                  <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-[#667085]">
                     <span>
                       Posted by:{" "}
-                      <strong className="text-gray-700">
+                      <strong className="text-[#0B1220]">
                         {item.postedBy}
                       </strong>
                     </span>
@@ -481,9 +461,9 @@ export default function Home() {
                       href={item.attachment}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 text-sm text-blue-600 hover:underline"
+                      className="mt-2 text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
                     >
-                      View attachment
+                      View attachment →
                     </a>
                   )}
                 </div>

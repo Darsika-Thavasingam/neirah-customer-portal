@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import StatusBadge from '../../components/StatusBadge';
 
 type Contract = {
   id: string;
@@ -69,7 +70,6 @@ export default function ContractDetailsPage() {
         }
 
         const data = await response.json();
-
         setContract(data);
       } catch (err) {
         setError(
@@ -102,11 +102,9 @@ export default function ContractDetailsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-6 py-8">
-        <div className="mx-auto max-w-5xl rounded-xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-[#667085]">
-            Loading contract...
-          </p>
+      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+          <p className="text-sm text-[#667085]">Loading contract...</p>
         </div>
       </main>
     );
@@ -114,21 +112,18 @@ export default function ContractDetailsPage() {
 
   if (error || !contract) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-6 py-8">
+      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <Link
             href="/contracts"
-            className="text-sm font-semibold text-[#2563EB]"
+            className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
           >
             ← Back to Contracts
           </Link>
 
-          <div className="mt-6 rounded-xl border border-red-200 bg-white p-8">
-            <h1 className="font-semibold text-[#B42318]">
-              Unable to load contract
-            </h1>
-
-            <p className="mt-2 text-sm text-[#667085]">
+          <div className="mt-6 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
+            <h1 className="font-bold">Unable to load contract</h1>
+            <p className="mt-2 text-sm font-normal text-[#B42318]">
               {error || 'Contract not found.'}
             </p>
           </div>
@@ -138,59 +133,56 @@ export default function ContractDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC] px-6 py-8">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-[#F7F9FC]">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
           href="/contracts"
-          className="text-sm font-semibold text-[#2563EB]"
+          className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
         >
           ← Back to Contracts
         </Link>
 
-        <div className="mt-6">
-          <p className="text-sm font-medium text-[#2563EB]">
+        <div className="mt-4">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
             Contract
           </p>
 
           <div className="mt-1 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h1 className="text-3xl font-bold text-[#0B1220]">
+              <h1 className="text-2xl font-bold text-[#0B1220] sm:text-3xl">
                 {contract.contractNumber}
               </h1>
 
               {contract.project && (
-                <p className="mt-2 text-sm text-[#667085]">
-                  {contract.project.name} ·{' '}
-                  {contract.project.projectCode}
+                <p className="mt-1 text-sm text-[#667085]">
+                  {contract.project.name} · {contract.project.projectCode}
                 </p>
               )}
             </div>
 
-            <span className="w-fit rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-[#2563EB]">
-              {contract.status}
-            </span>
+            <StatusBadge status={contract.status} />
           </div>
         </div>
 
-        <section className="mt-8 grid gap-5 md:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#0B1220]">
+        <section className="mt-8 grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-bold text-[#0B1220]">
               Contract Overview
             </h2>
 
             <div className="mt-5 space-y-4 text-sm">
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Contract Number
                 </p>
 
-                <p className="mt-1 font-medium text-[#0B1220]">
+                <p className="mt-1 font-semibold text-[#0B1220]">
                   {contract.contractNumber}
                 </p>
               </div>
 
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Contract Date
                 </p>
 
@@ -200,7 +192,7 @@ export default function ContractDetailsPage() {
               </div>
 
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Contract Value
                 </p>
 
@@ -210,25 +202,25 @@ export default function ContractDetailsPage() {
               </div>
 
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Status
                 </p>
 
-                <p className="mt-1 font-medium text-[#0B1220]">
-                  {contract.status}
-                </p>
+                <div className="mt-1">
+                  <StatusBadge status={contract.status} />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#0B1220]">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-bold text-[#0B1220]">
               Contract Dates
             </h2>
 
             <div className="mt-5 space-y-4 text-sm">
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Start Date
                 </p>
 
@@ -238,7 +230,7 @@ export default function ContractDetailsPage() {
               </div>
 
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Expected Completion
                 </p>
 
@@ -248,16 +240,16 @@ export default function ContractDetailsPage() {
               </div>
 
               <div>
-                <p className="text-[#667085]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                   Project
                 </p>
 
-                <p className="mt-1 font-medium text-[#0B1220]">
+                <p className="mt-1 font-semibold text-[#0B1220]">
                   {contract.project?.name || '—'}
                 </p>
 
                 {contract.project?.projectCode && (
-                  <p className="mt-1 text-xs text-[#667085]">
+                  <p className="mt-0.5 text-xs text-[#667085]">
                     {contract.project.projectCode}
                   </p>
                 )}
@@ -266,38 +258,38 @@ export default function ContractDetailsPage() {
           </div>
         </section>
 
-        <section className="mt-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-[#0B1220]">
-            Customer
+        <section className="mt-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+          <h2 className="text-lg font-bold text-[#0B1220]">
+            Customer Details
           </h2>
 
           <div className="mt-5 grid gap-5 text-sm md:grid-cols-3">
             <div>
-              <p className="text-[#667085]">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                 Company
               </p>
 
-              <p className="mt-1 font-medium text-[#0B1220]">
+              <p className="mt-1 font-semibold text-[#0B1220]">
                 {contract.customer.companyName || '—'}
               </p>
             </div>
 
             <div>
-              <p className="text-[#667085]">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                 Contact
               </p>
 
-              <p className="mt-1 font-medium text-[#0B1220]">
+              <p className="mt-1 font-semibold text-[#0B1220]">
                 {contract.customer.contactName}
               </p>
             </div>
 
             <div>
-              <p className="text-[#667085]">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
                 Email
               </p>
 
-              <p className="mt-1 font-medium text-[#0B1220]">
+              <p className="mt-1 font-semibold text-[#0B1220]">
                 {contract.customer.email}
               </p>
             </div>
@@ -305,8 +297,8 @@ export default function ContractDetailsPage() {
         </section>
 
         {contract.documentUrl && (
-          <section className="mt-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#0B1220]">
+          <section className="mt-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-bold text-[#0B1220]">
               Contract Document
             </h2>
 
@@ -318,9 +310,9 @@ export default function ContractDetailsPage() {
               href={contract.documentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 inline-flex rounded-lg bg-[#2563EB] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
             >
-              View / Download Contract
+              View / Download Contract Document
             </a>
           </section>
         )}

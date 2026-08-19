@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import StatusBadge from "../../components/StatusBadge";
 
 type QuotationItem = {
   id: string;
@@ -50,33 +51,8 @@ const API_BASE_URL =
 
 const USER_ID = process.env.NEXT_PUBLIC_USER_ID ?? "";
 
-function formatStatus(status: string) {
-  return status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function getStatusStyle(status: string) {
-  switch (status.toUpperCase()) {
-    case "ACCEPTED":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
-
-    case "SENT":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-
-    case "REJECTED":
-      return "bg-red-100 text-red-800 border-red-200";
-
-    case "EXPIRED":
-      return "bg-gray-100 text-gray-700 border-gray-200";
-
-    default:
-      return "bg-amber-100 text-amber-800 border-amber-200";
-  }
-}
-
 function formatAmount(value: string) {
-  return `Rs. ${Number(value).toLocaleString()}`;
+  return `LKR ${Number(value).toLocaleString()}`;
 }
 
 function formatDate(value: string) {
@@ -140,10 +116,10 @@ export default function QuotationDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100">
-        <div className="max-w-5xl mx-auto px-6 py-10">
-          <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500">Loading quotation...</p>
+      <main className="min-h-screen bg-[#F7F9FC] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <p className="text-[#667085]">Loading quotation...</p>
           </div>
         </div>
       </main>
@@ -152,20 +128,20 @@ export default function QuotationDetailPage() {
 
   if (error || !quotation) {
     return (
-      <main className="min-h-screen bg-gray-100">
-        <div className="max-w-5xl mx-auto px-6 py-10">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-            <h1 className="text-lg font-semibold text-red-800">
+      <main className="min-h-screen bg-[#F7F9FC] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-left">
+            <h1 className="text-lg font-semibold text-[#B42318]">
               Unable to load quotation
             </h1>
 
-            <p className="mt-2 text-red-700">
+            <p className="mt-2 text-sm text-[#B42318]">
               {error || "Quotation not found."}
             </p>
 
             <Link
               href="/quotations"
-              className="inline-block mt-5 text-sm font-medium text-blue-700 hover:underline"
+              className="mt-5 inline-block text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
             >
               ← Back to quotations
             </Link>
@@ -176,196 +152,172 @@ export default function QuotationDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-6 py-5">
+    <main className="min-h-screen bg-[#F7F9FC]">
+      <header className="border-b border-[rgba(15,23,42,0.08)] bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
           <Link
             href="/quotations"
-            className="text-sm text-blue-700 hover:underline"
+            className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
           >
             ← Back to quotations
           </Link>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-500">Quotation</p>
-
-              <h1 className="text-2xl font-bold text-gray-900">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">Quotation</p>
+              <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
                 {quotation.quotationNumber}
               </h1>
             </div>
 
-            <span
-              className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-sm font-medium ${getStatusStyle(
-                quotation.status
-              )}`}
-            >
-              {formatStatus(quotation.status)}
-            </span>
+            <StatusBadge status={quotation.status} />
           </div>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
-        <section className="bg-white rounded-xl border shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        {/* Overview Section */}
+        <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+          <h2 className="text-lg font-semibold text-[#0B1220]">
             Quotation Overview
           </h2>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                 Quotation Number
               </p>
 
-              <p className="mt-1 font-medium text-gray-900">
+              <p className="mt-1 font-medium text-[#0B1220]">
                 {quotation.quotationNumber}
               </p>
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                 Date
               </p>
 
-              <p className="mt-1 font-medium text-gray-900">
+              <p className="mt-1 font-medium text-[#0B1220]">
                 {formatDate(quotation.date)}
               </p>
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                 Valid Until
               </p>
 
-              <p className="mt-1 font-medium text-gray-900">
+              <p className="mt-1 font-medium text-[#0B1220]">
                 {formatDate(quotation.validUntil)}
               </p>
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
                 Project
               </p>
 
-              <p className="mt-1 font-medium text-gray-900">
+              <p className="mt-1 font-medium text-[#0B1220]">
                 {quotation.project.name}
               </p>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#667085]">
                 {quotation.project.projectCode}
               </p>
             </div>
           </div>
         </section>
 
+        {/* Customer & Project Info */}
         <section className="grid gap-6 md:grid-cols-2">
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-semibold text-[#0B1220]">
               Customer
             </h2>
 
             <div className="mt-4 space-y-2 text-sm">
-              <p className="font-medium text-gray-900">
+              <p className="font-semibold text-[#0B1220]">
                 {quotation.customer.companyName}
               </p>
 
-              <p className="text-gray-600">
+              <p className="text-[#667085]">
                 {quotation.customer.contactName}
               </p>
 
-              <p className="text-gray-600">
+              <p className="text-[#667085]">
                 {quotation.customer.email}
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-semibold text-[#0B1220]">
               Project
             </h2>
 
             <div className="mt-4">
-              <p className="font-medium text-gray-900">
+              <p className="font-semibold text-[#0B1220]">
                 {quotation.project.name}
               </p>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#667085]">
                 {quotation.project.projectCode}
               </p>
             </div>
           </div>
         </section>
 
-        <section className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div className="p-6 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">
+        {/* Line Items Table */}
+        <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+          <div className="border-b border-[rgba(15,23,42,0.08)] p-6">
+            <h2 className="text-lg font-semibold text-[#0B1220]">
               Line Items
             </h2>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] text-xs font-semibold uppercase tracking-wider text-[#667085]">
                 <tr>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                    Description
-                  </th>
-
-                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                    Quantity
-                  </th>
-
-                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                    Unit
-                  </th>
-
-                  <th className="px-6 py-4 text-right font-semibold text-gray-700">
-                    Unit Price
-                  </th>
-
-                  <th className="px-6 py-4 text-right font-semibold text-gray-700">
-                    Tax
-                  </th>
-
-                  <th className="px-6 py-4 text-right font-semibold text-gray-700">
-                    Discount
-                  </th>
-
-                  <th className="px-6 py-4 text-right font-semibold text-gray-700">
-                    Total
-                  </th>
+                  <th className="px-6 py-3.5">Description</th>
+                  <th className="px-6 py-3.5">Quantity</th>
+                  <th className="px-6 py-3.5">Unit</th>
+                  <th className="px-6 py-3.5 text-right">Unit Price</th>
+                  <th className="px-6 py-3.5 text-right">Tax</th>
+                  <th className="px-6 py-3.5 text-right">Discount</th>
+                  <th className="px-6 py-3.5 text-right">Total</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-[rgba(15,23,42,0.08)]">
                 {quotation.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 font-medium text-gray-900">
+                  <tr key={item.id} className="hover:bg-[#F7F9FC]/50">
+                    <td className="px-6 py-4 font-medium text-[#0B1220]">
                       {item.description}
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-[#667085]">
                       {item.quantity}
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-[#667085]">
                       {item.unit}
                     </td>
 
-                    <td className="px-6 py-4 text-right text-gray-700">
+                    <td className="px-6 py-4 text-right text-[#0B1220]">
                       {formatAmount(item.unitPrice)}
                     </td>
 
-                    <td className="px-6 py-4 text-right text-gray-700">
+                    <td className="px-6 py-4 text-right text-[#0B1220]">
                       {formatAmount(item.tax)}
                     </td>
 
-                    <td className="px-6 py-4 text-right text-gray-700">
+                    <td className="px-6 py-4 text-right text-[#0B1220]">
                       {formatAmount(item.discount)}
                     </td>
 
-                    <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                    <td className="px-6 py-4 text-right font-semibold text-[#0B1220]">
                       {formatAmount(item.total)}
                     </td>
                   </tr>
@@ -375,60 +327,62 @@ export default function QuotationDetailPage() {
           </div>
         </section>
 
-        <section className="bg-white rounded-xl border shadow-sm p-6">
+        {/* Totals Summary */}
+        <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
           <div className="ml-auto max-w-sm space-y-3 text-sm">
             <div className="flex justify-between gap-6">
-              <span className="text-gray-500">Subtotal</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-[#667085]">Subtotal</span>
+              <span className="font-medium text-[#0B1220]">
                 {formatAmount(quotation.subtotal)}
               </span>
             </div>
 
             <div className="flex justify-between gap-6">
-              <span className="text-gray-500">Tax</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-[#667085]">Tax</span>
+              <span className="font-medium text-[#0B1220]">
                 {formatAmount(quotation.tax)}
               </span>
             </div>
 
             <div className="flex justify-between gap-6">
-              <span className="text-gray-500">Discount</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-[#667085]">Discount</span>
+              <span className="font-medium text-[#0B1220]">
                 {formatAmount(quotation.discount)}
               </span>
             </div>
 
-            <div className="border-t pt-3 flex justify-between gap-6">
-              <span className="font-semibold text-gray-900">Total</span>
+            <div className="flex justify-between gap-6 border-t border-[rgba(15,23,42,0.08)] pt-3">
+              <span className="font-semibold text-[#0B1220]">Total</span>
 
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-xl font-bold text-[#2563EB]">
                 {formatAmount(quotation.total)}
               </span>
             </div>
           </div>
         </section>
 
+        {/* Terms & Notes */}
         {(quotation.terms || quotation.notes) && (
           <section className="grid gap-6 md:grid-cols-2">
             {quotation.terms && (
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+                <h2 className="text-lg font-semibold text-[#0B1220]">
                   Terms
                 </h2>
 
-                <p className="mt-4 text-sm text-gray-600 leading-7">
+                <p className="mt-4 text-sm leading-relaxed text-[#667085]">
                   {quotation.terms}
                 </p>
               </div>
             )}
 
             {quotation.notes && (
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+                <h2 className="text-lg font-semibold text-[#0B1220]">
                   Notes
                 </h2>
 
-                <p className="mt-4 text-sm text-gray-600 leading-7">
+                <p className="mt-4 text-sm leading-relaxed text-[#667085]">
                   {quotation.notes}
                 </p>
               </div>
@@ -436,9 +390,10 @@ export default function QuotationDetailPage() {
           </section>
         )}
 
+        {/* Document section */}
         {quotation.documentUrl && (
-          <section className="bg-white rounded-xl border shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <h2 className="text-lg font-semibold text-[#0B1220]">
               Quotation Document
             </h2>
 
@@ -446,9 +401,9 @@ export default function QuotationDetailPage() {
               href={quotation.documentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
             >
-              View / Download Quotation
+              View / Download Quotation Document
             </a>
           </section>
         )}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import StatusBadge from "../../../components/StatusBadge";
 
 type ProjectDocument = {
   id: string;
@@ -77,55 +78,38 @@ export default function ProjectDocumentsPage() {
   }, [projectId, apiUrl, userId]);
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
+    return new Date(date).toLocaleDateString("en-GB", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  const getCategoryStyle = (category: string) => {
-    switch (category.toLowerCase()) {
-      case "contract":
-        return "bg-blue-50 text-blue-700";
-      case "progress report":
-        return "bg-green-50 text-green-700";
-      case "approved drawings":
-        return "bg-purple-50 text-purple-700";
-      case "invoice":
-        return "bg-orange-50 text-orange-700";
-      case "certificate":
-        return "bg-emerald-50 text-emerald-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  };
-
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen bg-[#F7F9FC]">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href={`/projects/${projectId}`}
-            className="mb-4 inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-700"
+            className="mb-4 inline-flex items-center text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
           >
             ← Back to Project
           </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow-[0_8px_30px_rgba(30,64,175,0.08)]">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
               Project Documents
             </p>
 
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">
+            <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
               {documents.length > 0
                 ? documents[0].project.name
                 : "Project Documents"}
             </h1>
 
             {documents.length > 0 && (
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[#667085]">
                 {documents[0].project.projectCode}
               </p>
             )}
@@ -134,10 +118,8 @@ export default function ProjectDocumentsPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="rounded-2xl bg-white p-10 text-center shadow-[0_8px_30px_rgba(30,64,175,0.08)]">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-            <p className="mt-4 text-sm text-slate-500">
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-10 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <p className="text-sm text-[#667085]">
               Loading project documents...
             </p>
           </div>
@@ -145,16 +127,16 @@ export default function ProjectDocumentsPage() {
 
         {/* Error */}
         {!loading && error && (
-          <div className="rounded-2xl border border-red-100 bg-red-50 p-6">
-            <h2 className="font-semibold text-red-800">
+          <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
+            <h2 className="font-bold">
               Unable to load documents
             </h2>
 
-            <p className="mt-2 text-sm text-red-700">{error}</p>
+            <p className="mt-2 text-sm font-normal text-[#B42318]">{error}</p>
 
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+              className="mt-4 rounded-xl bg-[#B42318] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#912018] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B42318]"
             >
               Try Again
             </button>
@@ -163,69 +145,62 @@ export default function ProjectDocumentsPage() {
 
         {/* Empty */}
         {!loading && !error && documents.length === 0 && (
-          <div className="rounded-2xl bg-white p-12 text-center shadow-[0_8px_30px_rgba(30,64,175,0.08)]">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-              <span className="text-2xl">📄</span>
+          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-12 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF2FF] text-2xl text-[#2563EB]">
+              📄
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-slate-900">
+            <h2 className="mt-4 text-lg font-bold text-[#0B1220]">
               No documents available
             </h2>
 
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              No customer-visible documents have been uploaded for this
-              project yet.
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#667085]">
+              No customer-visible documents have been uploaded for this project yet.
             </p>
           </div>
         )}
 
-        {/* Documents */}
+        {/* Documents Grid */}
         {!loading && !error && documents.length > 0 && (
           <>
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">
+                <h2 className="text-lg font-bold text-[#0B1220]">
                   Available Documents
                 </h2>
 
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[#667085]">
                   {documents.length} document
                   {documents.length !== 1 ? "s" : ""} available
                 </p>
               </div>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {documents.map((document) => (
                 <div
                   key={document.id}
-                  className="rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgba(30,64,175,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(30,64,175,0.12)]"
+                  className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition hover:shadow-md"
                 >
                   {/* Document icon */}
                   <div className="flex items-start justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAF2FF] text-2xl text-[#2563EB]">
                       📄
                     </div>
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${getCategoryStyle(
-                        document.category
-                      )}`}
-                    >
-                      {document.category}
-                    </span>
+                    <StatusBadge status={document.category} />
                   </div>
 
                   {/* File information */}
                   <div className="mt-5">
                     <h3
-                      className="truncate font-semibold text-slate-900"
+                      className="truncate text-base font-bold text-[#0B1220]"
                       title={document.fileName}
                     >
                       {document.fileName}
                     </h3>
 
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-1 text-xs text-[#667085]">
                       Uploaded {formatDate(document.uploadedAt)}
                     </p>
                   </div>
@@ -236,7 +211,7 @@ export default function ProjectDocumentsPage() {
                       href={document.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block w-full rounded-lg bg-blue-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-800"
+                      className="block w-full rounded-xl bg-[#2563EB] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
                     >
                       View Document
                     </a>
