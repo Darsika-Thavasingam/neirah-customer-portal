@@ -44,23 +44,27 @@ async function main() {
     },
   });
 
-  const customer = await prisma.customer.create({
+  // ==========================================
+  // SEED CUSTOMER 1: Apex Construction Services
+  // ==========================================
+  const apexCustomer = await prisma.customer.create({
     data: {
       tenantId: tenant.id,
-      companyName: 'ABC Construction Holdings',
-      contactName: 'John Silva',
-      email: 'john.silva@example.com',
+      companyName: 'Apex Construction Services',
+      contactName: 'Darsika Thavasingam',
+      email: 'portal@apexconstruction.lk',
       phone: '+94 77 123 4567',
       address: 'Colombo, Sri Lanka',
       billingInfo: 'Monthly billing',
     },
   });
 
-  const user = await prisma.user.create({
+  const apexUser = await prisma.user.create({
     data: {
+      id: 'd4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c',
       tenantId: tenant.id,
-      email: 'john.silva@example.com',
-      name: 'John Silva',
+      email: 'portal@apexconstruction.lk',
+      name: 'Darsika Thavasingam',
       role: 'CUSTOMER',
     },
   });
@@ -68,63 +72,64 @@ async function main() {
   await prisma.customerPortalAccess.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      userId: user.id,
+      customerId: apexCustomer.id,
+      userId: apexUser.id,
       isActive: true,
     },
   });
 
-  const project = await prisma.project.create({
+  const apexProject = await prisma.project.create({
     data: {
+      id: '2e79e9a8-1c38-4e71-b506-3232ab8d6ed4',
       tenantId: tenant.id,
-      customerId: customer.id,
-      projectCode: 'NEI-2026-001',
-      name: 'ABC Office Complex',
-      location: 'Colombo',
+      customerId: apexCustomer.id,
+      projectCode: 'NEI-APEX-001',
+      name: 'Apex HQ Commercial Tower',
+      location: 'Colombo 03',
       status: 'IN_PROGRESS',
-      progress: 45,
-      currentPhase: 'Structural Work',
+      progress: 65,
+      currentPhase: 'Superstructure Construction',
       projectManagerName: 'Kasun Perera',
       projectManagerContact: '+94 71 555 1234',
-      recentUpdate: 'Structural work is progressing according to schedule.',
+      recentUpdate: 'Slab casting for the 12th floor has been completed successfully.',
     },
   });
 
   await prisma.customerProjectAccess.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      projectId: project.id,
+      customerId: apexCustomer.id,
+      projectId: apexProject.id,
     },
   });
 
   await prisma.milestone.createMany({
     data: [
       {
-        projectId: project.id,
-        name: 'Site Preparation',
-        description: 'Initial site preparation and groundwork.',
+        projectId: apexProject.id,
+        name: 'Excavation & Groundwork',
+        description: 'Excavation and shoring work for basement levels.',
         status: 'COMPLETED',
         progress: 100,
       },
       {
-        projectId: project.id,
-        name: 'Foundation',
-        description: 'Foundation construction.',
+        projectId: apexProject.id,
+        name: 'Foundation Piling',
+        description: 'Bored piling work for foundation support.',
         status: 'COMPLETED',
         progress: 100,
       },
       {
-        projectId: project.id,
-        name: 'Structural Work',
-        description: 'Main structural construction.',
+        projectId: apexProject.id,
+        name: 'Superstructure (Concrete)',
+        description: 'Casting slabs, columns, and core walls up to 15 floors.',
         status: 'IN_PROGRESS',
-        progress: 45,
+        progress: 65,
       },
       {
-        projectId: project.id,
-        name: 'Finishing',
-        description: 'Interior and exterior finishing.',
+        projectId: apexProject.id,
+        name: 'Façade and MEP Rough-ins',
+        description: 'Installation of unitized glass façade panels and main mechanical, electrical and plumbing lines.',
         status: 'UPCOMING',
         progress: 0,
       },
@@ -135,28 +140,25 @@ async function main() {
     data: [
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        title: 'Structural Work Progress Update',
-        update:
-          'Structural work has reached 45% completion and is progressing according to the planned schedule.',
+        projectId: apexProject.id,
+        title: 'Floor 12 Slab Casting Completed',
+        update: 'Structural concrete work on Floor 12 has been successfully completed. Formwork is now being erected for Floor 13 columns.',
         postedBy: 'Kasun Perera',
         visibility: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        title: 'Foundation Work Completed',
-        update:
-          'Foundation construction has been completed successfully. The project has now moved into the structural work phase.',
+        projectId: apexProject.id,
+        title: 'Tower Crane Reinforcement',
+        update: 'The primary tower crane was reinforced and climbed to its new working height to support upper-level lifting operations.',
         postedBy: 'Kasun Perera',
         visibility: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        title: 'Site Preparation Completed',
-        update:
-          'Initial site preparation and groundwork have been completed successfully.',
+        projectId: apexProject.id,
+        title: 'Basement Mechanical Room Handover',
+        update: 'Civil works in the main electrical substation room in basement level 1 have been completed for MEP equipment deployment.',
         postedBy: 'Kasun Perera',
         visibility: true,
       },
@@ -167,26 +169,26 @@ async function main() {
     data: [
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        photoUrl: 'https://placehold.co/800x500?text=Site+Preparation',
-        caption: 'Site preparation and groundwork completed.',
-        category: 'Site Preparation',
+        projectId: apexProject.id,
+        photoUrl: 'https://placehold.co/800x500?text=Apex+Groundwork',
+        caption: 'Excavation and foundation groundwork completed.',
+        category: 'Basement Works',
         isCustomerVisible: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        photoUrl: 'https://placehold.co/800x500?text=Foundation',
-        caption: 'Foundation construction completed.',
-        category: 'Foundation',
+        projectId: apexProject.id,
+        photoUrl: 'https://placehold.co/800x500?text=Apex+Slab+Pouring',
+        caption: 'Floor 12 slab concrete pouring in progress.',
+        category: 'Superstructure',
         isCustomerVisible: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
-        photoUrl: 'https://placehold.co/800x500?text=Structural+Work',
-        caption: 'Current structural work in progress.',
-        category: 'Structural Work',
+        projectId: apexProject.id,
+        photoUrl: 'https://placehold.co/800x500?text=Apex+Overall+View',
+        caption: 'Overall perspective view of the emerging commercial tower structure.',
+        category: 'Site Progress Overview',
         isCustomerVisible: true,
       },
     ],
@@ -196,38 +198,34 @@ async function main() {
     data: [
       {
         tenantId: tenant.id,
-        projectId: project.id,
+        projectId: apexProject.id,
         category: 'Contract',
-        fileName: 'Construction Agreement.pdf',
-        fileUrl:
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        fileName: 'Apex Commercial Tower Agreement.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         isCustomerVisible: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
+        projectId: apexProject.id,
         category: 'Progress Report',
-        fileName: 'August Progress Report.pdf',
-        fileUrl:
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        fileName: 'Apex Progress Report - August 2026.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         isCustomerVisible: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
+        projectId: apexProject.id,
         category: 'Approved Drawings',
-        fileName: 'Approved Project Drawings.pdf',
-        fileUrl:
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        fileName: 'Approved Architectural Drawings - Rev 3.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         isCustomerVisible: true,
       },
       {
         tenantId: tenant.id,
-        projectId: project.id,
+        projectId: apexProject.id,
         category: 'Internal',
-        fileName: 'Internal Cost Report.pdf',
-        fileUrl:
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        fileName: 'Contingency Allocation Report.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         isCustomerVisible: false,
       },
     ],
@@ -236,46 +234,37 @@ async function main() {
   await prisma.quotation.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      projectId: project.id,
-      quotationNumber: 'QT-2026-001',
+      customerId: apexCustomer.id,
+      projectId: apexProject.id,
+      quotationNumber: 'QT-APEX-2026-001',
       date: new Date('2026-08-15'),
       validUntil: new Date('2026-09-15'),
-      subtotal: 5000000,
-      tax: 900000,
-      discount: 100000,
-      total: 5800000,
+      subtotal: 12000000,
+      tax: 2160000,
+      discount: 250000,
+      total: 13910000,
       status: 'SENT',
-      terms: 'Payment according to the agreed project schedule.',
-      notes: 'This quotation is prepared for the ABC Office Complex project.',
+      terms: 'Milestone billing based on standard structural completion milestones.',
+      notes: 'This quotation covers the core superstructure work for the Apex Tower.',
       items: {
         create: [
           {
-            description: 'Foundation Construction',
+            description: 'Foundation and Excavation lump sum works',
             quantity: 1,
             unit: 'Lump Sum',
-            unitPrice: 2000000,
-            tax: 360000,
+            unitPrice: 5000000,
+            tax: 900000,
             discount: 0,
-            total: 2360000,
+            total: 5900000,
           },
           {
-            description: 'Structural Work',
+            description: 'Core Superstructure concrete framing',
             quantity: 1,
             unit: 'Lump Sum',
-            unitPrice: 2500000,
-            tax: 450000,
-            discount: 100000,
-            total: 2850000,
-          },
-          {
-            description: 'Site Preparation',
-            quantity: 1,
-            unit: 'Lump Sum',
-            unitPrice: 500000,
-            tax: 90000,
-            discount: 0,
-            total: 590000,
+            unitPrice: 7000000,
+            tax: 1260000,
+            discount: 250000,
+            total: 8010000,
           },
         ],
       },
@@ -285,51 +274,43 @@ async function main() {
   await prisma.contract.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      projectId: project.id,
-      contractNumber: 'CT-2026-001',
+      customerId: apexCustomer.id,
+      projectId: apexProject.id,
+      contractNumber: 'CT-APEX-2026-001',
       contractDate: new Date('2026-08-15'),
-      contractValue: 5800000,
+      contractValue: 13910000,
       startDate: new Date('2026-08-16'),
-      completionDate: new Date('2027-02-15'),
+      completionDate: new Date('2027-08-15'),
       status: 'ACTIVE',
       documentUrl: null,
     },
   });
 
-  const invoice = await prisma.invoice.create({
+  const apexInvoice = await prisma.invoice.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      projectId: project.id,
-      invoiceNumber: 'INV-2026-001',
+      customerId: apexCustomer.id,
+      projectId: apexProject.id,
+      invoiceNumber: 'INV-APEX-001',
       invoiceDate: new Date('2026-08-15'),
       dueDate: new Date('2026-09-15'),
-      contractReference: 'CT-2026-001',
+      contractReference: 'CT-APEX-2026-001',
       subtotal: 5000000,
       tax: 900000,
-      discount: 100000,
-      total: 5800000,
-      paidAmount: 2000000,
+      discount: 0,
+      total: 5900000,
+      paidAmount: 4000000,
       status: 'PARTIALLY_PAID',
       documentUrl: null,
       items: {
         create: [
           {
-            description: 'Structural Work',
+            description: 'Foundation & Excavation Milestone Claim',
             quantity: 1,
-            rate: 2500000,
-            tax: 450000,
-            discount: 100000,
-            total: 2850000,
-          },
-          {
-            description: 'Foundation Construction',
-            quantity: 1,
-            rate: 2000000,
-            tax: 360000,
+            rate: 5000000,
+            tax: 900000,
             discount: 0,
-            total: 2360000,
+            total: 5900000,
           },
         ],
       },
@@ -339,32 +320,300 @@ async function main() {
   await prisma.payment.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      invoiceId: invoice.id,
-      paymentReference: 'PAY-2026-001',
+      customerId: apexCustomer.id,
+      invoiceId: apexInvoice.id,
+      paymentReference: 'PAY-APEX-001',
       paymentDate: new Date('2026-08-16'),
       paymentMethod: 'Bank Transfer',
-      amount: 2000000,
+      amount: 4000000,
       status: 'COMPLETED',
-      receiptReference: 'RCT-2026-001',
+      receiptReference: 'RCT-APEX-001',
     },
   });
 
   await prisma.customerNotification.create({
     data: {
       tenantId: tenant.id,
-      customerId: customer.id,
-      title: 'Welcome to the Customer Portal',
-      message:
-        'Your project information is now available through the Neirah Customer Portal.',
+      customerId: apexCustomer.id,
+      title: 'Portal Access Activated',
+      message: 'Welcome Darsika! Your client dashboard is now active. You can track project updates, milestones, contracts, and view invoices.',
+      type: 'INFO',
+    },
+  });
+
+
+  // ==========================================
+  // SEED CUSTOMER 2: Skyline Developers PLC
+  // ==========================================
+  const skylineCustomer = await prisma.customer.create({
+    data: {
+      tenantId: tenant.id,
+      companyName: 'Skyline Developers PLC',
+      contactName: 'Kamal Perera',
+      email: 'portal@skylinedev.lk',
+      phone: '+94 77 987 6543',
+      address: 'Kandy, Sri Lanka',
+      billingInfo: 'Direct transfer',
+    },
+  });
+
+  const skylineUser = await prisma.user.create({
+    data: {
+      id: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
+      tenantId: tenant.id,
+      email: 'portal@skylinedev.lk',
+      name: 'Kamal Perera',
+      role: 'CUSTOMER',
+    },
+  });
+
+  await prisma.customerPortalAccess.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      userId: skylineUser.id,
+      isActive: true,
+    },
+  });
+
+  const skylineProject = await prisma.project.create({
+    data: {
+      id: '8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b',
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      projectCode: 'NEI-SKY-002',
+      name: 'Skyline Premium Residences',
+      location: 'Kandy Central',
+      status: 'IN_PROGRESS',
+      progress: 30,
+      currentPhase: 'Foundation & Basement Construction',
+      projectManagerName: 'Nuwan Bandara',
+      projectManagerContact: '+94 77 111 2222',
+      recentUpdate: 'Concrete pouring for the raft foundation has been successfully completed.',
+    },
+  });
+
+  await prisma.customerProjectAccess.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      projectId: skylineProject.id,
+    },
+  });
+
+  await prisma.milestone.createMany({
+    data: [
+      {
+        projectId: skylineProject.id,
+        name: 'Site Clearance and Mobilization',
+        description: 'Setting up temporary site hoardings, offices, and heavy equipment arrival.',
+        status: 'COMPLETED',
+        progress: 100,
+      },
+      {
+        projectId: skylineProject.id,
+        name: 'Raft Foundation Casting',
+        description: 'Continuous heavy concrete pour for main structural raft foundation.',
+        status: 'COMPLETED',
+        progress: 100,
+      },
+      {
+        projectId: skylineProject.id,
+        name: 'Retaining Wall and Substructure',
+        description: 'Construction of perimeter basement retaining walls and utility vaults.',
+        status: 'IN_PROGRESS',
+        progress: 15,
+      },
+      {
+        projectId: skylineProject.id,
+        name: 'Ground Floor Slab',
+        description: 'Formwork and casting of ground floor commercial transfer slab.',
+        status: 'UPCOMING',
+        progress: 0,
+      },
+    ],
+  });
+
+  await prisma.projectUpdate.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        title: 'Raft Foundation Pour Completed',
+        update: 'A continuous pour of 1200 cubic meters of Grade 40 concrete was completed over 36 hours for the primary raft foundation.',
+        postedBy: 'Nuwan Bandara',
+        visibility: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        title: 'Waterproofing Works Initiated',
+        update: 'Application of self-adhesive waterproofing membrane began along the exterior faces of the basement columns.',
+        postedBy: 'Nuwan Bandara',
+        visibility: true,
+      },
+    ],
+  });
+
+  await prisma.projectPhoto.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        photoUrl: 'https://placehold.co/800x500?text=Skyline+Raft+Foundations',
+        caption: 'Heavy reinforcement steel ready for raft foundation concrete.',
+        category: 'Substructure',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        photoUrl: 'https://placehold.co/800x500?text=Skyline+Concrete+Pour',
+        caption: 'Pump trucks pouring structural concrete into the raft base.',
+        category: 'Substructure',
+        isCustomerVisible: true,
+      },
+    ],
+  });
+
+  await prisma.customerVisibleDocument.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        category: 'Contract',
+        fileName: 'Skyline Residential Development Contract.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: true,
+      },
+      {
+        tenantId: tenant.id,
+        projectId: skylineProject.id,
+        category: 'Soil Report',
+        fileName: 'Geotechnical Soil Investigation Report.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        isCustomerVisible: true,
+      },
+    ],
+  });
+
+  await prisma.quotation.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      projectId: skylineProject.id,
+      quotationNumber: 'QT-SKY-2026-001',
+      date: new Date('2026-08-10'),
+      validUntil: new Date('2026-09-10'),
+      subtotal: 9500000,
+      tax: 1710000,
+      discount: 100000,
+      total: 11110000,
+      status: 'ACCEPTED',
+      terms: 'Progress payment schedule as agreed in main master contract.',
+      notes: 'Quotation includes excavation, shoring, raft foundation, and basement levels structural works.',
+      items: {
+        create: [
+          {
+            description: 'Site mobilization, shoring, and excavation',
+            quantity: 1,
+            unit: 'Lump Sum',
+            unitPrice: 3500000,
+            tax: 630000,
+            discount: 0,
+            total: 4130000,
+          },
+          {
+            description: 'Raft foundation concrete casting and steel reinforcement',
+            quantity: 1,
+            unit: 'Lump Sum',
+            unitPrice: 6000000,
+            tax: 1080000,
+            discount: 100000,
+            total: 6980000,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.contract.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      projectId: skylineProject.id,
+      contractNumber: 'CT-SKY-2026-001',
+      contractDate: new Date('2026-08-12'),
+      contractValue: 11110000,
+      startDate: new Date('2026-08-15'),
+      completionDate: new Date('2027-10-14'),
+      status: 'ACTIVE',
+      documentUrl: null,
+    },
+  });
+
+  const skylineInvoice = await prisma.invoice.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      projectId: skylineProject.id,
+      invoiceNumber: 'INV-SKY-001',
+      invoiceDate: new Date('2026-08-15'),
+      dueDate: new Date('2026-09-15'),
+      contractReference: 'CT-SKY-2026-001',
+      subtotal: 3500000,
+      tax: 630000,
+      discount: 0,
+      total: 4130000,
+      paidAmount: 4130000,
+      status: 'PAID',
+      documentUrl: null,
+      items: {
+        create: [
+          {
+            description: 'Mobilization & Excavation Completion Milestone Claim',
+            quantity: 1,
+            rate: 3500000,
+            tax: 630000,
+            discount: 0,
+            total: 4130000,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.payment.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      invoiceId: skylineInvoice.id,
+      paymentReference: 'PAY-SKY-001',
+      paymentDate: new Date('2026-08-16'),
+      paymentMethod: 'Bank Transfer',
+      amount: 4130000,
+      status: 'COMPLETED',
+      receiptReference: 'RCT-SKY-001',
+    },
+  });
+
+  await prisma.customerNotification.create({
+    data: {
+      tenantId: tenant.id,
+      customerId: skylineCustomer.id,
+      title: 'Raft Foundation Casting Complete',
+      message: 'Hello Kamal, we have successfully completed casting of the main raft foundation for Skyline Premium Residences.',
       type: 'INFO',
     },
   });
 
   console.log('Seed completed successfully.');
-  console.log(`Demo user ID: ${user.id}`);
-  console.log(`Demo customer ID: ${customer.id}`);
-  console.log(`Demo project ID: ${project.id}`);
+  console.log(`Apex User ID: ${apexUser.id}`);
+  console.log(`Apex Customer ID: ${apexCustomer.id}`);
+  console.log(`Apex Project ID: ${apexProject.id}`);
+  console.log(`Skyline User ID: ${skylineUser.id}`);
+  console.log(`Skyline Customer ID: ${skylineCustomer.id}`);
+  console.log(`Skyline Project ID: ${skylineProject.id}`);
 }
 
 main()

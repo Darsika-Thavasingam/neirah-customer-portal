@@ -4,23 +4,120 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
-const projectUrl = projectId ? `/projects/${projectId}` : "/";
+// Global fetch interceptor to support multi-tenant demo switcher
+if (typeof window !== "undefined" && !(window as any).__fetch_intercepted__) {
+  (window as any).__fetch_intercepted__ = true;
+  const originalFetch = window.fetch;
+  window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
+    const url = typeof input === "string" ? input : (input instanceof Request ? input.url : "");
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-const navItems = [
-  { href: "/", label: "Dashboard" },
-  { href: projectUrl, label: "Projects", isPrefixMatch: true },
-  { href: "/quotations", label: "Quotations", isPrefixMatch: true },
-  { href: "/contracts", label: "Contracts", isPrefixMatch: true },
-  { href: "/invoices", label: "Invoices", isPrefixMatch: true },
-  { href: "/payments", label: "Payments", isPrefixMatch: true },
-  { href: "/notifications", label: "Notifications", isPrefixMatch: true },
-  { href: "/profile", label: "Profile", isPrefixMatch: true },
-];
+    if (url.startsWith(apiBase)) {
+      const storedUserId = localStorage.getItem("neirah_customer_user_id");
+      if (storedUserId) {
+        init = init || {};
+        init.headers = init.headers || {};
+
+        const setHeader = (headers: HeadersInit, name: string, value: string) => {
+          if (headers instanceof Headers) {
+            headers.set(name, value);
+          } else if (Array.isArray(headers)) {
+            const index = headers.findIndex(([k]) => k.toLowerCase() === name.toLowerCase());
+            if (index !== -1) {
+              headers[index][1] = value;
+            } else {
+              headers.push([name, value]);
+            }
+          } else {
+            const key = Object.keys(headers).find(k => k.toLowerCase() === name.toLowerCase()) || name;
+            (headers as any)[key] = value;
+          }
+        };
+
+        // Override user ID header
+        setHeader(init.headers, "x-user-id", storedUserId);
+
+        // If logged in as Skyline, map the default/Apex project ID to Skyline project ID in URL
+        let targetUrl = url;
+        if (storedUserId === "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d" && url.includes("2e79e9a8-1c38-4e71-b506-3232ab8d6ed4")) {
+          targetUrl = url.replace("2e79e9a8-1c38-4e71-b506-3232ab8d6ed4", "8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b");
+        }
+
+        if (targetUrl !== url) {
+          if (typeof input === "string") {
+            input = targetUrl;
+          } else if (input instanceof URL) {
+            input = new URL(targetUrl);
+          } else if (input instanceof Request) {
+            input = new Request(targetUrl, input);
+          }
+        }
+      } else {
+        // Fallback for env default user ID translation: map 09e6e881-dcbb-42b9-ae4f-e62a0f2e598c to d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c
+        init = init || {};
+        init.headers = init.headers || {};
+        const getHeader = (headers: HeadersInit, name: string) => {
+          if (headers instanceof Headers) {
+            return headers.get(name);
+          } else if (Array.isArray(headers)) {
+            const entry = headers.find(([k]) => k.toLowerCase() === name.toLowerCase());
+            return entry ? entry[1] : null;
+          } else {
+            const key = Object.keys(headers).find(k => k.toLowerCase() === name.toLowerCase());
+            return key ? (headers as any)[key] : null;
+          }
+        };
+
+        const currentHeaderVal = getHeader(init.headers, "x-user-id");
+        if (currentHeaderVal === "09e6e881-dcbb-42b9-ae4f-e62a0f2e598c" || !currentHeaderVal) {
+          const setHeader = (headers: HeadersInit, name: string, value: string) => {
+            if (headers instanceof Headers) {
+              headers.set(name, value);
+            } else if (Array.isArray(headers)) {
+              const index = headers.findIndex(([k]) => k.toLowerCase() === name.toLowerCase());
+              if (index !== -1) {
+                headers[index][1] = value;
+              } else {
+                headers.push([name, value]);
+              }
+            } else {
+              const key = Object.keys(headers).find(k => k.toLowerCase() === name.toLowerCase()) || name;
+              (headers as any)[key] = value;
+            }
+          };
+          setHeader(init.headers, "x-user-id", "d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c");
+        }
+      }
+    }
+
+    return originalFetch(input, init);
+  };
+}
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Determine dynamic project ID and path based on logged in user
+  let currentProjectId = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
+  if (typeof window !== "undefined") {
+    const storedUserId = localStorage.getItem("neirah_customer_user_id");
+    if (storedUserId === "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d") {
+      currentProjectId = "8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b";
+    }
+  }
+  const projectUrl = currentProjectId ? `/projects/${currentProjectId}` : "/";
+
+  const navItems = [
+    { href: "/", label: "Dashboard" },
+    { href: projectUrl, label: "Projects", isPrefixMatch: true },
+    { href: "/quotations", label: "Quotations", isPrefixMatch: true },
+    { href: "/contracts", label: "Contracts", isPrefixMatch: true },
+    { href: "/invoices", label: "Invoices", isPrefixMatch: true },
+    { href: "/payments", label: "Payments", isPrefixMatch: true },
+    { href: "/notifications", label: "Notifications", isPrefixMatch: true },
+    { href: "/profile", label: "Profile", isPrefixMatch: true },
+  ];
 
   if (pathname === "/login") {
     return null;
