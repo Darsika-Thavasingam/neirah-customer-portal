@@ -51,6 +51,8 @@ export default function CustomerLoginPage() {
 
       if (typeof window !== "undefined") {
         localStorage.setItem("neirah_customer_user_id", accessId);
+        // Notify same-tab listeners (e.g. dashboard) to re-fetch with new identity
+        window.dispatchEvent(new Event("neirah:userswitch"));
       }
 
       router.push("/");

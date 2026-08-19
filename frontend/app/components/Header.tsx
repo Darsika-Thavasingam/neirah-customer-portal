@@ -106,12 +106,25 @@ export default function Header() {
   );
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("neirah_customer_user_id");
-    if (storedUserId === "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d") {
-      setProjectUrl("/projects/8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b");
-    } else {
-      setProjectUrl(defaultProjectId ? `/projects/${defaultProjectId}` : "/");
+    const SKYLINE_USER_ID = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d";
+    const SKYLINE_PROJECT_ID = "8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b";
+
+    function updateProjectUrl() {
+      const storedUserId = localStorage.getItem("neirah_customer_user_id");
+      if (storedUserId === SKYLINE_USER_ID) {
+        setProjectUrl(`/projects/${SKYLINE_PROJECT_ID}`);
+      } else {
+        setProjectUrl(defaultProjectId ? `/projects/${defaultProjectId}` : "/");
+      }
     }
+
+    updateProjectUrl();
+    window.addEventListener("neirah:userswitch", updateProjectUrl);
+    window.addEventListener("storage", updateProjectUrl);
+    return () => {
+      window.removeEventListener("neirah:userswitch", updateProjectUrl);
+      window.removeEventListener("storage", updateProjectUrl);
+    };
   }, [defaultProjectId]);
 
   const navItems = [

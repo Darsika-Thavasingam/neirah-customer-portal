@@ -85,6 +85,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatesError, setUpdatesError] = useState("");
+  // Increment this to force a re-fetch when the active user changes
+  const [fetchKey, setFetchKey] = useState(0);
+
+  // Re-fetch whenever localStorage changes (e.g. demo account switcher)
+  useEffect(() => {
+    const handleSwitch = () => {
+      setLoading(true);
+      setError("");
+      setUpdatesError("");
+      setFetchKey((k) => k + 1);
+    };
+    // storage fires when another tab changes localStorage;
+    // neirah:userswitch fires in the same tab via login page
+    window.addEventListener("storage", handleSwitch);
+    window.addEventListener("neirah:userswitch", handleSwitch);
+    return () => {
+      window.removeEventListener("storage", handleSwitch);
+      window.removeEventListener("neirah:userswitch", handleSwitch);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -110,11 +130,13 @@ export default function Home() {
         const [projectResponse, updatesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, {
             headers,
+            cache: "no-store",
           }),
           fetch(
             `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`,
             {
               headers,
+              cache: "no-store",
             }
           ),
         ]);
@@ -150,7 +172,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [fetchKey]);
 
   return (
     <main className="min-h-screen bg-[#F7F9FC]">
