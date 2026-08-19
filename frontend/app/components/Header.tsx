@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -98,15 +98,21 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Determine dynamic project ID and path based on logged in user
-  let currentProjectId = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
-  if (typeof window !== "undefined") {
+  // Start with the default Apex project ID (matches server render).
+  // After mount, update from localStorage to support the demo switcher.
+  const defaultProjectId = process.env.NEXT_PUBLIC_PROJECT_ID ?? "";
+  const [projectUrl, setProjectUrl] = useState(
+    defaultProjectId ? `/projects/${defaultProjectId}` : "/"
+  );
+
+  useEffect(() => {
     const storedUserId = localStorage.getItem("neirah_customer_user_id");
     if (storedUserId === "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d") {
-      currentProjectId = "8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b";
+      setProjectUrl("/projects/8f1e2d3c-4b5a-6e7f-8a9b-0c1d2e3f4a5b");
+    } else {
+      setProjectUrl(defaultProjectId ? `/projects/${defaultProjectId}` : "/");
     }
-  }
-  const projectUrl = currentProjectId ? `/projects/${currentProjectId}` : "/";
+  }, [defaultProjectId]);
 
   const navItems = [
     { href: "/", label: "Dashboard" },
