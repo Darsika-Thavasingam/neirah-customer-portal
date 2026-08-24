@@ -323,17 +323,20 @@ img {
    SKELETON LOADERS
 ───────────────────────────────────────────── */
 @keyframes shimmer {
-  0% { background-position: -600px 0; }
-  100% { background-position: 600px 0; }
+  0% {
+    background-position: -600px 0;
+  }
+
+  100% {
+    background-position: 600px 0;
+  }
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #e9edf4 25%,
-    #f3f5f9 50%,
-    #e9edf4 75%
-  );
+  background: linear-gradient(90deg,
+      #e9edf4 25%,
+      #f3f5f9 50%,
+      #e9edf4 75%);
   background-size: 1200px 100%;
   animation: shimmer 1.6s infinite linear;
   border-radius: 0.5rem;
@@ -501,12 +504,10 @@ img {
 .project-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(11, 18, 32, 0.88) 0%,
-    rgba(11, 18, 32, 0.4) 50%,
-    rgba(11, 18, 32, 0.1) 100%
-  );
+  background: linear-gradient(to top,
+      rgb(var(--navy-rgb) / 0.88) 0%,
+      rgb(var(--navy-rgb) / 0.40) 50%,
+      rgb(var(--navy-rgb) / 0.10) 100%);
 }
 
 .project-hero-content {
