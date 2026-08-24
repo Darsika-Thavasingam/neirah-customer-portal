@@ -3,22 +3,45 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import StatusBadge from "../components/StatusBadge";
+import PageHeader from "../components/PageHeader";
+import { PageLoading } from "../components/SkeletonLoader";
+import EmptyState, { ErrorState } from "../components/EmptyState";
+import { getActiveUserId } from "../lib/auth";
 
 type Contract = {
   id: string;
   contractNumber: string;
   contractDate: string;
   contractValue: string;
-  startDate: string;
-  completionDate: string;
+  startDate: string | null;
+  completionDate: string | null;
   status: string;
   documentUrl: string | null;
   project: {
     id: string;
     projectCode: string;
     name: string;
-  };
+  } | null;
 };
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+function formatDate(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatAmount(amount: string) {
+  return Number(amount).toLocaleString("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -28,31 +51,20 @@ export default function ContractsPage() {
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const userId = process.env.NEXT_PUBLIC_USER_ID;
-
-        if (!userId) {
-          throw new Error("Customer user ID is not configured");
-        }
+        const userId = getActiveUserId();
+        if (!userId) throw new Error("Customer portal user is not configured.");
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/customer-portal/contracts`,
-          {
-            headers: {
-              "x-user-id": userId,
-            },
-          }
+          `${API_BASE_URL}/api/v1/customer-portal/contracts`,
+          { headers: { "x-user-id": userId } }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to load contracts");
-        }
+        if (!response.ok) throw new Error("Failed to load contracts.");
 
         const data = await response.json();
-        setContracts(data);
+        setContracts(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load contracts"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load contracts.");
       } finally {
         setLoading(false);
       }
@@ -61,131 +73,118 @@ export default function ContractsPage() {
     fetchContracts();
   }, []);
 
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString();
-
-  const formatAmount = (amount: string) =>
-    `LKR ${Number(amount).toLocaleString("en-LK", { minimumFractionDigits: 2 })}`;
+  if (loading) {
+    return (
+      <div className="page-shell">
+        <PageHeader kicker="Contracts" title="My Contracts" />
+        <PageLoading message="Loading contracts…" />
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-            Contracts
-          </p>
+    <div className="page-shell">
+      <PageHeader
+        kicker="Contracts"
+        title="My Contracts"
+        subtitle="View binding contracts and legal terms related to your construction projects."
+      />
 
-          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
-            My Contracts
-          </h1>
+      {error && (
+        <ErrorState title="Unable to load contracts" message={error} />
+      )}
 
-          <p className="mt-1 text-sm text-[#667085]">
-            View binding contracts and legal terms related to your construction projects.
-          </p>
+      {!error && contracts.length === 0 && (
+        <div className="card">
+          <EmptyState
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            }
+            title="No contracts available"
+            body="There are currently no customer-visible contracts. Contracts will appear here once agreed upon with your project team."
+          />
         </div>
+      )}
 
-        {loading && (
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm text-[#667085]">Loading contracts...</p>
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            <p>{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && contracts.length === 0 && (
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">
-              No contracts available
-            </h2>
-
-            <p className="mt-2 text-sm text-[#667085]">
-              There are currently no customer-visible contracts.
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && contracts.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-2">
-            {contracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                      Contract Number
-                    </p>
-
-                    <h2 className="mt-1 text-xl font-bold text-[#0B1220]">
-                      {contract.contractNumber}
-                    </h2>
-                  </div>
-
-                  <StatusBadge status={contract.status} />
+      {!error && contracts.length > 0 && (
+        <div className="grid gap-5 md:grid-cols-2">
+          {contracts.map((contract) => (
+            <div key={contract.id} className="card card-hover p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="meta-label">Contract Number</p>
+                  <h2 className="mt-1 text-xl font-bold text-[#0B1220]">
+                    {contract.contractNumber}
+                  </h2>
                 </div>
+                <StatusBadge status={contract.status} />
+              </div>
 
-                <div className="mt-6 space-y-3 text-sm">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Project</p>
-                    <p className="font-semibold text-[#0B1220]">
-                      {contract.project.name}
-                    </p>
-                    <p className="text-xs text-[#667085]">
-                      {contract.project.projectCode}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 border-t border-[rgba(15,23,42,0.08)] pt-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Contract Date</p>
-                      <p className="mt-0.5 font-medium text-[#0B1220]">
-                        {formatDate(contract.contractDate)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Contract Value</p>
-                      <p className="mt-0.5 font-bold text-[#2563EB]">
-                        {formatAmount(contract.contractValue)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 border-t border-[rgba(15,23,42,0.08)] pt-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Start Date</p>
-                      <p className="mt-0.5 font-medium text-[#0B1220]">
-                        {formatDate(contract.startDate)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Completion Date</p>
-                      <p className="mt-0.5 font-medium text-[#0B1220]">
-                        {formatDate(contract.completionDate)}
-                      </p>
-                    </div>
-                  </div>
+              {/* Project */}
+              {contract.project && (
+                <div className="mt-4 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#F7F9FC] p-3.5">
+                  <p className="meta-label">Project</p>
+                  <p className="mt-0.5 text-sm font-bold text-[#0B1220]">
+                    {contract.project.name}
+                  </p>
+                  <p className="text-xs text-[#667085]">
+                    {contract.project.projectCode}
+                  </p>
                 </div>
+              )}
 
-                <div className="mt-6">
-                  <Link
-                    href={`/contracts/${contract.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                  >
-                    View Contract →
-                  </Link>
+              {/* Financials */}
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="meta-label">Contract Value</p>
+                  <p className="mt-1 text-lg font-bold" style={{ color: "var(--primary)" }}>
+                    LKR {formatAmount(contract.contractValue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="meta-label">Contract Date</p>
+                  <p className="meta-value">{formatDate(contract.contractDate)}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
+
+              {/* Dates */}
+              <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[rgba(15,23,42,0.06)] pt-4">
+                <div>
+                  <p className="meta-label">Start Date</p>
+                  <p className="meta-value">{formatDate(contract.startDate)}</p>
+                </div>
+                <div>
+                  <p className="meta-label">Completion</p>
+                  <p className="meta-value">{formatDate(contract.completionDate)}</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-5 flex flex-wrap gap-2 border-t border-[rgba(15,23,42,0.06)] pt-4">
+                <Link
+                  href={`/contracts/${contract.id}`}
+                  className="btn btn-primary btn-sm"
+                >
+                  View Contract →
+                </Link>
+                {contract.documentUrl && (
+                  <a
+                    href={contract.documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm"
+                  >
+                    View Document
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

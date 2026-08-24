@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
-import { getActiveUserId } from '../../lib/auth';
+import PageHeader from "../../components/PageHeader";
+import { PageLoading } from "../../components/SkeletonLoader";
+import { ErrorState } from "../../components/EmptyState";
+import { getActiveUserId } from "../../lib/auth";
 
 type InvoiceItem = {
   id: string;
@@ -127,151 +130,144 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <p className="text-sm text-[#667085]">Loading invoice details...</p>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href="/invoices" className="back-link mb-5 inline-flex">
+          ← Back to Invoices
+        </Link>
+        <PageHeader kicker="Invoice Details" title="Loading..." />
+        <PageLoading message="Loading invoice details…" />
+      </div>
     );
   }
 
   if (error || !invoice) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <Link href="/invoices" className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-            ← Back to Invoices
-          </Link>
-
-          <div className="mt-6 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            <h1 className="font-bold">Unable to load invoice</h1>
-            <p className="mt-2 text-sm font-normal text-[#B42318]">{error || "Invoice not found."}</p>
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href="/invoices" className="back-link mb-5 inline-flex">
+          ← Back to Invoices
+        </Link>
+        <ErrorState
+          title="Unable to load invoice"
+          message={error || "Invoice not found."}
+          backHref="/invoices"
+          backLabel="Back to Invoices"
+        />
+      </div>
     );
   }
 
   const balance = Math.max(Number(invoice.total ?? 0) - Number(invoice.paidAmount ?? 0), 0);
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link href="/invoices" className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-          ← Back to Invoices
-        </Link>
+    <div className="page-shell">
+      <Link href="/invoices" className="back-link mb-5 inline-flex">
+        ← Back to Invoices
+      </Link>
 
-        <div className="mt-4 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <PageHeader
+        kicker="Commercial"
+        title={invoice.invoiceNumber}
+        subtitle={
+          invoice.project
+            ? `${invoice.project.name} · ${invoice.project.projectCode}`
+            : undefined
+        }
+        actions={<StatusBadge status={invoice.status} />}
+      />
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        {/* Invoice Overview */}
+        <section className="card p-6">
+          <h2 className="section-heading mb-5">Invoice Overview</h2>
+          <div className="space-y-4 text-sm">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">Invoice Detail</p>
-              <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">{invoice.invoiceNumber}</h1>
-              {invoice.project && (
-                <p className="mt-1 text-sm text-[#667085]">
-                  {invoice.project.name} · {invoice.project.projectCode}
-                </p>
-              )}
+              <p className="meta-label">Invoice Number</p>
+              <p className="mt-1 font-bold text-[#0B1220]">{invoice.invoiceNumber}</p>
             </div>
-
-            <StatusBadge status={invoice.status} />
-          </div>
-        </div>
-
-        <section className="mt-6 grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">Invoice Overview</h2>
-            <dl className="mt-5 space-y-4 text-sm">
+            {invoice.project && (
               <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Invoice Number</dt>
-                <dd className="mt-1 font-semibold text-[#0B1220]">{invoice.invoiceNumber}</dd>
+                <p className="meta-label">Project</p>
+                <p className="mt-1 font-semibold text-[#2563EB] hover:underline">
+                  <Link href={`/projects/${invoice.project.id}`}>
+                    {invoice.project.name}
+                  </Link>
+                </p>
               </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Project</dt>
-                <dd className="mt-1 font-semibold text-[#0B1220]">
-                  {invoice.project ? (
-                    <Link href={`/projects/${invoice.project.id}`} className="text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-                      {invoice.project.name}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Contract Reference</dt>
-                <dd className="mt-1 font-medium text-[#0B1220]">{invoice.contractReference || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Invoice Date</dt>
-                <dd className="mt-1 font-medium text-[#0B1220]">{formatDate(invoice.invoiceDate)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Due Date</dt>
-                <dd className="mt-1 font-medium text-[#0B1220]">{formatDate(invoice.dueDate)}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">Payment Summary</h2>
-            <dl className="mt-5 space-y-3.5 text-sm">
-              <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                <dt className="text-[#667085]">Subtotal</dt>
-                <dd className="font-medium text-[#0B1220]">{formatCurrency(invoice.subtotal)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                <dt className="text-[#667085]">Tax</dt>
-                <dd className="font-medium text-[#0B1220]">{formatCurrency(invoice.tax)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                <dt className="text-[#667085]">Discount</dt>
-                <dd className="font-medium text-[#0B1220]">{formatCurrency(invoice.discount)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                <dt className="font-semibold text-[#0B1220]">Total</dt>
-                <dd className="font-bold text-[#0B1220]">{formatCurrency(invoice.total)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                <dt className="text-[#667085]">Paid Amount</dt>
-                <dd className="font-medium text-[#067647]">{formatCurrency(invoice.paidAmount)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 pt-1">
-                <dt className="font-bold text-[#0B1220]">Outstanding Balance</dt>
-                <dd className="text-lg font-bold text-[#B42318]">{formatCurrency(balance)}</dd>
-              </div>
-            </dl>
+            )}
+            <div>
+              <p className="meta-label">Contract Reference</p>
+              <p className="mt-1 font-semibold text-[#0B1220]">{invoice.contractReference || "—"}</p>
+            </div>
+            <div>
+              <p className="meta-label">Invoice Date</p>
+              <p className="mt-1 font-semibold text-[#0B1220]">{formatDate(invoice.invoiceDate)}</p>
+            </div>
+            <div>
+              <p className="meta-label">Due Date</p>
+              <p className="mt-1 font-semibold text-[#0B1220]">{formatDate(invoice.dueDate)}</p>
+            </div>
           </div>
         </section>
 
-        {/* Line Items section - Responsive Table */}
-        {(invoice.items && invoice.items.length > 0) && (
-          <section className="mt-8 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <div className="border-b border-[rgba(15,23,42,0.08)] p-6 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#0B1220]">Line Items</h2>
-              <span className="text-xs text-[#667085] sm:hidden">Scroll table horizontally →</span>
+        {/* Payment Summary */}
+        <section className="card p-6">
+          <h2 className="section-heading mb-5">Payment Summary</h2>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
+              <span className="text-[#667085]">Subtotal</span>
+              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.subtotal)}</span>
             </div>
+            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
+              <span className="text-[#667085]">Tax</span>
+              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.tax)}</span>
+            </div>
+            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
+              <span className="text-[#667085]">Discount</span>
+              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.discount)}</span>
+            </div>
+            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
+              <span className="font-bold text-[#0B1220]">Total</span>
+              <span className="font-black text-[#0B1220]">{formatCurrency(invoice.total)}</span>
+            </div>
+            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
+              <span className="text-[#667085]">Paid Amount</span>
+              <span className="font-bold text-[#067647]">{formatCurrency(invoice.paidAmount)}</span>
+            </div>
+            <div className="flex justify-between pt-2">
+              <span className="font-bold text-[#0B1220]">Outstanding Balance</span>
+              <span className="text-lg font-black text-[#B42318]">{formatCurrency(balance)}</span>
+            </div>
+          </div>
+        </section>
 
+        {/* Line Items */}
+        {invoice.items && invoice.items.length > 0 && (
+          <section className="card overflow-hidden md:col-span-2">
+            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
+              <h2 className="section-heading">Line Items</h2>
+              <span className="text-xs text-[#667085] md:hidden">Swipe table to view all columns</span>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] text-xs font-bold uppercase tracking-wider text-[#667085]">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-6 py-3.5">Description</th>
-                    <th className="px-6 py-3.5">Qty</th>
-                    <th className="px-6 py-3.5">Rate</th>
-                    <th className="px-6 py-3.5">Tax</th>
-                    <th className="px-6 py-3.5">Discount</th>
-                    <th className="px-6 py-3.5 text-right">Total</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Tax</th>
+                    <th>Discount</th>
+                    <th className="text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(15,23,42,0.08)] bg-white">
+                <tbody>
                   {invoice.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#F7F9FC]/50">
-                      <td className="px-6 py-4 font-medium text-[#0B1220]">{item.description}</td>
-                      <td className="px-6 py-4 text-[#667085]">{item.quantity}</td>
-                      <td className="px-6 py-4 text-[#0B1220]">{formatCurrency(item.rate)}</td>
-                      <td className="px-6 py-4 text-[#0B1220]">{formatCurrency(item.tax)}</td>
-                      <td className="px-6 py-4 text-[#0B1220]">{formatCurrency(item.discount)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-[#0B1220]">{formatCurrency(item.total)}</td>
+                    <tr key={item.id}>
+                      <td className="font-bold text-[#0B1220]">{item.description}</td>
+                      <td className="text-[#667085]">{item.quantity}</td>
+                      <td>{formatCurrency(item.rate)}</td>
+                      <td>{formatCurrency(item.tax)}</td>
+                      <td>{formatCurrency(item.discount)}</td>
+                      <td className="text-right font-bold text-[#0B1220]">{formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -280,37 +276,36 @@ export default function InvoiceDetailPage() {
           </section>
         )}
 
-        {/* Payment History section - Responsive Table */}
+        {/* Payment History */}
         {invoice.payments && invoice.payments.length > 0 && (
-          <section className="mt-8 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <div className="border-b border-[rgba(15,23,42,0.08)] p-6 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#0B1220]">Payment History</h2>
-              <span className="text-xs text-[#667085] sm:hidden">Scroll table horizontally →</span>
+          <section className="card overflow-hidden md:col-span-2">
+            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
+              <h2 className="section-heading">Payments Applied</h2>
+              <span className="text-xs text-[#667085] md:hidden">Swipe table to view all columns</span>
             </div>
-
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] text-xs font-bold uppercase tracking-wider text-[#667085]">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-6 py-3.5">Reference</th>
-                    <th className="px-6 py-3.5">Date</th>
-                    <th className="px-6 py-3.5">Method</th>
-                    <th className="px-6 py-3.5">Amount</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5">Receipt</th>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(15,23,42,0.08)] bg-white">
+                <tbody>
                   {invoice.payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-[#F7F9FC]/50">
-                      <td className="px-6 py-4 font-semibold text-[#0B1220]">{payment.paymentReference}</td>
-                      <td className="px-6 py-4 text-[#667085]">{formatDate(payment.paymentDate)}</td>
-                      <td className="px-6 py-4 text-[#0B1220]">{payment.paymentMethod}</td>
-                      <td className="px-6 py-4 font-bold text-[#067647]">{formatCurrency(payment.amount)}</td>
-                      <td className="px-6 py-4">
+                    <tr key={payment.id}>
+                      <td className="font-bold text-[#0B1220]">{payment.paymentReference}</td>
+                      <td className="text-[#667085]">{formatDate(payment.paymentDate)}</td>
+                      <td>{payment.paymentMethod}</td>
+                      <td className="font-bold text-[#067647]">{formatCurrency(payment.amount)}</td>
+                      <td>
                         <StatusBadge status={payment.status} />
                       </td>
-                      <td className="px-6 py-4 text-[#667085]">{payment.receiptReference || "—"}</td>
+                      <td className="font-mono text-xs text-[#667085]">{payment.receiptReference || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -319,20 +314,39 @@ export default function InvoiceDetailPage() {
           </section>
         )}
 
+        {/* Invoice Document / PDF Download */}
         {invoice.documentUrl && (
-          <section className="mt-8 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">Invoice Document</h2>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <a href={invoice.documentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-                View Document
+          <section className="card p-6 md:col-span-2">
+            <h2 className="section-heading mb-3">Invoice PDF Document</h2>
+            <p className="text-sm text-[#667085]">
+              You can view or download the certified copy of this invoice document.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a
+                href={invoice.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                View Invoice PDF
               </a>
-              <a href={invoice.documentUrl} download className="inline-flex items-center rounded-xl border border-[rgba(15,23,42,0.12)] bg-white px-5 py-2.5 text-sm font-semibold text-[#0B1220] transition hover:bg-[#F7F9FC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-                Download
+              <a
+                href={invoice.documentUrl}
+                download
+                className="btn btn-ghost"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download Document
               </a>
             </div>
           </section>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -7,7 +7,7 @@ type StatusBadgeProps = {
 };
 
 export function getStatusTheme(status: string) {
-  const normalized = status.toUpperCase().replace(/_/g, " ");
+  const normalized = status.toUpperCase().replace(/_/g, " ").trim();
 
   switch (normalized) {
     case "PAID":
@@ -28,6 +28,7 @@ export function getStatusTheme(status: string) {
     case "PENDING":
     case "UPCOMING":
     case "UNREAD":
+    case "ON HOLD":
       return "bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]";
 
     case "OVERDUE":
@@ -35,10 +36,14 @@ export function getStatusTheme(status: string) {
     case "CANCELLED":
     case "DELAYED":
     case "EXPIRED":
+    case "INACTIVE":
       return "bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]";
 
     case "DRAFT":
     case "ARCHIVED":
+    case "CLOSED":
+    case "PLANNING":
+    case "HANDOVER":
     default:
       return "bg-[#F8FAFC] text-[#475467] border-[#E2E8F0]";
   }
@@ -50,13 +55,17 @@ export function formatStatusText(status: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export default function StatusBadge({ status, label, className = "" }: StatusBadgeProps) {
+export default function StatusBadge({
+  status,
+  label,
+  className = "",
+}: StatusBadgeProps) {
   const theme = getStatusTheme(status);
   const displayText = label || formatStatusText(status);
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${theme} ${className}`}
+      className={`status-badge ${theme} ${className}`}
     >
       {displayText}
     </span>

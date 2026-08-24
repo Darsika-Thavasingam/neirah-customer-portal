@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getActiveUserId } from '../../../lib/auth';
+import { PageLoading } from "../../../components/SkeletonLoader";
+import EmptyState, { ErrorState } from "../../../components/EmptyState";
+import { getActiveUserId } from "../../../lib/auth";
 
 type ProjectUpdate = {
   id: string;
@@ -16,6 +18,23 @@ type ProjectUpdate = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function timeAgo(value: string) {
+  const diff = Date.now() - new Date(value).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (hours > 0) return `${hours}h ago`;
+  return `${Math.max(1, mins)}m ago`;
+}
 
 export default function ProjectUpdatesPage() {
   const params = useParams();
@@ -28,16 +47,12 @@ export default function ProjectUpdatesPage() {
   useEffect(() => {
     const fetchUpdates = async () => {
       try {
-        if (!projectId) {
-          throw new Error("Project ID is missing.");
-        }
+        if (!projectId) throw new Error("Project ID is missing.");
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`,
           {
-            headers: {
-              "x-user-id": getActiveUserId(),
-            },
+            headers: { "x-user-id": getActiveUserId() },
             cache: "no-store",
           }
         );
@@ -61,91 +76,128 @@ export default function ProjectUpdatesPage() {
     fetchUpdates();
   }, [projectId]);
 
-  return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link
-          href={`/projects/${projectId}`}
-          className="mb-4 inline-flex items-center text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-        >
-          ← Back to Project
-        </Link>
+  if (loading) {
+    return (
+      <div className="page-shell" style={{ maxWidth: "56rem" }}>
+        <PageLoading message="Loading project updates…" />
+      </div>
+    );
+  }
 
-        <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-            Announcements
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">Project Updates</h1>
-          <p className="mt-1 text-sm text-[#667085]">
-            Latest updates and project notifications shared by the project team.
+  return (
+    <div className="page-shell" style={{ maxWidth: "56rem" }}>
+      <Link href={`/projects/${projectId}`} className="back-link mb-5 inline-flex">
+        ← Back to Project
+      </Link>
+
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="page-kicker">Announcements</p>
+          <h1 className="page-title">Project Updates</h1>
+          <p className="page-subtitle">
+            Latest updates and notifications shared by the project team.
           </p>
         </div>
-
-        {loading && (
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm text-[#667085]">Loading updates...</p>
-          </div>
+        {!loading && !error && updates.length > 0 && (
+          <span className="shrink-0 rounded-xl border border-[rgba(15,23,42,0.08)] bg-white px-3 py-1.5 text-xs font-bold text-[#667085]">
+            {updates.length} update{updates.length !== 1 ? "s" : ""}
+          </span>
         )}
+      </div>
 
-        {error && (
-          <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            {error}
-          </div>
-        )}
+      {error && (
+        <ErrorState
+          title="Unable to load updates"
+          message={error}
+          backHref={`/projects/${projectId}`}
+          backLabel="Back to Project"
+        />
+      )}
 
-        {!loading && !error && updates.length === 0 && (
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-12 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">No updates yet</h2>
-            <p className="mt-2 text-sm text-[#667085]">
-              There are currently no project updates available.
-            </p>
-          </div>
-        )}
+      {!error && updates.length === 0 && (
+        <div className="card">
+          <EmptyState
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            }
+            title="No updates yet"
+            body="There are currently no project updates. Check back once the project team posts new announcements."
+          />
+        </div>
+      )}
 
+      {!error && updates.length > 0 && (
         <div className="space-y-4">
-          {updates.map((item) => (
-            <article
-              key={item.id}
-              className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition hover:shadow-md"
-            >
-              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-                <h2 className="text-lg font-bold text-[#0B1220]">
-                  {item.title}
-                </h2>
+          {updates.map((item, idx) => (
+            <article key={item.id} className="card card-hover p-6">
+              {/* Timeline dot */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center pt-0.5">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
+                    style={{
+                      background:
+                        idx === 0
+                          ? "var(--primary)"
+                          : "var(--slate-300)",
+                    }}
+                    aria-hidden="true"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                </div>
 
-                <span className="text-xs font-medium text-[#667085]">
-                  {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h2 className="text-base font-bold text-[#0B1220]">{item.title}</h2>
+                    <div className="flex shrink-0 flex-col items-end gap-0.5">
+                      <span className="text-xs font-semibold text-[#667085]">
+                        {formatDate(item.createdAt)}
+                      </span>
+                      <span className="text-[0.7rem] text-[#94A3B8]">
+                        {timeAgo(item.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-relaxed text-[#475467]">
+                    {item.update}
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-4">
+                    {item.postedBy && (
+                      <p className="text-xs font-medium text-[#667085]">
+                        Posted by{" "}
+                        <strong className="font-semibold text-[#344054]">
+                          {item.postedBy}
+                        </strong>
+                      </p>
+                    )}
+
+                    {item.attachment && (
+                      <a
+                        href={item.attachment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] hover:underline"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        View attachment
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
-
-              <p className="mt-4 text-sm leading-relaxed text-[#475467]">
-                {item.update}
-              </p>
-
-              {item.postedBy && (
-                <p className="mt-4 text-xs font-medium text-[#667085]">
-                  Posted by <strong className="text-[#0B1220]">{item.postedBy}</strong>
-                </p>
-              )}
-
-              {item.attachment && (
-                <a
-                  href={item.attachment}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                >
-                  View attachment →
-                </a>
-              )}
             </article>
           ))}
         </div>
-      </div>
-    </main>
+      )}
+    </div>
   );
 }

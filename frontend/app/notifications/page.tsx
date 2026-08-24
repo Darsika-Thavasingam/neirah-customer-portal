@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import StatusBadge from '../components/StatusBadge';
-import { getActiveUserId } from '../lib/auth';
+import { useEffect, useState } from "react";
+import StatusBadge from "../components/StatusBadge";
+import PageHeader from "../components/PageHeader";
+import { PageLoading } from "../components/SkeletonLoader";
+import EmptyState, { ErrorState } from "../components/EmptyState";
+import { getActiveUserId } from "../lib/auth";
 
 type Notification = {
   id: string;
@@ -18,44 +21,75 @@ type DashboardResponse = {
 };
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function NotificationIcon({ type, isRead }: { type: string; isRead: boolean }) {
+  const t = type.toUpperCase();
+  const color = isRead ? "#667085" : "#2563EB";
+
+  if (t.includes("INVOICE") || t.includes("PAYMENT")) {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    );
+  }
+
+  if (t.includes("PROJECT") || t.includes("MILESTONE") || t.includes("UPDATE")) {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    );
+  }
+
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  );
+}
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchNotifications() {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         if (!getActiveUserId()) {
-          throw new Error('Customer portal user is not configured.');
+          throw new Error("Customer portal user is not configured.");
         }
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/dashboard`,
           {
-            headers: {
-              'x-user-id': getActiveUserId(),
-            },
-            cache: 'no-store',
-          },
+            headers: { "x-user-id": getActiveUserId() },
+            cache: "no-store",
+          }
         );
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch notifications');
-        }
+        if (!response.ok) throw new Error("Failed to fetch notifications.");
 
         const data: DashboardResponse = await response.json();
-
         setNotifications(data.notifications || []);
       } catch (err) {
         console.error(err);
-        setError('Unable to load notifications.');
+        setError("Unable to load notifications.");
       } finally {
         setLoading(false);
       }
@@ -64,135 +98,125 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, []);
 
-  const unreadCount = notifications.filter(
-    (notification) => !notification.isRead,
-  ).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unread = notifications.filter((n) => !n.isRead);
+  const read = notifications.filter((n) => n.isRead);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm text-[#667085]">Loading notifications...</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            {error}
-          </div>
-        </div>
-      </main>
+      <div className="page-shell max-w-4xl">
+        <PageHeader kicker="Alerts & Updates" title="Notifications" />
+        <PageLoading message="Loading notifications…" />
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-              Alerts & Updates
-            </p>
-            <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
-              Notifications
-            </h1>
-            <p className="mt-1 text-sm text-[#667085]">
-              Stay updated with your project and account activity.
-            </p>
-          </div>
+    <div className="page-shell" style={{ maxWidth: "56rem" }}>
+      <PageHeader
+        kicker="Alerts & Updates"
+        title="Notifications"
+        subtitle="Stay updated with your project and account activity."
+        actions={
+          unreadCount > 0 ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-[#EAF2FF] px-4 py-1.5 text-xs font-bold text-[#2563EB]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[0.65rem] font-black text-white">
+                {unreadCount}
+              </span>
+              unread
+            </span>
+          ) : null
+        }
+      />
 
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-[#EAF2FF] px-4 py-2 text-xs font-bold text-[#2563EB]">
-            <span>{unreadCount}</span> unread
-          </div>
+      {error && <ErrorState title="Unable to load notifications" message={error} />}
+
+      {!error && notifications.length === 0 && (
+        <div className="card">
+          <EmptyState
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            }
+            title="No notifications"
+            body="You don't have any notifications at the moment. Updates will appear here as your project progresses."
+          />
         </div>
+      )}
 
-        {/* Empty state */}
-        {notifications.length === 0 ? (
-          <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-12 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF2FF] text-2xl text-[#2563EB]">
-              🔔
-            </div>
+      {!error && notifications.length > 0 && (
+        <div className="space-y-6">
+          {/* Unread */}
+          {unread.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
+                Unread · {unread.length}
+              </h2>
+              <div className="space-y-3">
+                {unread.map((n) => (
+                  <NotificationCard key={n.id} notification={n} />
+                ))}
+              </div>
+            </section>
+          )}
 
-            <h2 className="mt-4 text-lg font-bold text-[#0B1220]">
-              No notifications
-            </h2>
-
-            <p className="mt-2 text-sm text-[#667085]">
-              You don't have any notifications at the moment.
-            </p>
-          </section>
-        ) : (
-          <section className="space-y-4">
-            {notifications.map((notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-              />
-            ))}
-          </section>
-        )}
-      </div>
-    </main>
+          {/* Read */}
+          {read.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#667085]">
+                Earlier · {read.length}
+              </h2>
+              <div className="space-y-3">
+                {read.map((n) => (
+                  <NotificationCard key={n.id} notification={n} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-function NotificationCard({
-  notification,
-}: {
-  notification: Notification;
-}) {
+function NotificationCard({ notification }: { notification: Notification }) {
   return (
     <article
-      className={`rounded-2xl border p-5 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition ${
-        notification.isRead
-          ? 'border-[rgba(15,23,42,0.08)] bg-white'
-          : 'border-blue-200 bg-[#EAF2FF]/50'
-      }`}
+      className={`notification-item ${!notification.isRead ? "unread" : ""}`}
     >
-      <div className="flex items-start gap-4">
-        <div
-          className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
-            notification.isRead
-              ? 'border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] text-[#667085]'
-              : 'border-blue-200 bg-[#EAF2FF] text-[#2563EB]'
-          }`}
-        >
-          🔔
-        </div>
+      {/* Icon */}
+      <div
+        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
+        style={{
+          background: notification.isRead ? "var(--surface-soft)" : "var(--primary-soft)",
+          borderColor: notification.isRead ? "var(--border)" : "rgba(37,99,235,0.2)",
+        }}
+      >
+        <NotificationIcon type={notification.type} isRead={notification.isRead} />
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-bold text-[#0B1220]">
-                {notification.title}
-              </h2>
-
-              <StatusBadge status={notification.type} />
-            </div>
-
-            {!notification.isRead && (
-              <span className="inline-flex w-fit items-center rounded-full bg-[#2563EB] px-2.5 py-0.5 text-[0.7rem] font-bold text-white uppercase tracking-wider">
-                New
-              </span>
-            )}
+      {/* Content */}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-bold text-[#0B1220]">{notification.title}</h2>
+            <StatusBadge status={notification.type} />
           </div>
-
-          <p className="mt-3 text-sm leading-relaxed text-[#475467]">
-            {notification.message}
-          </p>
-
-          <p className="mt-3 text-xs font-medium text-[#667085]">
-            {new Date(notification.createdAt).toLocaleString()}
-          </p>
+          {!notification.isRead && (
+            <span className="shrink-0 rounded-full bg-[#2563EB] px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-wider text-white">
+              New
+            </span>
+          )}
         </div>
+
+        <p className="mt-2 text-sm leading-relaxed text-[#475467]">
+          {notification.message}
+        </p>
+
+        <p className="mt-2 text-xs font-medium text-[#667085]">
+          {formatDateTime(notification.createdAt)}
+        </p>
       </div>
     </article>
   );

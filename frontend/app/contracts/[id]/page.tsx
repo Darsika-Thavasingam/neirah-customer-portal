@@ -1,10 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import StatusBadge from '../../components/StatusBadge';
-import { getActiveUserId } from '../../lib/auth';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import StatusBadge from "../../components/StatusBadge";
+import PageHeader from "../../components/PageHeader";
+import { PageLoading } from "../../components/SkeletonLoader";
+import { ErrorState } from "../../components/EmptyState";
+import { getActiveUserId } from "../../lib/auth";
 
 type Contract = {
   id: string;
@@ -30,9 +33,23 @@ type Contract = {
   } | null;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+function formatDate(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatAmount(value: string) {
+  return Number(value).toLocaleString("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 export default function ContractDetailsPage() {
   const params = useParams();
@@ -40,43 +57,38 @@ export default function ContractDetailsPage() {
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadContract() {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         if (!getActiveUserId()) {
-          throw new Error('Customer portal user is not configured.');
+          throw new Error("Customer portal user is not configured.");
         }
 
         const response = await fetch(
           `${API_URL}/api/v1/customer-portal/contracts/${contractId}`,
           {
             headers: {
-              'x-user-id': getActiveUserId(),
+              "x-user-id": getActiveUserId(),
             },
-          },
+          }
         );
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('Contract not found.');
+            throw new Error("Contract not found.");
           }
-
-          throw new Error('Failed to load contract.');
+          throw new Error("Failed to load contract.");
         }
 
         const data = await response.json();
         setContract(data);
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load contract.',
-        );
+        setError(err instanceof Error ? err.message : "Failed to load contract.");
       } finally {
         setLoading(false);
       }
@@ -87,208 +99,139 @@ export default function ContractDetailsPage() {
     }
   }, [contractId]);
 
-  function formatDate(date: string | null) {
-    if (!date) return '—';
-
-    return new Date(date).toLocaleDateString();
-  }
-
-  function formatAmount(value: string) {
-    return Number(value).toLocaleString('en-LK', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <p className="text-sm text-[#667085]">Loading contract...</p>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href="/contracts" className="back-link mb-5 inline-flex">
+          ← Back to Contracts
+        </Link>
+        <PageHeader kicker="Contract Details" title="Loading..." />
+        <PageLoading message="Loading contract information…" />
+      </div>
     );
   }
 
   if (error || !contract) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <Link
-            href="/contracts"
-            className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-          >
-            ← Back to Contracts
-          </Link>
-
-          <div className="mt-6 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            <h1 className="font-bold">Unable to load contract</h1>
-            <p className="mt-2 text-sm font-normal text-[#B42318]">
-              {error || 'Contract not found.'}
-            </p>
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href="/contracts" className="back-link mb-5 inline-flex">
+          ← Back to Contracts
+        </Link>
+        <ErrorState
+          title="Unable to load contract"
+          message={error || "Contract not found."}
+          backHref="/contracts"
+          backLabel="Back to Contracts"
+        />
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link
-          href="/contracts"
-          className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-        >
-          ← Back to Contracts
-        </Link>
+    <div className="page-shell">
+      <Link href="/contracts" className="back-link mb-5 inline-flex">
+        ← Back to Contracts
+      </Link>
 
-        <div className="mt-4">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-            Contract
-          </p>
+      <PageHeader
+        kicker="Contract"
+        title={contract.contractNumber}
+        subtitle={
+          contract.project
+            ? `${contract.project.name} · ${contract.project.projectCode}`
+            : undefined
+        }
+        actions={<StatusBadge status={contract.status} />}
+      />
 
-          <div className="mt-1 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        {/* Contract Overview */}
+        <section className="card p-6">
+          <h2 className="section-heading mb-5">Contract Overview</h2>
+          <div className="space-y-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#0B1220] sm:text-3xl">
+              <p className="meta-label">Contract Number</p>
+              <p className="mt-1 font-bold text-[#0B1220]">
                 {contract.contractNumber}
-              </h1>
-
-              {contract.project && (
-                <p className="mt-1 text-sm text-[#667085]">
-                  {contract.project.name} · {contract.project.projectCode}
-                </p>
-              )}
+              </p>
             </div>
-
-            <StatusBadge status={contract.status} />
-          </div>
-        </div>
-
-        <section className="mt-8 grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">
-              Contract Overview
-            </h2>
-
-            <div className="mt-5 space-y-4 text-sm">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Contract Number
-                </p>
-
-                <p className="mt-1 font-semibold text-[#0B1220]">
-                  {contract.contractNumber}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Contract Date
-                </p>
-
-                <p className="mt-1 font-medium text-[#0B1220]">
-                  {formatDate(contract.contractDate)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Contract Value
-                </p>
-
-                <p className="mt-1 text-xl font-bold text-[#2563EB]">
-                  LKR {formatAmount(contract.contractValue)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Status
-                </p>
-
-                <div className="mt-1">
-                  <StatusBadge status={contract.status} />
-                </div>
-              </div>
+            <div>
+              <p className="meta-label">Contract Date</p>
+              <p className="mt-1 font-semibold text-[#0B1220]">
+                {formatDate(contract.contractDate)}
+              </p>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">
-              Contract Dates
-            </h2>
-
-            <div className="mt-5 space-y-4 text-sm">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Start Date
-                </p>
-
-                <p className="mt-1 font-medium text-[#0B1220]">
-                  {formatDate(contract.startDate)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Expected Completion
-                </p>
-
-                <p className="mt-1 font-medium text-[#0B1220]">
-                  {formatDate(contract.completionDate)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Project
-                </p>
-
-                <p className="mt-1 font-semibold text-[#0B1220]">
-                  {contract.project?.name || '—'}
-                </p>
-
-                {contract.project?.projectCode && (
-                  <p className="mt-0.5 text-xs text-[#667085]">
-                    {contract.project.projectCode}
-                  </p>
-                )}
+            <div>
+              <p className="meta-label">Contract Value</p>
+              <p className="mt-1 text-2xl font-black" style={{ color: "var(--primary)" }}>
+                LKR {formatAmount(contract.contractValue)}
+              </p>
+            </div>
+            <div>
+              <p className="meta-label">Status</p>
+              <div className="mt-1.5">
+                <StatusBadge status={contract.status} />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <h2 className="text-lg font-bold text-[#0B1220]">
-            Customer Details
-          </h2>
-
-          <div className="mt-5 grid gap-5 text-sm md:grid-cols-3">
+        {/* Contract Dates & Project Link */}
+        <section className="card p-6">
+          <h2 className="section-heading mb-5">Contract Dates</h2>
+          <div className="space-y-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Company
-              </p>
-
+              <p className="meta-label">Start Date</p>
               <p className="mt-1 font-semibold text-[#0B1220]">
-                {contract.customer.companyName || '—'}
+                {formatDate(contract.startDate)}
               </p>
             </div>
-
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Contact
+              <p className="meta-label">Expected Completion</p>
+              <p className="mt-1 font-semibold text-[#0B1220]">
+                {formatDate(contract.completionDate)}
               </p>
+            </div>
+            {contract.project && (
+              <div>
+                <p className="meta-label">Linked Project</p>
+                <div className="mt-2 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#F7F9FC] p-3.5">
+                  <p className="text-sm font-bold text-[#0B1220]">
+                    {contract.project.name}
+                  </p>
+                  <p className="text-xs text-[#667085]">
+                    {contract.project.projectCode}
+                  </p>
+                  <Link
+                    href={`/projects/${contract.project.id}`}
+                    className="mt-2.5 inline-flex text-xs font-bold text-[#2563EB] hover:underline"
+                  >
+                    View Project Detail →
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
+        {/* Customer Details */}
+        <section className="card p-6 md:col-span-2">
+          <h2 className="section-heading mb-5">Customer Details</h2>
+          <div className="grid gap-5 sm:grid-cols-3">
+            <div>
+              <p className="meta-label">Company Name</p>
+              <p className="mt-1 font-bold text-[#0B1220]">
+                {contract.customer.companyName || "—"}
+              </p>
+            </div>
+            <div>
+              <p className="meta-label">Contact Person</p>
               <p className="mt-1 font-semibold text-[#0B1220]">
                 {contract.customer.contactName}
               </p>
             </div>
-
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Email
-              </p>
-
+              <p className="meta-label">Email Address</p>
               <p className="mt-1 font-semibold text-[#0B1220]">
                 {contract.customer.email}
               </p>
@@ -296,27 +239,29 @@ export default function ContractDetailsPage() {
           </div>
         </section>
 
+        {/* Document section */}
         {contract.documentUrl && (
-          <section className="mt-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <h2 className="text-lg font-bold text-[#0B1220]">
-              Contract Document
-            </h2>
-
-            <p className="mt-2 text-sm text-[#667085]">
-              A customer-visible contract document is available.
+          <section className="card p-6 md:col-span-2">
+            <h2 className="section-heading mb-3">Contract Document</h2>
+            <p className="text-sm text-[#667085]">
+              A customer-visible contract document is available for this agreement.
             </p>
-
-            <a
-              href={contract.documentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-            >
-              View / Download Contract Document
-            </a>
+            <div className="mt-5">
+              <a
+                href={contract.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                View / Download Contract Document
+              </a>
+            </div>
           </section>
         )}
       </div>
-    </main>
+    </div>
   );
 }

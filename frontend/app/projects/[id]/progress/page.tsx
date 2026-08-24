@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../../components/StatusBadge";
-import { getActiveUserId } from '../../../lib/auth';
+import { PageLoading } from "../../../components/SkeletonLoader";
+import { ErrorState } from "../../../components/EmptyState";
+import { getActiveUserId } from "../../../lib/auth";
 
 type Milestone = {
   id: string;
@@ -23,12 +25,19 @@ type Project = {
   status: string;
   progress: number;
   currentPhase: string | null;
-  recentUpdate: string | null;
-  updatedAt: string;
   milestones: Milestone[];
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+function formatDate(v: string | null) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function ProjectProgressPage() {
   const params = useParams();
@@ -41,24 +50,14 @@ export default function ProjectProgressPage() {
   useEffect(() => {
     async function fetchProject() {
       try {
-        setLoading(true);
-        setError("");
-
-        if (!getActiveUserId()) {
-          throw new Error("Customer portal user is not configured.");
-        }
+        if (!getActiveUserId()) throw new Error("Customer portal user is not configured.");
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`,
-          {
-            headers: { "x-user-id": getActiveUserId() },
-            cache: "no-store",
-          }
+          { headers: { "x-user-id": getActiveUserId() }, cache: "no-store" }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to load project progress.");
-        }
+        if (!response.ok) throw new Error("Failed to load project progress.");
 
         const data: Project = await response.json();
         setProject(data);
@@ -69,123 +68,129 @@ export default function ProjectProgressPage() {
       }
     }
 
-    if (projectId) {
-      fetchProject();
-    }
+    if (projectId) fetchProject();
   }, [projectId]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm text-[#667085]">Loading project progress...</p>
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <PageLoading message="Loading project progress…" />
+      </div>
     );
   }
 
   if (error || !project) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <Link href={`/projects/${projectId}`} className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-            ← Back to Project
-          </Link>
-          <div className="mt-6 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            {error || "Project progress is not available."}
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href={`/projects/${projectId}`} className="back-link mb-6 inline-flex">← Back to Project</Link>
+        <ErrorState title="Unable to load progress" message={error} backHref={`/projects/${projectId}`} backLabel="Back to Project" />
+      </div>
     );
   }
 
-  const completedMilestones = project.milestones.filter((m) => m.status.toUpperCase() === "COMPLETED").length;
-  const upcomingMilestones = project.milestones.filter((m) => m.status.toUpperCase() === "UPCOMING").length;
-  const delayedMilestones = project.milestones.filter((m) => m.status.toUpperCase() === "DELAYED").length;
+  const completed = project.milestones.filter((m) => m.status.toUpperCase() === "COMPLETED").length;
+  const upcoming = project.milestones.filter((m) => m.status.toUpperCase() === "UPCOMING").length;
+  const delayed = project.milestones.filter((m) => m.status.toUpperCase() === "DELAYED").length;
+  const inProgress = project.milestones.filter((m) => m.status.toUpperCase() === "IN_PROGRESS" || m.status.toUpperCase() === "IN PROGRESS").length;
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link href={`/projects/${projectId}`} className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-            ← Back to Project
-          </Link>
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">Project Progress</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">{project.name}</h1>
-          <p className="mt-1 text-sm text-[#667085]">{project.projectCode} · {project.currentPhase ?? "Current phase not set"}</p>
+    <div className="page-shell">
+      <Link href={`/projects/${projectId}`} className="back-link mb-5 inline-flex">← Back to Project</Link>
+
+      <div className="mb-6">
+        <p className="page-kicker">Project Progress</p>
+        <h1 className="page-title">{project.name}</h1>
+        <p className="page-subtitle">{project.projectCode}{project.currentPhase ? ` · ${project.currentPhase}` : ""}</p>
+      </div>
+
+      {/* Overall progress */}
+      <div className="card mb-6 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="meta-label mb-1">Overall Completion</p>
+            <p className="text-4xl font-black text-[#0B1220]">{project.progress}<span className="text-2xl text-[#667085]">%</span></p>
+          </div>
+          <StatusBadge status={project.status} />
         </div>
 
-        <section className="mb-8 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Overall Completion</p>
-              <h2 className="mt-1 text-3xl font-bold text-[#0B1220]">{project.progress}%</h2>
-            </div>
-            <StatusBadge status={project.status} />
+        <div className="mt-5">
+          <div className="progress-track progress-track-lg">
+            <div className="progress-fill" style={{ width: `${project.progress}%` }} />
           </div>
+        </div>
 
-          <div className="mt-6 h-3 overflow-hidden rounded-full bg-[#E5E7EB]">
-            <div className="h-full rounded-full bg-[#2563EB] transition-all duration-500" style={{ width: `${project.progress}%` }} />
+        {/* Stat pills */}
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Completed", count: completed, color: "var(--success)", bg: "var(--success-bg)" },
+            { label: "In Progress", count: inProgress, color: "var(--primary)", bg: "var(--primary-soft)" },
+            { label: "Upcoming", count: upcoming, color: "var(--warning)", bg: "var(--warning-bg)" },
+            { label: "Delayed", count: delayed, color: "var(--danger)", bg: "var(--danger-bg)" },
+          ].map(({ label, count, color, bg }) => (
+            <div key={label} className="rounded-xl p-4 text-center" style={{ background: bg }}>
+              <p className="text-2xl font-black" style={{ color }}>{count}</p>
+              <p className="mt-0.5 text-xs font-bold text-[#344054]">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Milestone progress list */}
+      <div className="card p-6">
+        <h2 className="section-heading mb-5">Milestone Progress</h2>
+
+        {project.milestones.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[rgba(15,23,42,0.12)] bg-[#F7F9FC] p-8 text-center text-sm text-[#667085]">
+            No milestone progress has been published yet.
           </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Completed</div>
-              <div className="mt-2 text-2xl font-bold text-[#067647]">{completedMilestones}</div>
-            </div>
-            <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Upcoming</div>
-              <div className="mt-2 text-2xl font-bold text-[#2563EB]">{upcomingMilestones}</div>
-            </div>
-            <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Delayed</div>
-              <div className="mt-2 text-2xl font-bold text-[#B42318]">{delayedMilestones}</div>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <h2 className="text-lg font-bold text-[#0B1220]">Milestone Progress</h2>
-          <div className="mt-5 space-y-4">
-            {project.milestones.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-[rgba(15,23,42,0.12)] bg-[#F7F9FC] p-6 text-center text-sm text-[#667085]">
-                No milestone progress has been published yet.
-              </div>
-            ) : (
-              project.milestones.map((milestone) => (
-                <div key={milestone.id} className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h3 className="font-bold text-[#0B1220]">{milestone.name}</h3>
-                      {milestone.description && (
-                        <p className="mt-1 text-sm text-[#475467]">{milestone.description}</p>
-                      )}
-                    </div>
-                    <StatusBadge status={milestone.status} />
+        ) : (
+          <div className="space-y-4">
+            {project.milestones.map((milestone) => (
+              <div key={milestone.id} className="card-inner p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0B1220]">{milestone.name}</h3>
+                    {milestone.description && (
+                      <p className="mt-0.5 text-xs text-[#475467]">{milestone.description}</p>
+                    )}
                   </div>
+                  <StatusBadge status={milestone.status} />
+                </div>
 
-                  <div className="mt-4">
-                    <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#667085]">
-                      <span>Progress</span>
-                      <span className="text-[#0B1220]">{milestone.progress}%</span>
-                    </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-[#E5E7EB]">
-                      <div className="h-full rounded-full bg-[#2563EB] transition-all duration-300" style={{ width: `${milestone.progress}%` }} />
-                    </div>
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[#667085]">
+                    <span>Progress</span>
+                    <span className="font-bold text-[#0B1220]">{milestone.progress}%</span>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-[#667085]">
-                    {milestone.plannedDate && <span>Planned: {new Date(milestone.plannedDate).toLocaleDateString("en-GB")}</span>}
-                    {milestone.actualCompletionDate && <span>Completed: {new Date(milestone.actualCompletionDate).toLocaleDateString("en-GB")}</span>}
+                  <div className="progress-track">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${milestone.progress}%`,
+                        background:
+                          milestone.status.toUpperCase() === "COMPLETED"
+                            ? "var(--success)"
+                            : milestone.status.toUpperCase() === "DELAYED"
+                              ? "var(--danger)"
+                              : "var(--primary)",
+                      }}
+                    />
                   </div>
                 </div>
-              ))
-            )}
+
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs font-medium text-[#667085]">
+                  {milestone.plannedDate && (
+                    <span>Planned: {formatDate(milestone.plannedDate)}</span>
+                  )}
+                  {milestone.actualCompletionDate && (
+                    <span className="text-[#067647]">Completed: {formatDate(milestone.actualCompletionDate)}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
+        )}
       </div>
-    </main>
+    </div>
   );
 }

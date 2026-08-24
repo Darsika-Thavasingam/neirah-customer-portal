@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import StatusBadge from "./components/StatusBadge";
+import { PageLoading } from "./components/SkeletonLoader";
+import { ErrorState } from "./components/EmptyState";
 import { getActiveUserId, getActiveProjectId } from "./lib/auth";
 
 type ProjectUpdate = {
@@ -66,17 +68,22 @@ type ProjectDetails = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function formatCustomerContact(customer: CustomerSummary | null | undefined) {
-  if (!customer) return "Not provided";
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
-  const contactName = customer.contactName?.trim();
-  const phone = customer.phone?.trim();
-
-  if (contactName && phone) return `${contactName} • ${phone}`;
-  if (contactName) return contactName;
-  if (phone) return phone;
-
-  return "Not provided";
+function timeAgo(value: string) {
+  const diff = Date.now() - new Date(value).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  return `${Math.max(1, mins)}m ago`;
 }
 
 export default function Home() {
@@ -84,20 +91,14 @@ export default function Home() {
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatesError, setUpdatesError] = useState("");
-  // Increment this to force a re-fetch when the active user changes
   const [fetchKey, setFetchKey] = useState(0);
 
-  // Re-fetch whenever localStorage changes (e.g. demo account switcher)
   useEffect(() => {
     const handleSwitch = () => {
       setLoading(true);
       setError("");
-      setUpdatesError("");
       setFetchKey((k) => k + 1);
     };
-    // storage fires when another tab changes localStorage;
-    // neirah:userswitch fires in the same tab via login page
     window.addEventListener("storage", handleSwitch);
     window.addEventListener("neirah:userswitch", handleSwitch);
     return () => {
@@ -111,16 +112,12 @@ export default function Home() {
 
     async function fetchProjectData() {
       try {
-        // Read IDs dynamically so the demo switcher (localStorage) is respected
         const userId = getActiveUserId();
         const projectId = getActiveProjectId();
 
         if (!projectId || !userId) {
           setError(
-            "Project configuration is missing. Set NEXT_PUBLIC_PROJECT_ID and NEXT_PUBLIC_USER_ID in your environment."
-          );
-          setUpdatesError(
-            "Project configuration is missing. Set NEXT_PUBLIC_PROJECT_ID and NEXT_PUBLIC_USER_ID in your environment."
+            "Project configuration is missing. Please verify your access credentials."
           );
           return;
         }
@@ -134,369 +131,432 @@ export default function Home() {
           }),
           fetch(
             `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`,
-            {
-              headers,
-              cache: "no-store",
-            }
+            { headers, cache: "no-store" }
           ),
         ]);
 
-        if (!projectResponse.ok) {
-          throw new Error("Failed to fetch project overview");
-        }
-
-        if (!updatesResponse.ok) {
-          throw new Error("Failed to fetch project updates");
-        }
+        if (!projectResponse.ok) throw new Error("Failed to fetch project overview");
+        if (!updatesResponse.ok) throw new Error("Failed to fetch project updates");
 
         const projectData: ProjectDetails = await projectResponse.json();
         const updatesData: ProjectUpdate[] = await updatesResponse.json();
 
         if (!isMounted) return;
-
         setProject(projectData);
         setUpdates(updatesData);
       } catch (err) {
         console.error(err);
         if (!isMounted) return;
-
         setError("Unable to load project overview.");
-        setUpdatesError("Unable to load project updates.");
       } finally {
         if (isMounted) setLoading(false);
       }
     }
 
     fetchProjectData();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [fetchKey]);
 
-  return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header section */}
+  const completedMilestones = project?.milestones.filter(
+    (m) => m.status.toUpperCase() === "COMPLETED"
+  ).length ?? 0;
+  const nextMilestone = project?.milestones.find(
+    (m) => m.status.toUpperCase() !== "COMPLETED"
+  );
+
+  if (loading) {
+    return (
+      <div className="page-shell">
         <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-            Dashboard
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
-            Project Overview
-          </h1>
-          <p className="mt-1 text-sm text-[#667085]">
-            Construction project progress, updates, and deliverables
-          </p>
+          <div className="skeleton skeleton-text mb-2 w-24" />
+          <div className="skeleton skeleton-title w-64" />
         </div>
-
-        <section className="mb-8 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          {loading && (
-            <div className="py-4 text-center">
-              <p className="text-sm text-[#667085]">Loading project overview...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="rounded-xl border border-[#FECDCA] bg-[#FEF3F2] p-4 text-sm font-semibold text-[#B42318]">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {!loading && project && (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#667085]">Current Project</p>
-                  <h2 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">
-                    {project.name}
-                  </h2>
-                </div>
-                <StatusBadge status={project.status} />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
-                    Project Code
-                  </p>
-                  <p className="mt-1 font-semibold text-[#0B1220]">
-                    {project.projectCode}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
-                    Location
-                  </p>
-                  <p className="mt-1 font-semibold text-[#0B1220]">
-                    {project.location ?? "Not specified"}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
-                    Status
-                  </p>
-                  <div className="mt-1">
-                    <StatusBadge status={project.status} />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#667085]">
-                    Project ID
-                  </p>
-                  <p className="mt-1 truncate font-mono text-xs font-semibold text-[#0B1220]">
-                    {project.id}
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-5">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#475467]">
-                    Construction Progress
-                  </p>
-                  <span className="text-sm font-bold text-[#2563EB]">
-                    {project.progress}%
-                  </span>
-                </div>
-
-                <div className="h-3 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-                  <div
-                    className="h-full rounded-full bg-[#2563EB] transition-all duration-500"
-                    style={{ width: `${project.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Project Navigation Links */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Link
-                  href={`/projects/${project.id}/documents`}
-                  className="flex items-center justify-between rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-5 shadow-xs transition hover:border-[#2563EB]/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                >
-                  <div>
-                    <h3 className="font-bold text-[#0B1220]">
-                      Project Documents
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[#667085]">
-                      View contracts, reports, and blueprints
-                    </p>
-                  </div>
-                  <span className="rounded-xl bg-[#EAF2FF] px-3.5 py-1.5 text-xs font-bold text-[#2563EB]">
-                    View Documents ({project.documents?.length ?? 0}) →
-                  </span>
-                </Link>
-
-                <Link
-                  href={`/projects/${project.id}/photos`}
-                  className="flex items-center justify-between rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-5 shadow-xs transition hover:border-[#2563EB]/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                >
-                  <div>
-                    <h3 className="font-bold text-[#0B1220]">
-                      Project Photos
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[#667085]">
-                      Browse construction photo gallery
-                    </p>
-                  </div>
-                  <span className="rounded-xl bg-[#EAF2FF] px-3.5 py-1.5 text-xs font-bold text-[#2563EB]">
-                    View Gallery ({project.photos?.length ?? 0}) →
-                  </span>
-                </Link>
-              </div>
-
-              {/* Milestones */}
-              <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
-                <h3 className="text-lg font-bold text-[#0B1220]">
-                  Project Milestones
-                </h3>
-
-                <div className="mt-5 space-y-4">
-                  {!project.milestones || project.milestones.length === 0 ? (
-                    <p className="text-sm text-[#667085]">No milestones available yet.</p>
-                  ) : (
-                    project.milestones.map((milestone) => (
-                      <div
-                        key={milestone.id}
-                        className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-4"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <h4 className="font-bold text-[#0B1220]">
-                              {milestone.name}
-                            </h4>
-                            {milestone.description && (
-                              <p className="mt-1 text-sm text-[#475467]">
-                                {milestone.description}
-                              </p>
-                            )}
-                          </div>
-                          <StatusBadge status={milestone.status} />
-                        </div>
-
-                        <div className="mt-4">
-                          <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#667085]">
-                            <span>Progress</span>
-                            <span className="text-[#0B1220]">
-                              {milestone.progress}%
-                            </span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-                            <div
-                              className="h-full rounded-full bg-[#067647] transition-all duration-300"
-                              style={{ width: `${milestone.progress}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {(milestone.plannedDate ||
-                          milestone.actualCompletionDate) && (
-                          <div className="mt-3 flex flex-wrap gap-4 border-t border-[rgba(15,23,42,0.08)] pt-3 text-xs text-[#667085]">
-                            {milestone.plannedDate && (
-                              <span>
-                                Planned:{" "}
-                                <strong className="text-[#0B1220]">
-                                  {new Date(
-                                    milestone.plannedDate
-                                  ).toLocaleDateString()}
-                                </strong>
-                              </span>
-                            )}
-                            {milestone.actualCompletionDate && (
-                              <span>
-                                Completed:{" "}
-                                <strong className="text-[#067647]">
-                                  {new Date(
-                                    milestone.actualCompletionDate
-                                  ).toLocaleDateString()}
-                                </strong>
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Key Details & Recent Update */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
-                  <h3 className="text-lg font-bold text-[#0B1220]">
-                    Key Details
-                  </h3>
-
-                  <dl className="mt-4 space-y-3 text-sm">
-                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Current Phase</dt>
-                      <dd className="text-right font-semibold text-[#0B1220]">
-                        {project.currentPhase ?? "Not specified"}
-                      </dd>
-                    </div>
-
-                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Project Manager</dt>
-                      <dd className="text-right font-semibold text-[#0B1220]">
-                        {project.projectManagerName ?? "Not assigned"}
-                      </dd>
-                    </div>
-
-                    <div className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.08)] pb-2.5">
-                      <dt className="text-xs font-bold uppercase tracking-wider text-[#667085]">Contact</dt>
-                      <dd className="text-right font-semibold text-[#0B1220]">
-                        {formatCustomerContact(project.customer)}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-
-                <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
-                  <h3 className="text-lg font-bold text-[#0B1220]">
-                    Recent Update
-                  </h3>
-
-                  <p className="mt-4 text-sm leading-relaxed text-[#475467]">
-                    {project.recentUpdate ?? "No recent update available."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Project Feed Updates */}
-        <section>
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-[#0B1220]">
-              Project Updates
-            </h2>
-
-            <p className="mt-1 text-sm text-[#667085]">
-              Latest progress updates from the project team.
-            </p>
-          </div>
-
-          {updatesError && (
-            <div className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-              <p>{updatesError}</p>
-            </div>
-          )}
-
-          {!updatesError && updates.length === 0 && !loading && (
-            <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-xs">
-              <p className="text-sm text-[#667085]">
-                No project updates are available yet.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {updates.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)] transition hover:shadow-md"
-              >
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-lg font-bold text-[#0B1220]">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-sm leading-relaxed text-[#475467]">{item.update}</p>
-
-                  <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-[#667085]">
-                    <span>
-                      Posted by:{" "}
-                      <strong className="text-[#0B1220]">
-                        {item.postedBy}
-                      </strong>
-                    </span>
-
-                    <span>
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {item.attachment && (
-                    <a
-                      href={item.attachment}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
-                    >
-                      View attachment →
-                    </a>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <PageLoading message="Loading your project overview…" />
       </div>
-    </main>
+    );
+  }
+
+  return (
+    <div className="page-shell">
+      {/* ── Page header ── */}
+      <div className="mb-8">
+        <p className="page-kicker">Dashboard</p>
+        <h1 className="page-title">
+          {project?.customer?.contactName
+            ? `Good day, ${project.customer.contactName.split(" ")[0]}.`
+            : "Project Overview"}
+        </h1>
+        <p className="page-subtitle">
+          Here is the latest overview of your construction project.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-8">
+          <ErrorState title="Unable to load dashboard" message={error} />
+        </div>
+      )}
+
+      {!error && project && (
+        <>
+          {/* ── Main 2-col layout ── */}
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            {/* LEFT */}
+            <div className="flex flex-col gap-6">
+              {/* Active Project Hero */}
+              <div className="card overflow-hidden">
+                {/* Hero banner */}
+                <div
+                  className="project-hero"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #0B1220 0%, #1e3a5f 100%)",
+                    minHeight: "13rem",
+                  }}
+                >
+                  {/* Subtle grid texture */}
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundImage:
+                        "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)",
+                      backgroundSize: "28px 28px",
+                    }}
+                  />
+                  <div className="project-hero-content">
+                    <StatusBadge
+                      status={project.status}
+                      className="mb-3 w-fit"
+                    />
+                    <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                      {project.name}
+                    </h2>
+                    {project.location && (
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-white/70">
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          className="shrink-0"
+                        >
+                          <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {project.location}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress bar row */}
+                <div className="flex flex-col gap-4 border-t border-[rgba(15,23,42,0.06)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[#475467]">
+                      <span>Project Progress</span>
+                      <span className="font-bold text-[#2563EB]">
+                        {project.progress}% Complete
+                      </span>
+                    </div>
+                    <div className="progress-track progress-track-lg">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="btn btn-primary shrink-0 sm:ml-6"
+                  >
+                    View Project
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Quick-access grid */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  {
+                    label: "Documents",
+                    count: project.documents?.length ?? 0,
+                    href: `/projects/${project.id}/documents`,
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Photos",
+                    count: project.photos?.length ?? 0,
+                    href: `/projects/${project.id}/photos`,
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Milestones",
+                    count: project.milestones?.length ?? 0,
+                    href: `/projects/${project.id}/milestones`,
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="9 11 12 14 22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Updates",
+                    count: updates.length,
+                    href: `/projects/${project.id}/updates`,
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                    ),
+                  },
+                ].map(({ label, count, href, icon }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="hub-card group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EAF2FF] text-[#2563EB] transition group-hover:bg-[#dfeeff]">
+                        {icon}
+                      </div>
+                      <span className="text-lg font-bold text-[#0B1220]">
+                        {count}
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-sm font-semibold text-[#344054]">
+                        {label}
+                      </p>
+                      <p className="mt-0.5 text-xs font-medium text-[#2563EB]">
+                        View all →
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Recent Activity */}
+              <div className="card">
+                <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
+                  <h2 className="section-heading">Recent Activity</h2>
+                  <Link
+                    href={`/projects/${project.id}/updates`}
+                    className="text-xs font-semibold text-[#2563EB] hover:underline"
+                  >
+                    View all
+                  </Link>
+                </div>
+
+                {updates.length === 0 ? (
+                  <div className="px-6 py-8 text-center">
+                    <p className="text-sm text-[#667085]">
+                      No activity updates available yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="px-6 py-4">
+                    <div className="timeline">
+                      {updates.slice(0, 4).map((item, idx) => (
+                        <div key={item.id} className="timeline-item">
+                          <div
+                            className={`timeline-dot ${
+                              idx === 0 ? "" : "timeline-dot-muted"
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-[#667085]">
+                              {timeAgo(item.createdAt)}
+                            </p>
+                            <h3 className="mt-0.5 text-sm font-bold text-[#0B1220]">
+                              {item.title}
+                            </h3>
+                            <p className="mt-0.5 text-sm leading-relaxed text-[#475467] truncate-2">
+                              {item.update}
+                            </p>
+                            {item.attachment && (
+                              <a
+                                href={item.attachment}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 text-xs font-semibold text-[#2563EB] hover:underline"
+                              >
+                                View attachment →
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDEBAR */}
+            <div className="flex flex-col gap-4">
+              {/* Key stats */}
+              <div className="card p-5">
+                <h2 className="section-heading mb-4">Project Details</h2>
+                <dl className="space-y-3.5">
+                  {[
+                    { label: "Project Code", value: project.projectCode },
+                    {
+                      label: "Current Phase",
+                      value: project.currentPhase ?? "Not specified",
+                    },
+                    {
+                      label: "Project Manager",
+                      value: project.projectManagerName ?? "Not assigned",
+                    },
+                    {
+                      label: "Milestones Done",
+                      value: `${completedMilestones} / ${project.milestones.length}`,
+                    },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-start justify-between gap-4 border-b border-[rgba(15,23,42,0.06)] pb-3 last:border-0 last:pb-0"
+                    >
+                      <dt className="meta-label shrink-0">{label}</dt>
+                      <dd className="text-right text-sm font-semibold text-[#0B1220]">
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+
+              {/* Next milestone */}
+              {nextMilestone && (
+                <div
+                  className="rounded-2xl p-5"
+                  style={{
+                    background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+                  }}
+                >
+                  <p className="flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-white/70">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Next Milestone
+                  </p>
+                  <h3 className="mt-2 text-lg font-bold text-white">
+                    {nextMilestone.name}
+                  </h3>
+                  {nextMilestone.plannedDate && (
+                    <p className="mt-1 text-sm text-white/80">
+                      Target:{" "}
+                      {new Date(nextMilestone.plannedDate).toLocaleDateString(
+                        "en-GB",
+                        { day: "numeric", month: "short", year: "numeric" }
+                      )}
+                    </p>
+                  )}
+                  <div className="mt-4">
+                    <div className="progress-track" style={{ background: "rgba(255,255,255,0.25)" }}>
+                      <div
+                        className="h-full rounded-full bg-white transition-all duration-500"
+                        style={{ width: `${nextMilestone.progress}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-right text-xs font-semibold text-white/80">
+                      {nextMilestone.progress}% complete
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent update snippet */}
+              {project.recentUpdate && (
+                <div className="card p-5">
+                  <h2 className="section-heading mb-3">Recent Update</h2>
+                  <p className="text-sm leading-relaxed text-[#475467]">
+                    {project.recentUpdate}
+                  </p>
+                  <p className="mt-3 text-xs font-medium text-[#667085]">
+                    {formatDate(project.updatedAt)}
+                  </p>
+                </div>
+              )}
+
+              {/* Financial actions */}
+              <div className="card p-5">
+                <h2 className="section-heading mb-4">Financials</h2>
+                <div className="flex flex-col gap-2">
+                  <Link href="/invoices" className="btn btn-ghost w-full justify-start gap-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    View Invoices
+                  </Link>
+                  <Link href="/payments" className="btn btn-ghost w-full justify-start gap-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                      <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    Payment History
+                  </Link>
+                  <Link href="/quotations" className="btn btn-ghost w-full justify-start gap-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    Quotations
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../../components/StatusBadge";
-import { getActiveUserId } from '../../../lib/auth';
+import { PageLoading } from "../../../components/SkeletonLoader";
+import { ErrorState } from "../../../components/EmptyState";
+import { getActiveUserId } from "../../../lib/auth";
 
 type Milestone = {
   id: string;
@@ -25,6 +27,53 @@ type Project = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+function formatDate(v: string | null) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function milestoneIcon(status: string) {
+  const s = status.toUpperCase();
+  if (s === "COMPLETED") {
+    return (
+      <div className="milestone-dot bg-[#067647] text-white">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+    );
+  }
+  if (s === "IN_PROGRESS" || s === "IN PROGRESS") {
+    return (
+      <div className="milestone-dot bg-[#2563EB] text-white">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" fill="currentColor"/>
+        </svg>
+      </div>
+    );
+  }
+  if (s === "DELAYED") {
+    return (
+      <div className="milestone-dot bg-[#B42318] text-white">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <div className="milestone-dot bg-[#E5E7EB] text-[#667085]">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+      </svg>
+    </div>
+  );
+}
+
 export default function ProjectMilestonesPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -36,24 +85,14 @@ export default function ProjectMilestonesPage() {
   useEffect(() => {
     async function fetchProject() {
       try {
-        setLoading(true);
-        setError("");
-
-        if (!getActiveUserId()) {
-          throw new Error("Customer portal user is not configured.");
-        }
+        if (!getActiveUserId()) throw new Error("Customer portal user is not configured.");
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`,
-          {
-            headers: { "x-user-id": getActiveUserId() },
-            cache: "no-store",
-          }
+          { headers: { "x-user-id": getActiveUserId() }, cache: "no-store" }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to load milestones.");
-        }
+        if (!response.ok) throw new Error("Failed to load milestones.");
 
         const data: Project = await response.json();
         setProject(data);
@@ -64,92 +103,117 @@ export default function ProjectMilestonesPage() {
       }
     }
 
-    if (projectId) {
-      fetchProject();
-    }
+    if (projectId) fetchProject();
   }, [projectId]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-8 text-center shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm text-[#667085]">Loading milestones...</p>
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <PageLoading message="Loading milestones…" />
+      </div>
     );
   }
 
   if (error || !project) {
     return (
-      <main className="min-h-screen bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <Link href={`/projects/${projectId}`} className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-            ← Back to Project
-          </Link>
-          <div className="mt-6 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-6 text-sm font-semibold text-[#B42318]">
-            {error || "Milestones are not available."}
-          </div>
-        </div>
-      </main>
+      <div className="page-shell">
+        <Link href={`/projects/${projectId}`} className="back-link mb-6 inline-flex">← Back to Project</Link>
+        <ErrorState title="Unable to load milestones" message={error} backHref={`/projects/${projectId}`} backLabel="Back to Project" />
+      </div>
     );
   }
 
+  const completedCount = project.milestones.filter((m) => m.status.toUpperCase() === "COMPLETED").length;
+
   return (
-    <main className="min-h-screen bg-[#F7F9FC]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link href={`/projects/${projectId}`} className="text-sm font-semibold text-[#2563EB] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]">
-            ← Back to Project
-          </Link>
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">Project Milestones</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#0B1220] sm:text-3xl">{project.name}</h1>
-          <p className="mt-1 text-sm text-[#667085]">{project.projectCode}</p>
+    <div className="page-shell">
+      <Link href={`/projects/${projectId}`} className="back-link mb-5 inline-flex">← Back to Project</Link>
+
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="page-kicker">Project Milestones</p>
+          <h1 className="page-title">{project.name}</h1>
+          <p className="page-subtitle">{project.projectCode}</p>
+        </div>
+        <div className="card-inner shrink-0 px-4 py-2 text-center">
+          <p className="text-xs font-bold text-[#667085]">Completed</p>
+          <p className="text-lg font-black text-[#067647]">{completedCount}<span className="text-sm font-semibold text-[#667085]"> / {project.milestones.length}</span></p>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="section-heading">Milestone Schedule</h2>
+          <span className="text-xs font-bold text-[#667085]">{project.milestones.length} milestone{project.milestones.length !== 1 ? "s" : ""}</span>
         </div>
 
-        <section className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(37,99,235,0.08)]">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#0B1220]">Milestone Schedule</h2>
-            <span className="text-xs font-bold text-[#667085]">{project.milestones.length} milestone(s)</span>
+        {project.milestones.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[rgba(15,23,42,0.12)] bg-[#F7F9FC] p-8 text-center text-sm text-[#667085]">
+            There are no milestones for this project yet.
           </div>
+        ) : (
+          <div className="divide-y divide-[rgba(15,23,42,0.06)]">
+            {project.milestones.map((milestone, idx) => (
+              <div key={milestone.id} className="flex gap-4 py-5 first:pt-0 last:pb-0">
+                {/* Status icon */}
+                <div className="flex flex-col items-center gap-1">
+                  {milestoneIcon(milestone.status)}
+                  {idx < project.milestones.length - 1 && (
+                    <div className="mt-1 w-px flex-1 bg-[rgba(15,23,42,0.08)]" />
+                  )}
+                </div>
 
-          {project.milestones.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[rgba(15,23,42,0.12)] bg-[#F7F9FC] p-8 text-center text-sm text-[#667085]">
-              There are no milestones for this project yet.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {project.milestones.map((milestone) => (
-                <div key={milestone.id} className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                {/* Content */}
+                <div className="min-w-0 flex-1 pb-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h3 className="text-base font-bold text-[#0B1220]">{milestone.name}</h3>
-                      {milestone.description && <p className="mt-1 text-sm text-[#475467]">{milestone.description}</p>}
+                      <h3 className="text-sm font-bold text-[#0B1220]">{milestone.name}</h3>
+                      {milestone.description && (
+                        <p className="mt-0.5 text-xs text-[#475467]">{milestone.description}</p>
+                      )}
                     </div>
                     <StatusBadge status={milestone.status} />
                   </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-white p-3.5">
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Planned Date</div>
-                      <div className="mt-1 text-sm font-semibold text-[#0B1220]">{milestone.plannedDate ? new Date(milestone.plannedDate).toLocaleDateString("en-GB") : "—"}</div>
+                  {/* Dates */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-3">
+                      <p className="meta-label">Planned</p>
+                      <p className="mt-0.5 text-xs font-semibold text-[#0B1220]">{formatDate(milestone.plannedDate)}</p>
                     </div>
-                    <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-white p-3.5">
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Completed</div>
-                      <div className="mt-1 text-sm font-semibold text-[#067647]">{milestone.actualCompletionDate ? new Date(milestone.actualCompletionDate).toLocaleDateString("en-GB") : "—"}</div>
+                    <div className="rounded-lg border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-3">
+                      <p className="meta-label">Completed</p>
+                      <p className="mt-0.5 text-xs font-semibold text-[#067647]">{formatDate(milestone.actualCompletionDate)}</p>
                     </div>
-                    <div className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-white p-3.5">
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#667085]">Progress</div>
-                      <div className="mt-1 text-sm font-bold text-[#2563EB]">{milestone.progress}%</div>
+                    <div className="rounded-lg border border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] p-3">
+                      <p className="meta-label">Progress</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#2563EB]">{milestone.progress}%</p>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-3">
+                    <div className="progress-track">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${milestone.progress}%`,
+                          background:
+                            milestone.status.toUpperCase() === "COMPLETED"
+                              ? "var(--success)"
+                              : milestone.status.toUpperCase() === "DELAYED"
+                                ? "var(--danger)"
+                                : "var(--primary)",
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </main>
+    </div>
   );
 }
