@@ -286,7 +286,7 @@ export default function Home() {
     async function fetchDashboardData() {
       try {
         const userId = getActiveUserId();
-        const headers = userId ? { "x-user-id": userId } : {};
+        const headers: Record<string, string> = userId ? { "x-user-id": userId } : {};
 
         const [projRes, invRes, quotRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects`, { headers, cache: "no-store" }).catch(() => null),

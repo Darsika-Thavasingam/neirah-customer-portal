@@ -84,7 +84,7 @@ export default function ProjectContractsPage() {
     async function fetchData() {
       try {
         const userId = getActiveUserId();
-        const headers = userId ? { "x-user-id": userId } : {};
+        const headers: Record<string, string> = userId ? { "x-user-id": userId } : {};
 
         const [projRes, contRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null),

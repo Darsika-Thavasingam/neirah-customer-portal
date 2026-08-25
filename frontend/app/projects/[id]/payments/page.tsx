@@ -71,7 +71,7 @@ export default function ProjectPaymentsPage() {
     async function fetchData() {
       try {
         const userId = getActiveUserId();
-        const headers = userId ? { "x-user-id": userId } : {};
+        const headers: Record<string, string> = userId ? { "x-user-id": userId } : {};
 
         const [projRes, payRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null),

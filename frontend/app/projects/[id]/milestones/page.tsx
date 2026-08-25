@@ -24,6 +24,10 @@ type Project = {
   id: string;
   projectCode: string;
   name: string;
+  location?: string | null;
+  status: string;
+  progress: number;
+  currentPhase?: string | null;
   milestones: Milestone[];
 };
 
