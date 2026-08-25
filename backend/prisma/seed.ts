@@ -95,12 +95,46 @@ async function main() {
     },
   });
 
-  await prisma.customerProjectAccess.create({
+  const apexProject2 = await prisma.project.create({
     data: {
+      id: '4f89d9b8-2d49-4f82-c617-4343bc9e7fe5',
       tenantId: tenant.id,
       customerId: apexCustomer.id,
-      projectId: apexProject.id,
+      projectCode: 'NEI-APEX-002',
+      name: 'Apex Business Park - Phase 2',
+      location: 'Rajagiriya Tech Zone',
+      status: 'IN_PROGRESS',
+      progress: 38,
+      currentPhase: 'Structural Steel Framing',
+      projectManagerName: 'Sahan Rathnayake',
+      projectManagerContact: '+94 77 333 4444',
+      recentUpdate: 'Steel column installation on Grid A-D reached Level 3.',
     },
+  });
+
+  const apexProject3 = await prisma.project.create({
+    data: {
+      id: '6a90e0c9-3e50-5a93-d728-5454cd0f8af6',
+      tenantId: tenant.id,
+      customerId: apexCustomer.id,
+      projectCode: 'NEI-APEX-003',
+      name: 'Apex Logistics & Distribution Hub',
+      location: 'Katunayake Trade Zone',
+      status: 'COMPLETED',
+      progress: 100,
+      currentPhase: 'Final Handover & Warranty',
+      projectManagerName: 'Kasun Perera',
+      projectManagerContact: '+94 71 555 1234',
+      recentUpdate: 'Final Occupancy Certificate issued by urban development authority.',
+    },
+  });
+
+  await prisma.customerProjectAccess.createMany({
+    data: [
+      { tenantId: tenant.id, customerId: apexCustomer.id, projectId: apexProject.id },
+      { tenantId: tenant.id, customerId: apexCustomer.id, projectId: apexProject2.id },
+      { tenantId: tenant.id, customerId: apexCustomer.id, projectId: apexProject3.id },
+    ],
   });
 
   await prisma.milestone.createMany({
@@ -132,6 +166,48 @@ async function main() {
         description: 'Installation of unitized glass façade panels and main mechanical, electrical and plumbing lines.',
         status: 'UPCOMING',
         progress: 0,
+      },
+      {
+        projectId: apexProject2.id,
+        name: 'Land Grading & Site Prep',
+        description: 'Site clearance and foundation anchor preparation.',
+        status: 'COMPLETED',
+        progress: 100,
+      },
+      {
+        projectId: apexProject2.id,
+        name: 'Structural Steel Framing',
+        description: 'Erection of primary structural steel columns and beams.',
+        status: 'IN_PROGRESS',
+        progress: 50,
+      },
+      {
+        projectId: apexProject2.id,
+        name: 'Roofing & Solar Mounting',
+        description: 'Insulated roofing panel installation and solar frame mounting.',
+        status: 'UPCOMING',
+        progress: 0,
+      },
+      {
+        projectId: apexProject3.id,
+        name: 'Civil Earthworks & Slab',
+        description: 'Heavy industrial slab pouring and road connections.',
+        status: 'COMPLETED',
+        progress: 100,
+      },
+      {
+        projectId: apexProject3.id,
+        name: 'Warehouse Shell & Cold Storage',
+        description: 'Enclosure and climate-controlled storage integration.',
+        status: 'COMPLETED',
+        progress: 100,
+      },
+      {
+        projectId: apexProject3.id,
+        name: 'Authority Sign-off & Handover',
+        description: 'Final municipal inspection and client facility handover.',
+        status: 'COMPLETED',
+        progress: 100,
       },
     ],
   });

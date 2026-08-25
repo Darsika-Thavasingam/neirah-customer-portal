@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import StatusBadge from "../components/StatusBadge";
 import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
@@ -59,6 +59,8 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("ALL");
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -66,12 +68,13 @@ export default function InvoicesPage() {
         setLoading(true);
         setError("");
 
-        if (!getActiveUserId()) {
+        const userId = getActiveUserId();
+        if (!userId) {
           throw new Error("Customer configuration is missing.");
         }
 
         const response = await fetch(`${API_BASE}/customer-portal/invoices`, {
-          headers: { "x-user-id": getActiveUserId() },
+          headers: { "x-user-id": userId },
           cache: "no-store",
         });
 
@@ -103,33 +106,80 @@ export default function InvoicesPage() {
     return Number.isNaN(n) ? 0 : n;
   };
 
-  const totalInvoiced = invoices.reduce((s, i) => s + getAmount(i), 0);
-  const totalPaid = invoices.reduce((s, i) => s + getPaid(i), 0);
-  const totalOutstanding = Math.max(totalInvoiced - totalPaid, 0);
-  const outstandingCount = invoices.filter(
-    (i) => i.status !== "PAID" && getAmount(i) > 0
-  ).length;
-  const paidCount = invoices.filter((i) => i.status === "PAID").length;
+  const stats = useMemo(() => {
+    const totalInvoiced = invoices.reduce((s, i) => s + getAmount(i), 0);
+    const totalPaid = invoices.reduce((s, i) => s + getPaid(i), 0);
+    const totalOutstanding = Math.max(totalInvoiced - totalPaid, 0);
+    const outstandingCount = invoices.filter(
+      (i) => i.status !== "PAID" && getAmount(i) > 0
+    ).length;
+    const paidCount = invoices.filter((i) => i.status === "PAID").length;
+    return { totalInvoiced, totalPaid, totalOutstanding, outstandingCount, paidCount };
+  }, [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        inv.invoiceNumber.toLowerCase().includes(q) ||
+        (inv.project && inv.project.name.toLowerCase().includes(q)) ||
+        (inv.project && inv.project.projectCode.toLowerCase().includes(q));
+
+      if (!matchesSearch) return false;
+
+      if (selectedStatus !== "ALL") {
+        const norm = inv.status.toUpperCase();
+        if (selectedStatus === "PAID" && norm !== "PAID") return false;
+        if (selectedStatus === "UNPAID" && norm === "PAID") return false;
+        if (selectedStatus === "OVERDUE" && norm !== "OVERDUE") return false;
+      }
+      return true;
+    });
+  }, [invoices, searchQuery, selectedStatus]);
 
   if (loading) {
     return (
       <div className="page-shell">
         <PageHeader
-          kicker="Billing & Invoices"
+          kicker="Billing & Financials"
           title="Financial Overview"
         />
-        <PageLoading message="Loading invoices…" />
+        <PageLoading message="Loading billing statements…" />
       </div>
     );
   }
 
   return (
-    <div className="page-shell">
-      <PageHeader
-        kicker="Billing & Invoices"
-        title="Financial Overview"
-        subtitle="Manage your invoices and track payment history."
-      />
+    <div className="page-shell animate-fade-in-up">
+      {/* Hero Visual Header Banner */}
+      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
+        <img
+          src="/images/project-residential.png"
+          alt="Financial Statements"
+          className="h-full w-full object-cover opacity-35"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
+        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
+              Billing Ledger
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
+              Financial Overview & Invoices
+            </h1>
+            <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              Commercial billing statements, interim valuation certificates, and real-time payment history across your active construction projects.
+            </p>
+          </div>
+          <Link
+            href="/payments/outstanding"
+            className="btn btn-primary btn-sm hover-lift shrink-0 shadow-lg"
+          >
+            ⚠️ Outstanding Balances ({stats.outstandingCount})
+          </Link>
+        </div>
+      </div>
 
       {error && (
         <div className="mb-6">
@@ -139,256 +189,219 @@ export default function InvoicesPage() {
 
       {!error && (
         <>
-          {/* Financial metrics — matching the approved 3-card layout */}
+          {/* Executive Metric Cards */}
           <div className="mb-8 grid gap-4 sm:grid-cols-3">
-            {/* Total Invoiced */}
-            <div className="metric-card">
+            <div className="metric-card card-hover hover-lift shimmer-card">
               <div className="flex items-start justify-between">
-                <p className="metric-label">Total Invoiced</p>
+                <span className="metric-label">Total Invoiced</span>
                 <div className="metric-icon bg-[#EAF2FF] text-[#2563EB]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
                 </div>
               </div>
-              <p className="metric-value">{formatCurrency(totalInvoiced)}</p>
+              <div className="metric-value">{formatCurrency(stats.totalInvoiced)}</div>
               <p className="mt-1 text-xs text-[#667085]">
-                {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
+                {invoices.length} Total Statement{invoices.length !== 1 ? "s" : ""}
               </p>
             </div>
 
-            {/* Total Paid */}
-            <div className="metric-card">
+            <div className="metric-card card-hover hover-lift shimmer-card">
               <div className="flex items-start justify-between">
-                <p className="metric-label">Total Paid</p>
+                <span className="metric-label">Total Settled</span>
                 <div className="metric-icon bg-[#ECFDF5] text-[#067647]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </div>
               </div>
-              <p className="metric-value" style={{ color: "var(--success)" }}>
-                {formatCurrency(totalPaid)}
-              </p>
-              <p className="mt-1 text-xs text-[#667085]">
-                {paidCount} paid
+              <div className="metric-value text-[#067647]">
+                {formatCurrency(stats.totalPaid)}
+              </div>
+              <p className="mt-1 text-xs text-[#067647]">
+                {stats.paidCount} Fully Paid Invoices
               </p>
             </div>
 
-            {/* Outstanding */}
-            <div className="metric-card">
+            <div className="metric-card card-hover hover-lift shimmer-card">
               <div className="flex items-start justify-between">
-                <p className="metric-label">Outstanding Balance</p>
-                <div
-                  className="metric-icon"
-                  style={{
-                    background:
-                      totalOutstanding > 0 ? "var(--danger-bg)" : "var(--success-bg)",
-                    color:
-                      totalOutstanding > 0 ? "var(--danger)" : "var(--success)",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                <span className="metric-label">Outstanding Balance</span>
+                <div className="metric-icon bg-[#FEF3F2] text-[#B42318]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                   </svg>
                 </div>
               </div>
-              <p
-                className="metric-value"
-                style={{
-                  color:
-                    totalOutstanding > 0
-                      ? "var(--danger)"
-                      : "var(--success)",
-                }}
-              >
-                {formatCurrency(totalOutstanding)}
-              </p>
-              <p className="mt-1 text-xs text-[#667085]">
-                {outstandingCount} outstanding
+              <div className="metric-value text-[#B42318]">
+                {formatCurrency(stats.totalOutstanding)}
+              </div>
+              <p className="mt-1 text-xs text-[#B42318]">
+                {stats.outstandingCount} Pending Collections
               </p>
             </div>
           </div>
 
-          {/* Main two-col layout like approved design */}
+          {/* Controls Toolbar */}
+          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 min-w-[240px]">
+              <input
+                type="text"
+                placeholder="Search by invoice number or project..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="form-input text-xs py-2.5 pl-4 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#667085] hover:text-[#0B1220]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setSelectedStatus("ALL")}
+                className={`tab-btn ${selectedStatus === "ALL" ? "tab-btn-active" : ""}`}
+              >
+                All ({invoices.length})
+              </button>
+              <button
+                onClick={() => setSelectedStatus("PAID")}
+                className={`tab-btn ${selectedStatus === "PAID" ? "tab-btn-active" : ""}`}
+              >
+                Paid ({stats.paidCount})
+              </button>
+              <button
+                onClick={() => setSelectedStatus("UNPAID")}
+                className={`tab-btn ${selectedStatus === "UNPAID" ? "tab-btn-active" : ""}`}
+              >
+                Unpaid ({stats.outstandingCount})
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Layout */}
           <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-            {/* Invoice list */}
             <div>
-              {invoices.length === 0 ? (
+              {filteredInvoices.length === 0 ? (
                 <div className="card">
                   <EmptyState
                     icon={
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
                       </svg>
                     }
-                    title="No invoices found"
-                    body="Your invoices will appear here once they have been issued."
+                    title="No matching invoices found"
+                    body="Try adjusting your search query or filter selection."
                   />
                 </div>
               ) : (
                 <div className="card overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-                    <h2 className="section-heading">Invoices</h2>
-                    <Link
-                      href="/payments/outstanding"
-                      className="btn btn-primary btn-sm"
-                    >
-                      Outstanding
-                    </Link>
-                  </div>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Invoice #</th>
+                        <th>Project</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th className="text-right">Total Amount</th>
+                        <th>Status</th>
+                        <th className="text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredInvoices.map((invoice) => {
+                        const isOverdue =
+                          invoice.status !== "PAID" &&
+                          new Date(invoice.dueDate) < new Date();
 
-                  {/* Desktop table */}
-                  <div className="hidden overflow-x-auto md:block">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Invoice #</th>
-                          <th>Project</th>
-                          <th>Date</th>
-                          <th>Due Date</th>
-                          <th className="text-right">Amount</th>
-                          <th>Status</th>
-                          <th />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invoices.map((invoice) => {
-                          const isOverdue =
-                            invoice.status !== "PAID" &&
-                            new Date(invoice.dueDate) < new Date();
-
-                          return (
-                            <tr key={invoice.id}>
-                              <td className="font-bold text-[#0B1220]">
+                        return (
+                          <tr key={invoice.id} className="hover:bg-[#F7F9FC]">
+                            <td className="font-bold text-[#2563EB]">
+                              <Link href={`/invoices/${invoice.id}`} className="hover:underline">
                                 {invoice.invoiceNumber}
-                              </td>
-                              <td>
-                                <p className="text-sm font-medium text-[#0B1220]">
-                                  {invoice.project?.name || "—"}
+                              </Link>
+                            </td>
+                            <td>
+                              <p className="text-sm font-semibold text-[#0B1220]">
+                                {invoice.project?.name || "—"}
+                              </p>
+                              {invoice.project?.projectCode && (
+                                <p className="text-xs text-[#667085]">
+                                  {invoice.project.projectCode}
                                 </p>
-                                {invoice.project?.projectCode && (
-                                  <p className="text-xs text-[#667085]">
-                                    {invoice.project.projectCode}
-                                  </p>
-                                )}
-                              </td>
-                              <td className="text-[#667085]">
-                                {formatDate(invoice.invoiceDate)}
-                              </td>
-                              <td
-                                className={
-                                  isOverdue
-                                    ? "font-semibold text-[#B42318]"
-                                    : "text-[#667085]"
-                                }
+                              )}
+                            </td>
+                            <td className="text-xs text-[#667085]">
+                              {formatDate(invoice.invoiceDate)}
+                            </td>
+                            <td
+                              className={`text-xs ${
+                                isOverdue
+                                  ? "font-semibold text-[#B42318]"
+                                  : "text-[#667085]"
+                              }`}
+                            >
+                              {formatDate(invoice.dueDate)}
+                            </td>
+                            <td className="text-right font-bold text-[#0B1220]">
+                              LKR {formatAmount(getAmount(invoice))}
+                            </td>
+                            <td>
+                              <StatusBadge status={invoice.status} />
+                            </td>
+                            <td className="text-right">
+                              <Link
+                                href={`/invoices/${invoice.id}`}
+                                className="btn btn-primary btn-sm hover-lift"
                               >
-                                {formatDate(invoice.dueDate)}
-                              </td>
-                              <td className="text-right font-bold text-[#0B1220]">
-                                LKR {formatAmount(getAmount(invoice))}
-                              </td>
-                              <td>
-                                <StatusBadge status={invoice.status} />
-                              </td>
-                              <td className="text-right">
-                                <Link
-                                  href={`/invoices/${invoice.id}`}
-                                  className="text-xs font-semibold text-[#2563EB] hover:underline"
-                                >
-                                  View →
-                                </Link>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile cards */}
-                  <div className="flex flex-col gap-3 p-4 md:hidden">
-                    {invoices.map((invoice) => (
-                      <div
-                        key={invoice.id}
-                        className="card-inner p-4"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="text-sm font-bold text-[#0B1220]">
-                              {invoice.invoiceNumber}
-                            </p>
-                            <p className="mt-0.5 text-xs text-[#667085]">
-                              {invoice.project?.name || "—"}
-                            </p>
-                          </div>
-                          <StatusBadge status={invoice.status} />
-                        </div>
-                        <div className="mt-3 flex items-center justify-between">
-                          <p className="text-xs text-[#667085]">
-                            Due {formatDate(invoice.dueDate)}
-                          </p>
-                          <p className="text-sm font-bold text-[#2563EB]">
-                            LKR {formatAmount(getAmount(invoice))}
-                          </p>
-                        </div>
-                        <div className="mt-3">
-                          <Link
-                            href={`/invoices/${invoice.id}`}
-                            className="btn btn-primary btn-sm w-full"
-                          >
-                            View Details →
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                                View →
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
 
-            {/* Sidebar: actions */}
+            {/* Sidebar Controls */}
             <div className="flex flex-col gap-4">
               <div className="card p-5">
-                <h2 className="section-heading mb-4">Quick Actions</h2>
+                <h2 className="section-heading mb-4">Financial Shortcuts</h2>
                 <div className="flex flex-col gap-2">
-                  <Link href="/payments/outstanding" className="btn btn-ghost w-full justify-start">
-                    View Outstanding
+                  <Link href="/payments/outstanding" className="btn btn-primary btn-sm w-full text-center hover-lift">
+                    ⚠️ View Outstanding Receivables
                   </Link>
-                  <Link href="/payments" className="btn btn-ghost w-full justify-start">
-                    Payment History
+                  <Link href="/payments" className="btn btn-ghost btn-sm w-full text-center hover-lift">
+                    💳 Payment Ledger History
                   </Link>
-                  <Link href="/quotations" className="btn btn-ghost w-full justify-start">
-                    View Quotations
+                  <Link href="/quotations" className="btn btn-ghost btn-sm w-full text-center hover-lift">
+                    📄 Commercial Quotations
                   </Link>
                 </div>
               </div>
 
               <div className="card p-5">
-                <p className="meta-label mb-3">Summary</p>
-                <dl className="space-y-3">
-                  {[
-                    {
-                      label: "Total Invoices",
-                      value: invoices.length,
-                      color: "text-[#0B1220]",
-                    },
-                    {
-                      label: "Paid",
-                      value: paidCount,
-                      color: "text-[#067647]",
-                    },
-                    {
-                      label: "Outstanding",
-                      value: outstandingCount,
-                      color: outstandingCount > 0 ? "text-[#B42318]" : "text-[#0B1220]",
-                    },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5 last:border-0 last:pb-0">
-                      <dt className="text-xs font-medium text-[#667085]">{label}</dt>
-                      <dd className={`text-lg font-bold ${color}`}>{value}</dd>
-                    </div>
-                  ))}
+                <span className="meta-label mb-3 block">Billing Summary</span>
+                <dl className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] pb-2">
+                    <dt className="text-[#667085]">Total Invoices</dt>
+                    <dd className="font-bold text-[#0B1220]">{invoices.length}</dd>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] pb-2">
+                    <dt className="text-[#667085]">Fully Settled</dt>
+                    <dd className="font-bold text-[#067647]">{stats.paidCount}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#667085]">Pending Action</dt>
+                    <dd className="font-bold text-[#B42318]">{stats.outstandingCount}</dd>
+                  </div>
                 </dl>
               </div>
             </div>

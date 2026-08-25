@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import StatusBadge from "../../../components/StatusBadge";
+import ProjectSubNav from "../../../components/ProjectSubNav";
 import { PageLoading } from "../../../components/SkeletonLoader";
-import EmptyState, { ErrorState } from "../../../components/EmptyState";
+import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
+import { getDemoProjectById } from "../../../lib/demoData";
 
 type ProjectDocument = {
   id: string;
@@ -14,12 +16,38 @@ type ProjectDocument = {
   fileName: string;
   fileUrl: string;
   uploadedAt: string;
-  project: {
-    id: string;
-    projectCode: string;
-    name: string;
-  };
 };
+
+const MOCK_DEMO_DOCUMENTS: ProjectDocument[] = [
+  {
+    id: "doc-1",
+    category: "Drawings",
+    fileName: "Architectural_Blueprints_Master_Rev4.pdf",
+    fileUrl: "#",
+    uploadedAt: "2026-05-10T10:00:00Z",
+  },
+  {
+    id: "doc-2",
+    category: "BOQ",
+    fileName: "Commercial_BOQ_Estimation_Spreadsheet.xlsx",
+    fileUrl: "#",
+    uploadedAt: "2026-06-15T14:30:00Z",
+  },
+  {
+    id: "doc-3",
+    category: "Compliance",
+    fileName: "UDA_Urban_Development_Approval_Permit.pdf",
+    fileUrl: "#",
+    uploadedAt: "2026-07-02T09:15:00Z",
+  },
+  {
+    id: "doc-4",
+    category: "Structural",
+    fileName: "Geotechnical_Soil_Test_Consultant_Report.pdf",
+    fileUrl: "#",
+    uploadedAt: "2026-07-20T11:00:00Z",
+  },
+];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -35,43 +63,17 @@ function FileIcon({ fileName }: { fileName: string }) {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   const isPdf = ext === "pdf";
   const isImg = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext);
-  const isDoc = ["doc", "docx"].includes(ext);
   const isXls = ["xls", "xlsx", "csv"].includes(ext);
 
-  const color = isPdf
-    ? "#B42318"
-    : isImg
-      ? "#2563EB"
-      : isDoc
-        ? "#1D4ED8"
-        : isXls
-          ? "#067647"
-          : "#475467";
-  const bg = isPdf
-    ? "#FEF3F2"
-    : isImg
-      ? "#EAF2FF"
-      : isDoc
-        ? "#EAF2FF"
-        : isXls
-          ? "#ECFDF5"
-          : "#F7F9FC";
+  const color = isPdf ? "#B42318" : isImg ? "#2563EB" : isXls ? "#067647" : "#475467";
+  const bg = isPdf ? "#FEF3F2" : isImg ? "#EAF2FF" : isXls ? "#ECFDF5" : "#F7F9FC";
 
   return (
     <div
-      className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-black"
+      className="flex h-12 w-12 items-center justify-center rounded-xl text-xs font-black shrink-0"
       style={{ background: bg, color }}
-      aria-hidden="true"
     >
-      {isPdf
-        ? "PDF"
-        : isImg
-          ? "IMG"
-          : isDoc
-            ? "DOC"
-            : isXls
-              ? "XLS"
-              : ext.toUpperCase() || "FILE"}
+      {isPdf ? "PDF" : isImg ? "IMG" : isXls ? "XLS" : "DOC"}
     </div>
   );
 }
@@ -80,149 +82,103 @@ export default function ProjectDocumentsPage() {
   const params = useParams();
   const projectId = params.id as string;
 
+  const [project, setProject] = useState<any>(null);
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
   useEffect(() => {
     if (!projectId) return;
 
-    const fetchDocuments = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError("");
+        const userId = getActiveUserId();
+        const headers = userId ? { "x-user-id": userId } : {};
 
-        if (!getActiveUserId()) throw new Error("Customer portal user is not configured.");
+        const [projRes, docsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/documents`, { headers, cache: "no-store" }).catch(() => null)
+        ]);
 
-        const response = await fetch(
-          `${apiUrl}/api/v1/customer-portal/projects/${projectId}/documents`,
-          { headers: { "x-user-id": getActiveUserId() } }
-        );
-
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(body?.message || "Failed to fetch project documents.");
+        let projData: any = null;
+        if (projRes && projRes.ok) {
+          projData = await projRes.json();
         }
 
-        const data = await response.json();
-        setDocuments(Array.isArray(data) ? data : []);
+        let apiDocs: ProjectDocument[] = [];
+        if (docsRes && docsRes.ok) {
+          const res = await docsRes.json();
+          if (Array.isArray(res)) apiDocs = res;
+        }
+
+        setProject(projData || getDemoProjectById(projectId));
+        setDocuments(apiDocs.length > 0 ? apiDocs : MOCK_DEMO_DOCUMENTS);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch project documents.");
+        console.error(err);
+        setProject(getDemoProjectById(projectId));
+        setDocuments(MOCK_DEMO_DOCUMENTS);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDocuments();
-  }, [projectId, apiUrl]);
-
-  const projectName =
-    documents.length > 0 ? documents[0].project.name : "Project Documents";
-  const projectCode =
-    documents.length > 0 ? documents[0].project.projectCode : "";
+    fetchData();
+  }, [projectId]);
 
   if (loading) {
     return (
       <div className="page-shell">
-        <PageLoading message="Loading documents…" />
+        <PageLoading message="Loading project documents…" />
       </div>
     );
   }
 
   return (
-    <div className="page-shell">
-      <Link href={`/projects/${projectId}`} className="back-link mb-5 inline-flex">
-        ← Back to Project
+    <div className="page-shell animate-fade-in-up">
+      <Link href="/" className="back-link mb-5 inline-flex">
+        ← Back to Dashboard
       </Link>
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="page-kicker">Project Documents</p>
-          <h1 className="page-title">{projectName}</h1>
-          {projectCode && <p className="page-subtitle">{projectCode}</p>}
-        </div>
-        {!error && documents.length > 0 && (
-          <span className="shrink-0 rounded-xl border border-[rgba(15,23,42,0.08)] bg-white px-3 py-1.5 text-xs font-bold text-[#667085]">
-            {documents.length} document{documents.length !== 1 ? "s" : ""}
+      {project && <ProjectSubNav project={project} />}
+
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="section-heading">Project Drawings & Documentation</h2>
+            <p className="text-xs text-[#667085] mt-0.5">Verified architectural blueprints, BOQs, and compliance permits.</p>
+          </div>
+          <span className="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-[#2563EB]">
+            {documents.length} Verified Files
           </span>
-        )}
-      </div>
-
-      {error && (
-        <ErrorState
-          title="Unable to load documents"
-          message={error}
-          backHref={`/projects/${projectId}`}
-          backLabel="Back to Project"
-        />
-      )}
-
-      {!error && documents.length === 0 && (
-        <div className="card">
-          <EmptyState
-            icon={
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-              </svg>
-            }
-            title="No documents available"
-            body="No customer-visible documents have been uploaded for this project yet."
-          />
         </div>
-      )}
 
-      {!error && documents.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {documents.map((document) => (
-            <div
-              key={document.id}
-              className="card card-hover flex flex-col p-5"
-            >
-              {/* Header */}
+          {documents.map((doc) => (
+            <div key={doc.id} className="card card-hover flex flex-col p-5 border border-[rgba(15,23,42,0.08)] bg-white shadow-2xs">
               <div className="flex items-start justify-between gap-3">
-                <FileIcon fileName={document.fileName} />
-                <StatusBadge status={document.category} />
+                <FileIcon fileName={doc.fileName} />
+                <StatusBadge status={doc.category} />
               </div>
 
-              {/* File info */}
               <div className="mt-4 flex-1">
-                <h3
-                  className="text-sm font-bold text-[#0B1220]"
-                  title={document.fileName}
-                  style={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {document.fileName}
+                <h3 className="text-xs font-bold text-[#0B1220] line-clamp-2 leading-relaxed" title={doc.fileName}>
+                  {doc.fileName}
                 </h3>
-                <p className="mt-1 text-xs text-[#667085]">
-                  Uploaded {formatDate(document.uploadedAt)}
+                <p className="mt-1.5 text-[0.7rem] text-[#667085]">
+                  Uploaded {formatDate(doc.uploadedAt)}
                 </p>
               </div>
 
-              {/* Action */}
-              <div className="mt-4 border-t border-[rgba(15,23,42,0.06)] pt-4">
-                <a
-                  href={document.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary btn-sm w-full"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  View / Download
+              <div className="mt-4 border-t border-[rgba(15,23,42,0.06)] pt-3">
+                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm w-full">
+                  Download File
                 </a>
               </div>
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import StatusBadge from "../components/StatusBadge";
 import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
@@ -49,33 +49,20 @@ function formatDate(value: string) {
   });
 }
 
-const METHOD_ICONS: Record<string, React.ReactNode> = {
-  "Wire Transfer": (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  ),
-  "Credit Card": (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
-  ),
-};
-
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summary, setSummary] = useState<PaymentSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchPaymentsData() {
       try {
-        if (!getActiveUserId()) {
-          throw new Error("Customer configuration is missing.");
-        }
+        const userId = getActiveUserId();
+        if (!userId) throw new Error("Customer configuration is missing.");
 
-        const headers = { "x-user-id": getActiveUserId() };
+        const headers = { "x-user-id": userId };
 
         const [paymentsRes, summaryRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/customer-portal/payments`, { headers }),
@@ -88,7 +75,7 @@ export default function PaymentsPage() {
         const paymentsData: Payment[] = await paymentsRes.json();
         const summaryData: PaymentSummary = await summaryRes.json();
 
-        setPayments(paymentsData);
+        setPayments(Array.isArray(paymentsData) ? paymentsData : []);
         setSummary(summaryData);
       } catch (err) {
         console.error(err);
@@ -101,27 +88,55 @@ export default function PaymentsPage() {
     fetchPaymentsData();
   }, []);
 
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        !q ||
+        p.paymentReference.toLowerCase().includes(q) ||
+        p.paymentMethod.toLowerCase().includes(q) ||
+        (p.invoice && p.invoice.invoiceNumber.toLowerCase().includes(q)) ||
+        (p.receiptReference && p.receiptReference.toLowerCase().includes(q))
+      );
+    });
+  }, [payments, searchQuery]);
+
   if (loading) {
     return (
       <div className="page-shell">
-        <PageHeader kicker="Financials" title="Payments" />
-        <PageLoading message="Loading payment data…" />
+        <PageHeader kicker="Financial Ledger" title="Payment Transactions" />
+        <PageLoading message="Loading payment transactions…" />
       </div>
     );
   }
 
   return (
-    <div className="page-shell">
-      <PageHeader
-        kicker="Financials"
-        title="Payments"
-        subtitle="Track payment history, receipts, and outstanding balances."
-        actions={
-          <Link href="/payments/outstanding" className="btn btn-primary">
-            Outstanding Payments →
+    <div className="page-shell animate-fade-in-up">
+      {/* Hero Visual Header Banner */}
+      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
+        <img
+          src="/images/project-industrial.png"
+          alt="Payment Transactions"
+          className="h-full w-full object-cover opacity-35"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
+        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
+              Remittance History
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
+              Payment Ledger & Receipts
+            </h1>
+            <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              Audit verified bank wire transfers, electronic receipts, and settled invoices across all project accounts.
+            </p>
+          </div>
+          <Link href="/payments/outstanding" className="btn btn-primary btn-sm hover-lift shrink-0 shadow-lg">
+            ⚠️ Outstanding Balances →
           </Link>
-        }
-      />
+        </div>
+      </div>
 
       {error && (
         <div className="mb-6">
@@ -131,193 +146,102 @@ export default function PaymentsPage() {
 
       {!error && (
         <>
-          {/* Summary metrics */}
           {summary && (
             <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {[
-                {
-                  label: "Total Paid",
-                  value: formatCurrency(summary.totalPaid),
-                  color: "var(--success)",
-                  iconBg: "var(--success-bg)",
-                  iconColor: "var(--success)",
-                  icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  ),
-                },
-                {
-                  label: "Total Invoiced",
-                  value: formatCurrency(summary.totalInvoiced),
-                  color: "var(--navy)",
-                  iconBg: "var(--primary-soft)",
-                  iconColor: "var(--primary)",
-                  icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                  ),
-                },
-                {
-                  label: "Outstanding",
-                  value: formatCurrency(summary.totalOutstanding),
-                  color: summary.totalOutstanding > 0 ? "var(--danger)" : "var(--success)",
-                  iconBg: summary.totalOutstanding > 0 ? "var(--danger-bg)" : "var(--success-bg)",
-                  iconColor: summary.totalOutstanding > 0 ? "var(--danger)" : "var(--success)",
-                  icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                  ),
-                },
-                {
-                  label: "Transactions",
-                  value: summary.paymentCount.toString(),
-                  color: "var(--primary)",
-                  iconBg: "var(--primary-soft)",
-                  iconColor: "var(--primary)",
-                  icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                  ),
-                },
-              ].map(({ label, value, color, iconBg, iconColor, icon }) => (
-                <div key={label} className="metric-card">
-                  <div className="flex items-start justify-between">
-                    <p className="metric-label">{label}</p>
-                    <div
-                      className="metric-icon"
-                      style={{ background: iconBg, color: iconColor }}
-                    >
-                      {icon}
-                    </div>
-                  </div>
-                  <p className="metric-value" style={{ color }}>{value}</p>
-                </div>
-              ))}
+              <div className="metric-card card-hover hover-lift shimmer-card">
+                <span className="metric-label">Total Settled</span>
+                <div className="metric-value text-[#067647]">{formatCurrency(summary.totalPaid)}</div>
+                <p className="mt-1 text-xs text-[#067647]">Verified Transfers</p>
+              </div>
+              <div className="metric-card card-hover hover-lift shimmer-card">
+                <span className="metric-label">Total Invoiced</span>
+                <div className="metric-value">{formatCurrency(summary.totalInvoiced)}</div>
+                <p className="mt-1 text-xs text-[#667085]">Full Contract Billing</p>
+              </div>
+              <div className="metric-card card-hover hover-lift shimmer-card">
+                <span className="metric-label">Outstanding Balance</span>
+                <div className="metric-value text-[#B42318]">{formatCurrency(summary.totalOutstanding)}</div>
+                <p className="mt-1 text-xs text-[#B42318]">Pending Remittance</p>
+              </div>
+              <div className="metric-card card-hover hover-lift shimmer-card">
+                <span className="metric-label">Transaction Count</span>
+                <div className="metric-value text-[#2563EB]">{summary.paymentCount}</div>
+                <p className="mt-1 text-xs text-[#2563EB]">Ledger Entries</p>
+              </div>
             </div>
           )}
 
-          {/* Payment History Table */}
-          {payments.length === 0 ? (
+          {/* Controls Toolbar */}
+          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search by payment reference, receipt number, or invoice..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="form-input text-xs py-2.5 pl-4 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#667085] hover:text-[#0B1220]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Payments Table */}
+          {filteredPayments.length === 0 ? (
             <div className="card">
               <EmptyState
                 icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
                   </svg>
                 }
-                title="No payments recorded"
-                body="Payment activity will appear here once transactions are processed."
+                title="No payments found"
+                body="No transaction records match your search query."
               />
             </div>
           ) : (
-            <>
-              {/* Desktop table */}
-              <div className="card hidden overflow-hidden md:block">
-                <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-                  <h2 className="section-heading">Payment History</h2>
-                  <span className="text-xs text-[#667085]">
-                    {payments.length} transaction{payments.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Payment Ref</th>
-                        <th>Invoice</th>
-                        <th>Date</th>
-                        <th>Method</th>
-                        <th className="text-right">Amount</th>
-                        <th>Status</th>
-                        <th>Receipt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map((payment) => (
-                        <tr key={payment.id}>
-                          <td className="font-bold text-[#0B1220]">
-                            {payment.paymentReference}
-                          </td>
-                          <td>
-                            {payment.invoice ? (
-                              <Link
-                                href={`/invoices/${payment.invoice.id}`}
-                                className="font-semibold text-[#2563EB] hover:underline"
-                              >
-                                {payment.invoice.invoiceNumber}
-                              </Link>
-                            ) : (
-                              <span className="text-[#667085]">—</span>
-                            )}
-                          </td>
-                          <td className="text-[#667085]">
-                            {formatDate(payment.paymentDate)}
-                          </td>
-                          <td>
-                            <span className="flex items-center gap-1.5 text-[#344054]">
-                              <span className="text-[#667085]">
-                                {METHOD_ICONS[payment.paymentMethod] ?? null}
-                              </span>
-                              {payment.paymentMethod}
-                            </span>
-                          </td>
-                          <td className="text-right font-bold" style={{ color: "var(--success)" }}>
-                            +{formatCurrency(payment.amount)}
-                          </td>
-                          <td>
-                            <StatusBadge status={payment.status} />
-                          </td>
-                          <td className="font-mono text-xs text-[#667085]">
-                            {payment.receiptReference ?? "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Mobile cards */}
-              <div className="flex flex-col gap-3 md:hidden">
-                {payments.map((payment) => (
-                  <div key={payment.id} className="card p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-[#0B1220]">
-                          {payment.paymentReference}
-                        </p>
-                        {payment.invoice && (
-                          <Link
-                            href={`/invoices/${payment.invoice.id}`}
-                            className="mt-0.5 text-xs font-semibold text-[#2563EB] hover:underline"
-                          >
+            <div className="card overflow-hidden">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Payment Ref</th>
+                    <th>Invoice Reference</th>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th className="text-right">Amount Settled</th>
+                    <th>Status</th>
+                    <th>Receipt Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-[#F7F9FC]">
+                      <td className="font-bold text-[#0B1220]">{payment.paymentReference}</td>
+                      <td>
+                        {payment.invoice ? (
+                          <Link href={`/invoices/${payment.invoice.id}`} className="font-semibold text-[#2563EB] hover:underline">
                             {payment.invoice.invoiceNumber}
                           </Link>
+                        ) : (
+                          <span className="text-[#667085]">—</span>
                         )}
-                      </div>
-                      <StatusBadge status={payment.status} />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-xs text-[#667085]">
-                        {payment.paymentMethod} · {formatDate(payment.paymentDate)}
-                      </p>
-                      <p className="text-base font-bold" style={{ color: "var(--success)" }}>
-                        +{formatCurrency(payment.amount)}
-                      </p>
-                    </div>
-                    {payment.receiptReference && (
-                      <p className="mt-2 text-xs font-mono text-[#667085]">
-                        Ref: {payment.receiptReference}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
+                      </td>
+                      <td className="text-xs text-[#667085]">{formatDate(payment.paymentDate)}</td>
+                      <td className="text-xs font-semibold text-[#0B1220]">{payment.paymentMethod}</td>
+                      <td className="text-right font-bold text-[#067647]">+{formatCurrency(payment.amount)}</td>
+                      <td><StatusBadge status={payment.status} /></td>
+                      <td className="font-mono text-xs text-[#667085]">{payment.receiptReference ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

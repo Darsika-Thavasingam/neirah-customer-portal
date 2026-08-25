@@ -3,27 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const DEMO_USERS = [
-  {
-    id: "d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c",
-    name: "Apex Construction Services",
-    email: "portal@apexconstruction.lk",
-    contact: "Darsika Thavasingam",
-    role: "Verified Customer Access",
-  },
-  {
-    id: "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-    name: "Skyline Developers PLC",
-    email: "portal@skylinedev.lk",
-    contact: "Kamal Perera",
-    role: "Verified Customer Access",
-  },
-];
-
 export default function CustomerLoginPage() {
   const router = useRouter();
   const [accessId, setAccessId] = useState(
-    process.env.NEXT_PUBLIC_USER_ID || DEMO_USERS[0].id
+    process.env.NEXT_PUBLIC_USER_ID || "d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c"
   );
   const [password, setPassword] = useState("••••••••••••");
   const [loading, setLoading] = useState(false);
@@ -45,16 +28,16 @@ export default function CustomerLoginPage() {
 
       if (!res.ok) {
         throw new Error(
-          "Invalid or inactive customer portal access. Please verify your access credentials."
+          "Invalid or inactive customer portal access key. Please verify your account identity."
         );
       }
 
       if (typeof window !== "undefined") {
         localStorage.setItem("neirah_customer_user_id", accessId);
-        // Notify same-tab listeners (e.g. dashboard) to re-fetch with new identity
         window.dispatchEvent(new Event("neirah:userswitch"));
       }
 
+      // Direct redirection straight to Portfolio Command Center Dashboard
       router.push("/");
     } catch (err) {
       setError(
@@ -68,129 +51,124 @@ export default function CustomerLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Brand Logo & Header */}
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200/80 bg-[#0B1220] shadow-[0_8px_20px_rgba(37,99,235,0.25)] transition hover:scale-105">
-            <img
-              src="/neirah-logo.png?v=3"
-              alt="Neirah Construction OS Logo"
-              className="h-full w-full object-contain p-1"
-            />
-          </div>
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.25em] text-[#2563EB]">
-            Neirah Tech Solution
-          </p>
-          <h1 className="mt-1 text-2xl font-black text-[#0B1220] sm:text-3xl">
-            Customer Access Portal
-          </h1>
-          <p className="mt-1.5 text-xs text-[#667085]">
-            Secure self-service gateway for construction project clients
-          </p>
-        </div>
+    <main className="min-h-screen bg-[#F7F9FC] flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-[rgba(15,23,42,0.08)] bg-white shadow-xl grid md:grid-cols-12 animate-fade-in-up">
+        {/* Left Side: Brand Visual Hero Panel */}
+        <div className="md:col-span-5 bg-[#0B1220] p-8 text-white flex flex-col justify-between relative overflow-hidden min-h-[440px]">
+          {/* Construction Imagery Background */}
+          <img
+            src="/images/project-commercial.png"
+            alt="Neirah Construction OS"
+            className="absolute inset-0 h-full w-full object-cover opacity-30"
+          />
+          {/* Dark Navy Glass Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/80 to-transparent" />
 
-        {/* Login Form Card */}
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white px-6 py-8 shadow-[0_10px_30px_rgba(37,99,235,0.08)] sm:px-10">
-            <form className="space-y-5" onSubmit={handleLogin}>
-              <div>
-                <label
-                  htmlFor="accessId"
-                  className="block text-xs font-bold uppercase tracking-[0.08em] text-[#0B1220]"
-                >
-                  Customer Access Key / User ID
-                </label>
-                <div className="mt-1.5">
-                  <input
-                    id="accessId"
-                    name="accessId"
-                    type="text"
-                    required
-                    value={accessId}
-                    onChange={(e) => setAccessId(e.target.value)}
-                    placeholder="Enter User UUID or Select Demo Account"
-                    className="block w-full rounded-xl border border-[rgba(15,23,42,0.14)] bg-[#F7F9FC] px-4 py-3 text-sm text-[#0B1220] font-mono transition focus:border-[#2563EB] focus:bg-white focus:outline-2 focus:outline-offset-2 focus:outline-[#2563EB]"
-                  />
-                </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-[#0B1220]/90 border border-blue-500/30 p-1.5 shadow-md flex items-center justify-center backdrop-blur-md">
+                <img
+                  src="/neirah-logo.png?v=3"
+                  alt="Neirah OS"
+                  className="h-full w-full object-contain"
+                />
               </div>
-
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-xs font-bold uppercase tracking-[0.08em] text-[#0B1220]"
-                >
-                  Password / Security Token
-                </label>
-                <div className="mt-1.5">
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-xl border border-[rgba(15,23,42,0.14)] bg-[#F7F9FC] px-4 py-3 text-sm text-[#0B1220] transition focus:border-[#2563EB] focus:bg-white focus:outline-2 focus:outline-offset-2 focus:outline-[#2563EB]"
-                  />
-                </div>
+                <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB]">
+                  Neirah Construction OS
+                </span>
+                <h2 className="text-sm font-bold text-white leading-none mt-0.5">
+                  Customer Portal
+                </h2>
               </div>
+            </div>
 
-              {error && (
-                <div className="rounded-xl border border-[#FECDCA] bg-[#FEF3F2] p-3.5 text-xs font-semibold text-[#B42318]">
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex w-full justify-center rounded-xl bg-[#2563EB] px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[0_4px_12px_rgba(37,99,235,0.25)] transition hover:bg-[#1D4ED8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] disabled:opacity-50"
-                >
-                  {loading ? "Verifying Access..." : "Sign In to Portal"}
-                </button>
-              </div>
-            </form>
-
-            {/* Demo Account Quick Switcher */}
-            <div className="mt-8 border-t border-[rgba(15,23,42,0.08)] pt-6">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#667085]">
-                Quick Demo Customer Switcher
+            <div className="mt-12 space-y-4">
+              <h3 className="text-2xl font-bold tracking-tight text-white leading-snug">
+                Construction Command Center
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Direct single sign-on access to your active construction projects, real-time site milestones, commercial invoices, and project documentation.
               </p>
-              <div className="mt-3 space-y-2">
-                {DEMO_USERS.map((user) => (
-                  <button
-                    key={user.id}
-                    type="button"
-                    onClick={() => setAccessId(user.id)}
-                    className={`w-full text-left rounded-xl border p-3 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
-                      accessId === user.id
-                        ? "border-[#2563EB] bg-[#EAF2FF]"
-                        : "border-[rgba(15,23,42,0.08)] bg-[#F7F9FC] hover:bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#0B1220]">
-                        {user.name}
-                      </span>
-                      {accessId === user.id && (
-                        <span className="rounded-md bg-[#2563EB] px-1.5 py-0.5 text-[0.65rem] font-bold text-white uppercase">
-                          Selected
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-[0.7rem] text-[#667085]">
-                      {user.contact} · {user.email}
-                    </p>
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-[#667085]">
-              Neirah Construction OS · Multi-Tenant Enterprise Security
+          <div className="relative z-10 mt-10 pt-6 border-t border-white/10 text-xs text-slate-400 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Multi-Tenant Enterprise Security Active</span>
+            </div>
+            <p className="text-[0.7rem] text-slate-500">
+              © 2026 Neirah Construction OS. All rights reserved.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side: Clean Enterprise Form */}
+        <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-center">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-[#0B1220]">
+              Sign In to Customer Portal
+            </h2>
+            <p className="text-xs text-[#667085] mt-1.5 leading-relaxed">
+              Enter your enterprise portal credentials to access your multi-project command center.
+            </p>
+          </div>
+
+          <form className="space-y-5" onSubmit={handleLogin}>
+            <div>
+              <label
+                htmlFor="accessId"
+                className="block text-xs font-bold uppercase tracking-wider text-[#0B1220]"
+              >
+                Customer Access Key (UUID)
+              </label>
+              <input
+                id="accessId"
+                type="text"
+                required
+                value={accessId}
+                onChange={(e) => setAccessId(e.target.value)}
+                placeholder="e.g. d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c"
+                className="form-input mt-2 font-mono text-xs p-3"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-xs font-bold uppercase tracking-wider text-[#0B1220]"
+              >
+                Security Passcode
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input mt-2 text-xs p-3"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-[#FECDCA] bg-[#FEF3F2] p-3.5 text-xs font-semibold text-[#B42318]">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full py-3.5 text-xs font-bold uppercase tracking-wider mt-4 hover-lift"
+            >
+              {loading ? "Authenticating Account..." : "Log In to Construction Portal →"}
+            </button>
+          </form>
+
+          <div className="mt-8 border-t border-[rgba(15,23,42,0.08)] pt-4 text-center">
+            <p className="text-[0.7rem] text-[#667085]">
+              Need technical support or access credentials? Contact Neirah OS Systems Administrator.
             </p>
           </div>
         </div>

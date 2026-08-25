@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import StatusBadge from "../components/StatusBadge";
 import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
@@ -20,8 +20,7 @@ type DashboardResponse = {
   notifications: Notification[];
 };
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("en-GB", {
@@ -33,37 +32,11 @@ function formatDateTime(value: string) {
   });
 }
 
-function NotificationIcon({ type, isRead }: { type: string; isRead: boolean }) {
-  const t = type.toUpperCase();
-  const color = isRead ? "#667085" : "#2563EB";
-
-  if (t.includes("INVOICE") || t.includes("PAYMENT")) {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    );
-  }
-
-  if (t.includes("PROJECT") || t.includes("MILESTONE") || t.includes("UPDATE")) {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-      </svg>
-    );
-  }
-
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-    </svg>
-  );
-}
-
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filterTab, setFilterTab] = useState<"ALL" | "UNREAD" | "READ">("ALL");
 
   useEffect(() => {
     async function fetchNotifications() {
@@ -71,14 +44,15 @@ export default function NotificationsPage() {
         setLoading(true);
         setError("");
 
-        if (!getActiveUserId()) {
+        const userId = getActiveUserId();
+        if (!userId) {
           throw new Error("Customer portal user is not configured.");
         }
 
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/dashboard`,
           {
-            headers: { "x-user-id": getActiveUserId() },
+            headers: { "x-user-id": userId },
             cache: "no-store",
           }
         );
@@ -98,126 +72,126 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const unread = notifications.filter((n) => !n.isRead);
-  const read = notifications.filter((n) => n.isRead);
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    if (filterTab === "UNREAD") return notifications.filter((n) => !n.isRead);
+    if (filterTab === "READ") return notifications.filter((n) => n.isRead);
+    return notifications;
+  }, [notifications, filterTab]);
 
   if (loading) {
     return (
       <div className="page-shell max-w-4xl">
-        <PageHeader kicker="Alerts & Updates" title="Notifications" />
-        <PageLoading message="Loading notifications…" />
+        <PageHeader kicker="Alerts & Audit" title="Customer Notifications" />
+        <PageLoading message="Loading notifications inbox…" />
       </div>
     );
   }
 
   return (
-    <div className="page-shell" style={{ maxWidth: "56rem" }}>
-      <PageHeader
-        kicker="Alerts & Updates"
-        title="Notifications"
-        subtitle="Stay updated with your project and account activity."
-        actions={
-          unreadCount > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-[#EAF2FF] px-4 py-1.5 text-xs font-bold text-[#2563EB]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[0.65rem] font-black text-white">
-                {unreadCount}
+    <div className="page-shell max-w-4xl animate-fade-in-up">
+      {/* High-Tech Laser Blueprint Visual Header Banner */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl border-2 border-blue-500/40 bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#0F172A] p-6 sm:p-7 text-white shadow-[0_10px_35px_rgba(37,99,235,0.2)] group">
+        <img
+          src="/images/project-commercial.png"
+          alt="System Notifications"
+          className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay transition-transform duration-700 ease-out group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-cyan-500/30 opacity-70 animate-pulse pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+              <span className="rounded-md bg-blue-500/30 px-2.5 py-0.5 text-[0.68rem] font-black uppercase tracking-widest text-cyan-300 border border-cyan-400/40 backdrop-blur-md">
+                Real-Time System Dispatch
               </span>
-              unread
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
+              Customer Notifications & Alerts
+            </h1>
+            <p className="mt-1 text-xs text-cyan-100 font-semibold drop-shadow-sm">
+              Live automated alerts for site updates, BOQ approvals, and invoice status.
+            </p>
+          </div>
+
+          {unreadCount > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/10 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-white border border-white/20 shadow-lg">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              {unreadCount} Unread Alert{unreadCount !== 1 ? "s" : ""}
             </span>
-          ) : null
-        }
-      />
+          )}
+        </div>
+      </div>
 
       {error && <ErrorState title="Unable to load notifications" message={error} />}
 
-      {!error && notifications.length === 0 && (
-        <div className="card">
-          <EmptyState
-            icon={
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-            }
-            title="No notifications"
-            body="You don't have any notifications at the moment. Updates will appear here as your project progresses."
-          />
-        </div>
-      )}
+      {!error && (
+        <>
+          {/* Filter Bar */}
+          <div className="mb-6 flex items-center gap-2 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-2 shadow-2xs">
+            <button
+              onClick={() => setFilterTab("ALL")}
+              className={`tab-btn ${filterTab === "ALL" ? "tab-btn-active" : ""}`}
+            >
+              All ({notifications.length})
+            </button>
+            <button
+              onClick={() => setFilterTab("UNREAD")}
+              className={`tab-btn ${filterTab === "UNREAD" ? "tab-btn-active" : ""}`}
+            >
+              Unread ({unreadCount})
+            </button>
+            <button
+              onClick={() => setFilterTab("READ")}
+              className={`tab-btn ${filterTab === "READ" ? "tab-btn-active" : ""}`}
+            >
+              Read ({notifications.length - unreadCount})
+            </button>
+          </div>
 
-      {!error && notifications.length > 0 && (
-        <div className="space-y-6">
-          {/* Unread */}
-          {unread.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#2563EB]">
-                Unread · {unread.length}
-              </h2>
-              <div className="space-y-3">
-                {unread.map((n) => (
-                  <NotificationCard key={n.id} notification={n} />
-                ))}
-              </div>
-            </section>
+          {filteredNotifications.length === 0 ? (
+            <div className="card">
+              <EmptyState
+                icon={
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                }
+                title="No notifications"
+                body="You have no notifications matching this tab filter."
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredNotifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`card card-hover hover-lift shimmer-card p-5 transition flex gap-4 items-start ${
+                    !n.isRead ? "border-l-4 border-l-[#2563EB] bg-[#F8FAFC]" : ""
+                  }`}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FF] text-[#2563EB] font-bold shadow-2xs">
+                    🔔
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-[#0B1220]">{n.title}</h2>
+                        <StatusBadge status={n.type} />
+                      </div>
+                      <span className="text-xs text-[#667085]">{formatDateTime(n.createdAt)}</span>
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-[#475467]">{n.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-
-          {/* Read */}
-          {read.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#667085]">
-                Earlier · {read.length}
-              </h2>
-              <div className="space-y-3">
-                {read.map((n) => (
-                  <NotificationCard key={n.id} notification={n} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+        </>
       )}
     </div>
-  );
-}
-
-function NotificationCard({ notification }: { notification: Notification }) {
-  return (
-    <article
-      className={`notification-item ${!notification.isRead ? "unread" : ""}`}
-    >
-      {/* Icon */}
-      <div
-        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
-        style={{
-          background: notification.isRead ? "var(--surface-soft)" : "var(--primary-soft)",
-          borderColor: notification.isRead ? "var(--border)" : "rgba(37,99,235,0.2)",
-        }}
-      >
-        <NotificationIcon type={notification.type} isRead={notification.isRead} />
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-bold text-[#0B1220]">{notification.title}</h2>
-            <StatusBadge status={notification.type} />
-          </div>
-          {!notification.isRead && (
-            <span className="shrink-0 rounded-full bg-[#2563EB] px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-wider text-white">
-              New
-            </span>
-          )}
-        </div>
-
-        <p className="mt-2 text-sm leading-relaxed text-[#475467]">
-          {notification.message}
-        </p>
-
-        <p className="mt-2 text-xs font-medium text-[#667085]">
-          {formatDateTime(notification.createdAt)}
-        </p>
-      </div>
-    </article>
   );
 }

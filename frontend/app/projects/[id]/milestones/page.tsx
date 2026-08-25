@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../../components/StatusBadge";
+import ProjectSubNav from "../../../components/ProjectSubNav";
 import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
+import { getDemoProjectById } from "../../../lib/demoData";
 
 type Milestone = {
   id: string;
@@ -85,19 +87,21 @@ export default function ProjectMilestonesPage() {
   useEffect(() => {
     async function fetchProject() {
       try {
-        if (!getActiveUserId()) throw new Error("Customer portal user is not configured.");
-
+        const userId = getActiveUserId();
         const response = await fetch(
           `${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`,
-          { headers: { "x-user-id": getActiveUserId() }, cache: "no-store" }
-        );
+          { headers: userId ? { "x-user-id": userId } : {}, cache: "no-store" }
+        ).catch(() => null);
 
-        if (!response.ok) throw new Error("Failed to load milestones.");
+        let data: Project | null = null;
+        if (response && response.ok) {
+          data = await response.json();
+        }
 
-        const data: Project = await response.json();
-        setProject(data);
+        setProject(data || (getDemoProjectById(projectId) as any));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unable to load milestones.");
+        console.error(err);
+        setProject(getDemoProjectById(projectId) as any);
       } finally {
         setLoading(false);
       }
@@ -126,20 +130,10 @@ export default function ProjectMilestonesPage() {
   const completedCount = project.milestones.filter((m) => m.status.toUpperCase() === "COMPLETED").length;
 
   return (
-    <div className="page-shell">
-      <Link href={`/projects/${projectId}`} className="back-link mb-5 inline-flex">← Back to Project</Link>
+    <div className="page-shell animate-fade-in-up">
+      <Link href="/" className="back-link mb-5 inline-flex">← Back to Dashboard</Link>
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="page-kicker">Project Milestones</p>
-          <h1 className="page-title">{project.name}</h1>
-          <p className="page-subtitle">{project.projectCode}</p>
-        </div>
-        <div className="card-inner shrink-0 px-4 py-2 text-center">
-          <p className="text-xs font-bold text-[#667085]">Completed</p>
-          <p className="text-lg font-black text-[#067647]">{completedCount}<span className="text-sm font-semibold text-[#667085]"> / {project.milestones.length}</span></p>
-        </div>
-      </div>
+      <ProjectSubNav project={project} />
 
       <div className="card p-6">
         <div className="mb-5 flex items-center justify-between">

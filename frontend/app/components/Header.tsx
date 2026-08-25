@@ -134,11 +134,6 @@ export default function Header() {
 
   const navItems = [
     { href: "/", label: "Dashboard", exact: true },
-    { href: projectUrl, label: "Projects", prefix: "/projects" },
-    { href: "/quotations", label: "Quotations", prefix: "/quotations" },
-    { href: "/contracts", label: "Contracts", prefix: "/contracts" },
-    { href: "/invoices", label: "Invoices", prefix: "/invoices" },
-    { href: "/payments", label: "Payments", prefix: "/payments" },
     { href: "/notifications", label: "Notifications", prefix: "/notifications" },
     { href: "/profile", label: "Profile", prefix: "/profile" },
   ];

@@ -101,7 +101,7 @@ export default function OutstandingPaymentsPage() {
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell animate-fade-in-up">
       <Link href="/payments" className="back-link mb-5 inline-flex">
         ← Back to Payments
       </Link>
