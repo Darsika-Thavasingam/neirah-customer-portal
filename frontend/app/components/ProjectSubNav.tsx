@@ -40,7 +40,7 @@ export default function ProjectSubNav({ project }: ProjectSubNavProps) {
         alt={project.name}
         className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay transition-transform duration-700 ease-out group-hover:scale-105"
       />
-      
+
       {/* Animated Laser Blueprint Grid & Shimmer Sheen */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-cyan-500/30 opacity-70 animate-pulse pointer-events-none" />
@@ -102,11 +102,10 @@ export default function ProjectSubNav({ project }: ProjectSubNavProps) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all duration-300 shrink-0 ${
-                  isActive
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all duration-300 shrink-0 ${isActive
                     ? "bg-gradient-to-r from-[#2563EB] to-cyan-600 text-white shadow-xl shadow-blue-500/40 border-2 border-cyan-300 scale-105"
                     : "bg-white/10 text-white hover:bg-white/25 hover:border-white/30 border border-white/15 backdrop-blur-md hover:scale-102"
-                }`}
+                  }`}
               >
                 <span className="text-sm">{tab.icon}</span>
                 <span>{tab.label}</span>

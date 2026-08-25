@@ -388,7 +388,7 @@ export default function Home() {
   // Project financial lookup map
   const projectFinancials = useMemo(() => {
     const map: Record<string, { totalInvoiced: number; totalPaid: number; balance: number; quotationNumber?: string; quotationStatus?: string }> = {};
-    
+
     invoices.forEach((inv) => {
       const pId = inv.project?.id;
       if (!pId) return;
@@ -525,8 +525,8 @@ export default function Home() {
                 <span className="metric-label">Total Projects</span>
                 <div className="metric-icon bg-[#EAF2FF] text-[#2563EB]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                   </svg>
                 </div>
               </div>
@@ -539,8 +539,8 @@ export default function Home() {
                 <span className="metric-label">In Progress</span>
                 <div className="metric-icon bg-[#ECFDF5] text-[#067647]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
                   </svg>
                 </div>
               </div>
@@ -553,9 +553,9 @@ export default function Home() {
                 <span className="metric-label">Overall Completion</span>
                 <div className="metric-icon bg-[#F0F5FF] text-[#2563EB]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
                   </svg>
                 </div>
               </div>
@@ -568,8 +568,8 @@ export default function Home() {
                 <span className="metric-label">Pending Works</span>
                 <div className="metric-icon bg-[#FFFAEB] text-[#B54708]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
                   </svg>
                 </div>
               </div>
@@ -625,9 +625,8 @@ export default function Home() {
                   <button
                     key={client}
                     onClick={() => setSelectedClient(client)}
-                    className={`tab-btn ${selectedClient === client ? "tab-btn-active" : ""} ${
-                      isSingle ? "!border-blue-400 !bg-blue-50 !text-[#2563EB] font-bold" : ""
-                    }`}
+                    className={`tab-btn ${selectedClient === client ? "tab-btn-active" : ""} ${isSingle ? "!border-blue-400 !bg-blue-50 !text-[#2563EB] font-bold" : ""
+                      }`}
                   >
                     🏢 {client} ({count}) {isSingle ? "✨ 1 Project Demo" : ""}
                   </button>
@@ -649,8 +648,8 @@ export default function Home() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input
                   type="text"
@@ -713,35 +712,33 @@ export default function Home() {
                   <button
                     onClick={() => setViewMode("GRID")}
                     title="Grid Visual View"
-                    className={`rounded-md p-1.5 text-xs font-semibold transition ${
-                      viewMode === "GRID"
+                    className={`rounded-md p-1.5 text-xs font-semibold transition ${viewMode === "GRID"
                         ? "bg-white text-[#2563EB] shadow-xs"
                         : "text-[#667085] hover:text-[#0B1220]"
-                    }`}
+                      }`}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7"/>
-                      <rect x="14" y="3" width="7" height="7"/>
-                      <rect x="14" y="14" width="7" height="7"/>
-                      <rect x="3" y="14" width="7" height="7"/>
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
                     </svg>
                   </button>
                   <button
                     onClick={() => setViewMode("LIST")}
                     title="Compact Portfolio Table View"
-                    className={`rounded-md p-1.5 text-xs font-semibold transition ${
-                      viewMode === "LIST"
+                    className={`rounded-md p-1.5 text-xs font-semibold transition ${viewMode === "LIST"
                         ? "bg-white text-[#2563EB] shadow-xs"
                         : "text-[#667085] hover:text-[#0B1220]"
-                    }`}
+                      }`}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="8" y1="6" x2="21" y2="6"/>
-                      <line x1="8" y1="12" x2="21" y2="12"/>
-                      <line x1="8" y1="18" x2="21" y2="18"/>
-                      <line x1="3" y1="6" x2="3.01" y2="6"/>
-                      <line x1="3" y1="12" x2="3.01" y2="12"/>
-                      <line x1="3" y1="18" x2="3.01" y2="18"/>
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -754,8 +751,8 @@ export default function Home() {
             <div className="card empty-state">
               <div className="empty-state-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
               </div>
               <h3 className="empty-state-title">No projects found matching criteria</h3>
@@ -962,7 +959,7 @@ export default function Home() {
                           {pendingMilestones.length === 0 ? (
                             <p className="text-xs text-[#067647] font-medium flex items-center gap-1">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <polyline points="20 6 9 17 4 12"/>
+                                <polyline points="20 6 9 17 4 12" />
                               </svg>
                               No pending works for this project.
                             </p>

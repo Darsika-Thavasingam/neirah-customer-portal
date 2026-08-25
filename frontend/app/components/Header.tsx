@@ -146,27 +146,26 @@ export default function Header() {
 
   return (
     <header
-      className="sticky top-0 z-50 bg-white"
-      style={{ boxShadow: "var(--shadow-header)" }}
+      className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
     >
       <div className="mx-auto flex max-w-[80rem] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+          className="group flex shrink-0 items-center gap-3 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-200/60 bg-[#0B1220] shadow-sm transition-transform group-hover:scale-105">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-400/40 bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/30">
             <img
               src="/neirah-logo.png?v=3"
               alt="Neirah Construction OS"
-              className="h-full w-full object-contain p-0.5"
+              className="h-full w-full object-contain p-1"
             />
           </div>
           <div className="hidden sm:block leading-tight">
-            <div className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#2563EB]">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.24em] bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
               Neirah
             </div>
-            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-[#667085]">
+            <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#667085]">
               Customer Portal
             </div>
           </div>
@@ -174,7 +173,7 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav
-          className="hidden items-center gap-0.5 lg:flex"
+          className="hidden items-center gap-1.5 lg:flex bg-slate-100/70 p-1.5 rounded-2xl border border-slate-200/60"
           aria-label="Main navigation"
         >
           {navItems.map((item) => {
@@ -184,7 +183,11 @@ export default function Header() {
                 key={item.label}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`nav-link ${active ? "nav-link-active" : ""}`}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 ${
+                  active
+                    ? "bg-gradient-to-r from-[#2563EB] to-blue-600 text-white shadow-md shadow-blue-500/20 scale-102"
+                    : "text-[#475467] hover:text-[#0B1220] hover:bg-white/60"
+                }`}
               >
                 {item.label}
               </Link>
@@ -193,19 +196,23 @@ export default function Header() {
         </nav>
 
         {/* Right side: notifications + hamburger */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
             href="/notifications"
             aria-label="Notifications"
-            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-[#667085] transition hover:bg-[#F7F9FC] hover:text-[#0B1220] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100/80 border border-slate-200/80 text-[#667085] transition hover:bg-blue-50 hover:text-[#2563EB] hover:border-blue-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
           >
+            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
+            </span>
             <svg
               width="18"
               height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
@@ -221,10 +228,10 @@ export default function Header() {
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
             aria-label="Toggle menu"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(15,23,42,0.1)] text-[#475467] transition hover:bg-[#F7F9FC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] lg:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100/80 text-[#475467] transition hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] lg:hidden"
           >
             <svg
-              className="h-4.5 w-4.5"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="2.2"
