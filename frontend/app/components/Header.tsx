@@ -154,18 +154,18 @@ export default function Header() {
           href="/"
           className="group flex shrink-0 items-center gap-3 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-400/40 bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/30">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-200/60 bg-[#0B1220] shadow-sm transition-transform group-hover:scale-105">
             <img
               src="/neirah-logo.png?v=3"
               alt="Neirah Construction OS"
-              className="h-full w-full object-contain p-1"
+              className="h-full w-full object-contain p-0.5"
             />
           </div>
           <div className="hidden sm:block leading-tight">
-            <div className="text-[0.72rem] font-black uppercase tracking-[0.24em] bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <div className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#2563EB]">
               Neirah
             </div>
-            <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#667085]">
+            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-[#667085]">
               Customer Portal
             </div>
           </div>
