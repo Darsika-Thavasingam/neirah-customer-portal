@@ -9,9 +9,18 @@ export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private async getPortalContext(userId: string) {
-    const access = await this.prisma.customerPortalAccess.findUnique({
+    const cleanId = userId?.trim();
+    if (!cleanId) {
+      throw new UnauthorizedException('Customer portal access key is required');
+    }
+
+    const access = await this.prisma.customerPortalAccess.findFirst({
       where: {
-        userId,
+        OR: [
+          { userId: cleanId },
+          { id: cleanId },
+          { customerId: cleanId },
+        ],
       },
       select: {
         tenantId: true,
@@ -22,7 +31,7 @@ export class PaymentsService {
 
     if (!access || !access.isActive) {
       throw new UnauthorizedException(
-        'Customer portal access is not active',
+        'Invalid or inactive portal access key. Please contact your project manager.',
       );
     }
 

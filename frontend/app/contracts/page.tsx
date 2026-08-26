@@ -174,27 +174,12 @@ export default function ContractsPage() {
   return (
     <div className="page-shell animate-fade-in-up">
       {/* Hero Visual Header Banner */}
-      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
-        <img
-          src="/images/project-commercial.png"
-          alt="Master Contracts"
-          className="h-full w-full object-cover opacity-35"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
-        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
-              Legal Repository
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
-              Master Contracts & Legal Agreements
-            </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Binding contractual commitments, terms of delivery, milestone schedules, and financial scope agreements.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        kicker="LEGAL REPOSITORY"
+        title="Master Contracts & Legal Agreements"
+        subtitle="Binding contractual commitments, terms of delivery, milestone schedules, and financial scope agreements."
+        bgImage="/images/project-industrial.png"
+      />
 
       {error && (
         <ErrorState title="Unable to load contracts" message={error} />
@@ -202,34 +187,34 @@ export default function ContractsPage() {
 
       {!error && (
         <>
-          {/* Executive KPI Summary */}
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Total Contracts</span>
-              <div className="metric-value">{stats.total}</div>
-              <p className="mt-1 text-xs text-[#667085]">Executed Agreements</p>
+          {/* Executive KPI Summary — Borderless Horizontal Stats Bar */}
+          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+            <div className="flex flex-col justify-center">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Contracts</span>
+              <div className="text-2xl font-black text-[#0B1220]">{stats.total}</div>
+              <p className="text-[0.68rem] font-bold text-[#667085]">Executed Agreements</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Active Contracts</span>
-              <div className="metric-value text-[#067647]">{stats.active}</div>
-              <p className="mt-1 text-xs text-[#067647]">Under Execution</p>
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Active Contracts</span>
+              <div className="text-2xl font-black text-[#067647]">{stats.active}</div>
+              <p className="text-[0.68rem] font-bold text-[#067647]">Under Execution</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Completed</span>
-              <div className="metric-value text-[#2563EB]">{stats.completed}</div>
-              <p className="mt-1 text-xs text-[#2563EB]">Fulfilled</p>
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#2563EB] block mb-1">Completed</span>
+              <div className="text-2xl font-black text-[#2563EB]">{stats.completed}</div>
+              <p className="text-[0.68rem] font-bold text-[#2563EB]">Fulfilled</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Total Contracted Capital</span>
-              <div className="metric-value text-sm sm:text-base text-[#0B1220] truncate">
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#D97706] block mb-1">Total Capital</span>
+              <div className="text-xl font-black text-[#B45309] truncate">
                 LKR {formatAmount(stats.totalValue)}
               </div>
-              <p className="mt-1 text-xs text-[#667085]">Committed Capital</p>
+              <p className="text-[0.68rem] font-bold text-[#D97706]">Committed Capital</p>
             </div>
           </div>
 
           {/* Controls Toolbar */}
-          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
             <div className="relative flex-1 min-w-[240px]">
               <input
                 type="text"
@@ -248,31 +233,31 @@ export default function ContractsPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F1F5F9] p-1 rounded-2xl">
               <button
                 onClick={() => setSelectedStatus("ALL")}
-                className={`tab-btn ${selectedStatus === "ALL" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ALL" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 All ({stats.total})
               </button>
               <button
                 onClick={() => setSelectedStatus("ACTIVE")}
-                className={`tab-btn ${selectedStatus === "ACTIVE" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ACTIVE" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Active ({stats.active})
               </button>
               <button
                 onClick={() => setSelectedStatus("COMPLETED")}
-                className={`tab-btn ${selectedStatus === "COMPLETED" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "COMPLETED" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Completed ({stats.completed})
               </button>
             </div>
           </div>
 
-          {/* Contracts Grid */}
+          {/* Contracts Row List */}
           {filteredContracts.length === 0 ? (
-            <div className="card">
+            <div className="py-10 text-center text-sm text-[#667085]">
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -284,72 +269,51 @@ export default function ContractsPage() {
               />
             </div>
           ) : (
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="divide-y divide-slate-200">
               {filteredContracts.map((contract) => (
-                <div key={contract.id} className="card card-hover hover-lift shimmer-card p-6 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085]">
-                          Contract Reference
-                        </span>
-                        <h2 className="mt-0.5 text-xl font-bold text-[#0B1220]">
-                          {contract.contractNumber}
-                        </h2>
-                      </div>
+                <div key={contract.id} className="py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h2 className="text-lg font-black text-[#0B1220]">
+                        {contract.contractNumber}
+                      </h2>
                       <StatusBadge status={contract.status} />
                     </div>
 
                     {contract.project && (
-                      <div className="mt-4 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#F8FAFC] p-3.5">
-                        <span className="meta-label">Associated Project</span>
-                        <p className="mt-0.5 text-sm font-bold text-[#0B1220]">
-                          {contract.project.name}
-                        </p>
-                        <p className="text-xs text-[#667085]">
-                          {contract.project.projectCode}
-                        </p>
-                      </div>
+                      <p className="text-xs font-extrabold text-[#2563EB]">
+                        {contract.project.name} <span className="text-[#667085] font-normal">({contract.project.projectCode})</span>
+                      </p>
                     )}
 
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="meta-label">Contract Valuation</span>
-                        <p className="mt-1 text-lg font-bold text-[#2563EB]">
-                          LKR {formatAmount(contract.contractValue)}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="meta-label">Signing Date</span>
-                        <p className="mt-1 text-xs font-semibold text-[#0B1220]">{formatDate(contract.contractDate)}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[rgba(15,23,42,0.06)] pt-4 text-xs">
-                      <div>
-                        <span className="meta-label">Commencement Date</span>
-                        <p className="font-semibold text-[#0B1220] mt-0.5">{formatDate(contract.startDate)}</p>
-                      </div>
-                      <div>
-                        <span className="meta-label">Completion Date</span>
-                        <p className="font-semibold text-[#0B1220] mt-0.5">{formatDate(contract.completionDate)}</p>
-                      </div>
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#667085]">
+                      <span>Signing: <strong className="text-[#0B1220]">{formatDate(contract.contractDate)}</strong></span>
+                      <span>Commenced: <strong className="text-[#0B1220]">{formatDate(contract.startDate)}</strong></span>
+                      <span>Completion: <strong className="text-[#0B1220]">{formatDate(contract.completionDate)}</strong></span>
                     </div>
                   </div>
 
-                  <div className="mt-6 flex flex-wrap gap-2 border-t border-[rgba(15,23,42,0.06)] pt-4">
-                    <button
-                      onClick={() => setSelectedContract(contract)}
-                      className="btn btn-primary btn-sm flex-1 text-center hover-lift font-bold"
-                    >
-                      🔍 Inspect Full Agreement
-                    </button>
-                    <button
-                      onClick={() => handleDownloadContractPdf(contract)}
-                      className="btn btn-ghost btn-sm text-xs font-bold"
-                    >
-                      📥 Download PDF
-                    </button>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 shrink-0 w-full md:w-auto justify-between">
+                    <div className="text-right">
+                      <span className="meta-label block">Contract Valuation</span>
+                      <p className="text-lg font-black text-[#2563EB]">
+                        LKR {formatAmount(contract.contractValue)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedContract(contract)}
+                        className="btn btn-primary btn-sm font-bold py-2 px-3 rounded-xl shadow-sm"
+                      >
+                        🔍 Inspect
+                      </button>
+                      <button
+                        onClick={() => handleDownloadContractPdf(contract)}
+                        className="btn btn-ghost btn-sm text-xs font-bold py-2 px-3 rounded-xl bg-[#F1F5F9]"
+                      >
+                        📥 PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

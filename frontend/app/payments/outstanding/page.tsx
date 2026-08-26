@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
-import PageHeader from "../../components/PageHeader";
 import { PageLoading } from "../../components/SkeletonLoader";
 import EmptyState, { ErrorState } from "../../components/EmptyState";
 import { getActiveUserId } from "../../lib/auth";
@@ -11,38 +10,24 @@ import { getActiveUserId } from "../../lib/auth";
 type OutstandingInvoice = {
   id: string;
   invoiceNumber: string;
+  invoiceDate: string;
   dueDate: string;
-  total: number | string;
-  paidAmount: number | string;
-  outstandingAmount?: number | string;
-  daysOverdue?: number;
-  status?: string;
-  project?: {
-    id: string;
-    projectCode: string;
-    name: string;
-  } | null;
+  total: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  daysOverdue: number;
+  status: string;
+  project: { id: string; projectCode: string; name: string };
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function formatCurrency(value: number | string | null | undefined) {
-  const raw = Number(value ?? 0);
-  return new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(raw) ? raw : 0);
+function fmt(v: string | null | undefined) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+function curr(n: number | null | undefined) {
+  return new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 2 }).format(Number(n) || 0);
 }
 
 export default function OutstandingPaymentsPage() {
@@ -51,236 +36,134 @@ export default function OutstandingPaymentsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadOutstanding = async () => {
+    async function fetch_() {
       try {
-        setLoading(true);
-        setError("");
-
-        if (!getActiveUserId()) {
-          throw new Error("Customer configuration is missing.");
-        }
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/customer-portal/invoices/outstanding`,
-          {
-            headers: {
-              "x-user-id": getActiveUserId(),
-            },
-            cache: "no-store",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to load outstanding payments.");
-        }
-
-        const data: OutstandingInvoice[] = await response.json();
+        const uid = getActiveUserId();
+        if (!uid) throw new Error("No user configured.");
+        const res = await fetch(`${API_BASE_URL}/api/v1/customer-portal/invoices/outstanding`, {
+          headers: { "x-user-id": uid }, cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Failed to fetch outstanding invoices.");
+        const data = await res.json();
         setInvoices(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Unable to load outstanding payments."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadOutstanding();
+      } catch (e: any) { setError(e.message || "Failed to load."); }
+      finally { setLoading(false); }
+    }
+    fetch_();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="page-shell">
-        <Link href="/payments" className="back-link mb-5 inline-flex">
-          ← Back to Payments
-        </Link>
-        <PageHeader kicker="Due Balances" title="Outstanding Payments" />
-        <PageLoading message="Loading outstanding payments…" />
-      </div>
-    );
-  }
+  const totalOutstanding = invoices.reduce((s, i) => s + Number(i.outstandingAmount), 0);
+  const overdueCount = invoices.filter(i => i.daysOverdue > 0).length;
+  const overdueTotal = invoices.filter(i => i.daysOverdue > 0).reduce((s, i) => s + Number(i.outstandingAmount), 0);
+
+  if (loading) return <div className="page-shell"><PageLoading message="Loading outstanding balances…" /></div>;
 
   return (
     <div className="page-shell animate-fade-in-up">
-      <Link href="/payments" className="back-link mb-5 inline-flex">
-        ← Back to Payments
-      </Link>
+      <Link href="/invoices" className="back-link mb-6 inline-flex">← Back to Invoices</Link>
 
-      <PageHeader
-        kicker="Due Balances"
-        title="Outstanding Payments"
-        subtitle="Invoices with remaining balances and overdue amounts."
-      />
-
-      {error && (
-        <ErrorState
-          title="Unable to load outstanding payments"
-          message={error}
-          backHref="/payments"
-          backLabel="Back to Payments"
-        />
-      )}
-
-      {!error && invoices.length === 0 ? (
-        <div className="card">
-          <EmptyState
-            icon={
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            }
-            title="All caught up!"
-            body="There are no outstanding invoices requiring payment at this time."
-          />
+      {/* Hero */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl bg-[#0B1220] p-6 text-white shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 via-[#0B1220]/80 to-transparent pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-[0.65rem] font-black uppercase tracking-wider text-red-300 mb-1">Balance Management</p>
+            <h1 className="text-2xl font-black text-white">Outstanding Payments</h1>
+            <p className="text-xs text-slate-300 mt-0.5">Invoices with outstanding balances requiring payment.</p>
+          </div>
+          {overdueCount > 0 && (
+            <div className="shrink-0 bg-red-500/20 border border-red-400/30 rounded-xl px-4 py-2 text-center">
+              <p className="text-lg font-black text-red-300">{overdueCount}</p>
+              <p className="text-[0.65rem] font-bold text-red-400">Overdue</p>
+            </div>
+          )}
         </div>
-      ) : (
+      </div>
+
+      {error && <ErrorState title="Unable to load" message={error} backHref="/invoices" backLabel="Back to Invoices" />}
+
+      {!error && (
         <>
-          {/* Desktop Table View */}
-          <div className="card hidden overflow-hidden md:block">
-            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-              <h2 className="section-heading">Invoices Due</h2>
-              <span className="text-xs text-[#667085]">
-                {invoices.length} outstanding invoice{invoices.length !== 1 ? "s" : ""}
-              </span>
+          {/* KPI Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-black text-[#0B1220]">{invoices.length}</p>
+              <p className="text-[0.65rem] font-bold text-[#667085] mt-0.5">Unpaid Invoices</p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Invoice</th>
-                    <th>Due Date</th>
-                    <th>Total</th>
-                    <th>Paid</th>
-                    <th>Outstanding</th>
-                    <th>Overdue Status</th>
-                    <th className="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoices.map((invoice) => {
-                    const outstanding = Number(
-                      invoice.outstandingAmount ??
-                        Math.max(Number(invoice.total) - Number(invoice.paidAmount), 0)
-                    );
-
-                    return (
-                      <tr key={invoice.id}>
-                        <td>
-                          <Link
-                            href={`/invoices/${invoice.id}`}
-                            className="font-bold text-[#0B1220] hover:text-[#2563EB]"
-                          >
-                            {invoice.invoiceNumber}
-                          </Link>
-                          {invoice.project && (
-                            <div className="mt-0.5 text-xs text-[#667085]">
-                              {invoice.project.name}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-[#667085]">{formatDate(invoice.dueDate)}</td>
-                        <td className="font-semibold text-[#0B1220]">{formatCurrency(invoice.total)}</td>
-                        <td className="text-[#067647]">{formatCurrency(invoice.paidAmount)}</td>
-                        <td className="font-bold text-[#B42318]">{formatCurrency(outstanding)}</td>
-                        <td>
-                          {invoice.daysOverdue && invoice.daysOverdue > 0 ? (
-                            <StatusBadge
-                              status="OVERDUE"
-                              label={`${invoice.daysOverdue} days overdue`}
-                            />
-                          ) : (
-                            <StatusBadge status="PENDING" label="Due soon" />
-                          )}
-                        </td>
-                        <td className="text-right">
-                          <Link
-                            href={`/invoices/${invoice.id}`}
-                            className="btn btn-ghost btn-sm"
-                          >
-                            View Details
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="card p-4 text-center border-red-100" style={{ background: "#FEF3F2" }}>
+              <p className="text-2xl font-black text-[#B42318]">{curr(totalOutstanding)}</p>
+              <p className="text-[0.65rem] font-bold text-[#667085] mt-0.5">Total Outstanding</p>
+            </div>
+            <div className="card p-4 text-center border-orange-100" style={{ background: "#FFFBEB" }}>
+              <p className="text-2xl font-black text-[#B45309]">{curr(overdueTotal)}</p>
+              <p className="text-[0.65rem] font-bold text-[#667085] mt-0.5">Overdue Amount</p>
             </div>
           </div>
 
-          {/* Mobile Card View */}
-          <div className="flex flex-col gap-3 md:hidden">
-            {invoices.map((invoice) => {
-              const outstanding = Number(
-                invoice.outstandingAmount ??
-                  Math.max(Number(invoice.total) - Number(invoice.paidAmount), 0)
-              );
+          {invoices.length === 0 ? (
+            <div className="card p-10">
+              <EmptyState
+                icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 14l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>}
+                title="No Outstanding Balances"
+                body="All your invoices are fully paid. Great financial health!"
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {invoices.map(inv => {
+                const isOverdue = inv.daysOverdue > 0;
+                const pct = inv.total > 0 ? Math.min(Math.round((Number(inv.paidAmount) / Number(inv.total)) * 100), 100) : 0;
+                return (
+                  <div key={inv.id} className={`card p-5 card-hover ${isOverdue ? "bg-[#FEF3F2]/50 border-l-4 border-l-[#B42318]" : ""}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className="text-xs font-mono font-black text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-md">
+                            {inv.invoiceNumber}
+                          </span>
+                          <StatusBadge status={inv.status} />
+                          {isOverdue && (
+                            <span className="text-[0.6rem] font-black bg-red-100 text-[#B42318] px-2 py-0.5 rounded-md">
+                              {inv.daysOverdue}d OVERDUE
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-extrabold text-[#0B1220]">{inv.project.name}</p>
+                        <p className="text-xs text-[#667085] mt-0.5">{inv.project.projectCode}</p>
+                        <div className="flex gap-4 mt-2 text-xs text-[#98A2B3]">
+                          <span>Invoice: <span className="font-bold text-[#475467]">{fmt(inv.invoiceDate)}</span></span>
+                          <span className={`font-bold ${isOverdue ? "text-[#B42318]" : "text-[#475467]"}`}>Due: {fmt(inv.dueDate)}</span>
+                        </div>
+                      </div>
 
-              return (
-                <div key={invoice.id} className="card p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="text-sm font-bold text-[#0B1220] hover:text-[#2563EB]"
-                      >
-                        {invoice.invoiceNumber}
+                      <div className="shrink-0 text-right">
+                        <p className="text-[0.65rem] font-bold text-[#98A2B3] uppercase">Outstanding</p>
+                        <p className={`text-lg font-black ${isOverdue ? "text-[#B42318]" : "text-[#0B1220]"}`}>{curr(inv.outstandingAmount)}</p>
+                        <p className="text-xs text-[#667085]">of {curr(inv.total)}</p>
+                      </div>
+                    </div>
+
+                    {/* Payment progress */}
+                    <div className="mt-4">
+                      <div className="flex justify-between text-[0.65rem] mb-1">
+                        <span className="text-[#667085]">Paid: {curr(inv.paidAmount)}</span>
+                        <span className="font-bold text-[#0B1220]">{pct}%</span>
+                      </div>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#067647] rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                      <Link href={`/invoices/${inv.id}`} className="btn btn-primary btn-sm text-xs rounded-xl py-2 px-3">
+                        View Invoice →
                       </Link>
-                      {invoice.project && (
-                        <p className="mt-0.5 text-xs text-[#667085]">
-                          {invoice.project.name}
-                        </p>
-                      )}
-                    </div>
-                    {invoice.daysOverdue && invoice.daysOverdue > 0 ? (
-                      <StatusBadge status="OVERDUE" label={`${invoice.daysOverdue} days`} />
-                    ) : (
-                      <StatusBadge status="PENDING" label="Due soon" />
-                    )}
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-y border-[rgba(15,23,42,0.06)] py-3 text-center">
-                    <div>
-                      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085]">
-                        Total
-                      </p>
-                      <p className="mt-0.5 text-xs font-semibold text-[#0B1220]">
-                        {formatCurrency(invoice.total)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085]">
-                        Paid
-                      </p>
-                      <p className="mt-0.5 text-xs font-semibold text-[#067647]">
-                        {formatCurrency(invoice.paidAmount)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085]">
-                        Outstanding
-                      </p>
-                      <p className="mt-0.5 text-xs font-bold text-[#B42318]">
-                        {formatCurrency(outstanding)}
-                      </p>
                     </div>
                   </div>
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-[#667085]">
-                      Due: {formatDate(invoice.dueDate)}
-                    </p>
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="text-xs font-bold text-[#2563EB] hover:underline"
-                    >
-                      View Invoice →
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>

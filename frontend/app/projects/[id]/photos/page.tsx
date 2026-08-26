@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import PageHeader from "../../../components/PageHeader";
 import StatusBadge from "../../../components/StatusBadge";
 import ProjectSubNav from "../../../components/ProjectSubNav";
 import { PageLoading } from "../../../components/SkeletonLoader";
@@ -89,31 +90,30 @@ export default function ProjectPhotosPage() {
         if (!userId) throw new Error("Customer portal user is not configured.");
         const headers = { "x-user-id": userId };
 
-        const [projRes, photosRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null),
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/photos`, { headers, cache: "no-store" }).catch(() => null)
-        ]);
-
-        if (projRes && projRes.ok) {
+        const projRes = await fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null);
+        if (projRes) {
+          if (!projRes.ok) {
+            setError("Access Denied: You do not have permission to view this project's photos.");
+            setProject(null);
+            setLoading(false);
+            return;
+          }
           const projData = await projRes.json();
           setProject(projData);
+
+          const photosRes = await fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/photos`, { headers, cache: "no-store" }).catch(() => null);
+          let apiPhotos: ProjectPhoto[] = photosRes && photosRes.ok ? await photosRes.json() : [];
+          const validPhotos = Array.isArray(apiPhotos) ? apiPhotos.filter(
+            (p) => p.photoUrl && !p.photoUrl.includes("placehold.co")
+          ) : [];
+
+          setPhotos(validPhotos.length > 0 ? validPhotos : REAL_DEMO_PHOTOS);
+        } else {
+          setPhotos(REAL_DEMO_PHOTOS);
         }
-
-        let apiPhotos: ProjectPhoto[] = [];
-        if (photosRes && photosRes.ok) {
-          const data = await photosRes.json();
-          if (Array.isArray(data)) apiPhotos = data;
-        }
-
-        // Clean out placeholder images (placehold.co) and replace with actual real photos
-        const validPhotos = apiPhotos.filter(
-          (p) => p.photoUrl && !p.photoUrl.includes("placehold.co")
-        );
-
-        setPhotos(validPhotos.length > 0 ? validPhotos : REAL_DEMO_PHOTOS);
       } catch (err) {
         console.error(err);
-        setPhotos(REAL_DEMO_PHOTOS);
+        setError("Access Denied: Unable to fetch project photos.");
       } finally {
         setLoading(false);
       }
@@ -132,10 +132,12 @@ export default function ProjectPhotosPage() {
 
   return (
     <div className="page-shell animate-fade-in-up">
-      <Link href="/" className="back-link mb-5 inline-flex">
-        ← Back to Dashboard
-      </Link>
-
+      <PageHeader
+        kicker={`PROJECT ${project?.projectCode || ""} · PHOTO GALLERY`}
+        title="Site Inspection Photos"
+        subtitle={`Progress photography and structural inspection records for ${project?.name || "this project"}.`}
+        bgImage="/images/project-villa.png"
+      />
       {project && <ProjectSubNav project={project} />}
 
       {error && (
@@ -200,7 +202,7 @@ export default function ProjectPhotosPage() {
               <article
                 key={photo.id}
                 onClick={() => setSelectedPhoto(photo)}
-                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white shadow-sm hover-lift transition-all duration-300"
+                className="card overflow-hidden cursor-pointer card-hover transition-all duration-300"
               >
                 {/* Photo Image Container */}
                 <div className="relative h-56 w-full overflow-hidden bg-[#0B1220]">

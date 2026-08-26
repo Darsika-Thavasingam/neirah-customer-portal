@@ -9,36 +9,44 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getCustomerId(userId: string): Promise<string> {
-    const access = await this.prisma.customerPortalAccess.findUnique({
+  private async getPortalContext(
+    userId: string,
+  ): Promise<{ customerId: string; tenantId: string }> {
+    const cleanId = userId?.trim();
+    if (!cleanId) {
+      throw new UnauthorizedException('Customer portal access key is required');
+    }
+
+    const access = await this.prisma.customerPortalAccess.findFirst({
       where: {
-        userId,
+        OR: [
+          { userId: cleanId },
+          { id: cleanId },
+          { customerId: cleanId },
+        ],
       },
       select: {
         customerId: true,
+        tenantId: true,
         isActive: true,
       },
     });
 
     if (!access || !access.isActive) {
       throw new UnauthorizedException(
-        'Customer portal access is not active',
+        'Invalid or inactive portal access key. Please contact your project manager.',
       );
     }
 
-    return access.customerId;
+    return { customerId: access.customerId, tenantId: access.tenantId };
   }
 
   async getProjects(userId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     return this.prisma.project.findMany({
-      where: {
-        customerId,
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
+      where: { customerId, tenantId },
+      orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
         projectCode: true,
@@ -53,11 +61,8 @@ export class ProjectsService {
         projectManagerContact: true,
         recentUpdate: true,
         updatedAt: true,
-
         milestones: {
-          orderBy: {
-            createdAt: 'asc',
-          },
+          orderBy: { createdAt: 'asc' },
           select: {
             id: true,
             name: true,
@@ -68,18 +73,26 @@ export class ProjectsService {
             progress: true,
           },
         },
+        updates: {
+          where: { visibility: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            title: true,
+            update: true,
+            createdAt: true,
+          },
+        },
       },
     });
   }
 
   async getProject(userId: string, projectId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     const project = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        customerId,
-      },
+      where: { id: projectId, customerId, tenantId },
       select: {
         id: true,
         projectCode: true,
@@ -221,16 +234,11 @@ export class ProjectsService {
   }
 
   async getProjectUpdates(userId: string, projectId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     const project = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        customerId,
-      },
-      select: {
-        id: true,
-      },
+      where: { id: projectId, customerId, tenantId },
+      select: { id: true },
     });
 
     if (!project) {
@@ -238,13 +246,8 @@ export class ProjectsService {
     }
 
     return this.prisma.projectUpdate.findMany({
-      where: {
-        projectId: project.id,
-        visibility: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { projectId: project.id, visibility: true },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         title: true,
@@ -256,17 +259,39 @@ export class ProjectsService {
     });
   }
 
-  async getProjectPhotos(userId: string, projectId: string) {
-    const customerId = await this.getCustomerId(userId);
+  async getProjectMilestones(userId: string, projectId: string) {
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     const project = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        customerId,
-      },
+      where: { id: projectId, customerId, tenantId },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.prisma.milestone.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: 'asc' },
       select: {
         id: true,
+        name: true,
+        description: true,
+        plannedDate: true,
+        actualCompletionDate: true,
+        status: true,
+        progress: true,
       },
+    });
+  }
+
+  async getProjectPhotos(userId: string, projectId: string) {
+    const { customerId, tenantId } = await this.getPortalContext(userId);
+
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, customerId, tenantId },
+      select: { id: true },
     });
 
     if (!project) {
@@ -274,13 +299,8 @@ export class ProjectsService {
     }
 
     return this.prisma.projectPhoto.findMany({
-      where: {
-        projectId: project.id,
-        isCustomerVisible: true,
-      },
-      orderBy: {
-        uploadedAt: 'desc',
-      },
+      where: { projectId: project.id, isCustomerVisible: true },
+      orderBy: { uploadedAt: 'desc' },
       select: {
         id: true,
         photoUrl: true,
@@ -292,17 +312,11 @@ export class ProjectsService {
   }
 
   async getProjectDocuments(userId: string, projectId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     const project = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        customerId,
-      },
-      select: {
-        id: true,
-        tenantId: true,
-      },
+      where: { id: projectId, customerId, tenantId },
+      select: { id: true, tenantId: true },
     });
 
     if (!project) {

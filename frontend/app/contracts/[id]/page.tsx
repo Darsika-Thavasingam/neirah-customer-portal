@@ -195,7 +195,7 @@ export default function ContractDetailsPage() {
             {contract.project && (
               <div>
                 <p className="meta-label">Linked Project</p>
-                <div className="mt-2 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#F7F9FC] p-3.5">
+                <div className="mt-2 rounded-2xl bg-[#F7F9FC] p-4">
                   <p className="text-sm font-bold text-[#0B1220]">
                     {contract.project.name}
                   </p>

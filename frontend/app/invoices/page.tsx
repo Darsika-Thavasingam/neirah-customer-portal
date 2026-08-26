@@ -153,33 +153,20 @@ export default function InvoicesPage() {
   return (
     <div className="page-shell animate-fade-in-up">
       {/* Hero Visual Header Banner */}
-      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
-        <img
-          src="/images/project-residential.png"
-          alt="Financial Statements"
-          className="h-full w-full object-cover opacity-35"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
-        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
-              Billing Ledger
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
-              Financial Overview & Invoices
-            </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Commercial billing statements, interim valuation certificates, and real-time payment history across your active construction projects.
-            </p>
-          </div>
+      <PageHeader
+        kicker="BILLING LEDGER"
+        title="Financial Overview & Invoices"
+        subtitle="Commercial billing statements, interim valuation certificates, and real-time payment history across your active construction projects."
+        bgImage="/images/project-residential.png"
+        actions={
           <Link
             href="/payments/outstanding"
-            className="btn btn-primary btn-sm hover-lift shrink-0 shadow-lg"
+            className="btn btn-primary btn-sm shrink-0 shadow-lg py-2 px-3.5 rounded-xl font-bold text-xs"
           >
             ⚠️ Outstanding Balances ({stats.outstandingCount})
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
         <div className="mb-6">
@@ -189,60 +176,41 @@ export default function InvoicesPage() {
 
       {!error && (
         <>
-          {/* Executive Metric Cards */}
-          <div className="mb-8 grid gap-4 sm:grid-cols-3">
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <div className="flex items-start justify-between">
-                <span className="metric-label">Total Invoiced</span>
-                <div className="metric-icon bg-[#EAF2FF] text-[#2563EB]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </div>
+          {/* Executive KPI Summary — Borderless Horizontal Stats Bar */}
+          <div className="mb-8 border-y border-slate-200 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 divide-x divide-slate-100 sm:divide-slate-200 mb-4">
+              <div className="flex flex-col justify-center">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Invoiced</span>
+                <span className="text-xl sm:text-2xl font-black text-[#0B1220]">{formatCurrency(stats.totalInvoiced)}</span>
+                <span className="text-[0.68rem] font-bold text-[#667085]">{invoices.length} statement{invoices.length !== 1 ? "s" : ""}</span>
               </div>
-              <div className="metric-value">{formatCurrency(stats.totalInvoiced)}</div>
-              <p className="mt-1 text-xs text-[#667085]">
-                {invoices.length} Total Statement{invoices.length !== 1 ? "s" : ""}
-              </p>
+              <div className="flex flex-col justify-center pl-4">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Paid</span>
+                <span className="text-xl sm:text-2xl font-black text-[#067647]">{formatCurrency(stats.totalPaid)}</span>
+                <span className="text-[0.68rem] font-bold text-[#067647]">{stats.paidCount} fully paid</span>
+              </div>
+              <div className="flex flex-col justify-center pl-4">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#B42318] block mb-1">Balance Due</span>
+                <span className="text-xl sm:text-2xl font-black" style={{ color: stats.totalOutstanding > 0 ? "#B42318" : "#067647" }}>{formatCurrency(stats.totalOutstanding)}</span>
+                <span className="text-[0.68rem] font-bold text-[#667085]">{stats.outstandingCount} pending</span>
+              </div>
             </div>
-
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <div className="flex items-start justify-between">
-                <span className="metric-label">Total Settled</span>
-                <div className="metric-icon bg-[#ECFDF5] text-[#067647]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+            {/* Stacked bar */}
+            {stats.totalInvoiced > 0 && (
+              <div className="flex items-center gap-3 pt-2">
+                <div className="flex-1 flex h-2 rounded-full overflow-hidden bg-slate-100">
+                  <div className="h-full bg-[#10B981] transition-all duration-700" style={{ width: `${Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%` }} />
+                  <div className="h-full bg-[#EF4444] transition-all duration-700" style={{ width: `${Math.round((stats.totalOutstanding / stats.totalInvoiced) * 100)}%` }} />
                 </div>
+                <span className="text-[0.68rem] font-extrabold text-[#667085] whitespace-nowrap">
+                  {Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}% settled
+                </span>
               </div>
-              <div className="metric-value text-[#067647]">
-                {formatCurrency(stats.totalPaid)}
-              </div>
-              <p className="mt-1 text-xs text-[#067647]">
-                {stats.paidCount} Fully Paid Invoices
-              </p>
-            </div>
-
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <div className="flex items-start justify-between">
-                <span className="metric-label">Outstanding Balance</span>
-                <div className="metric-icon bg-[#FEF3F2] text-[#B42318]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  </svg>
-                </div>
-              </div>
-              <div className="metric-value text-[#B42318]">
-                {formatCurrency(stats.totalOutstanding)}
-              </div>
-              <p className="mt-1 text-xs text-[#B42318]">
-                {stats.outstandingCount} Pending Collections
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Controls Toolbar */}
-          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
             <div className="relative flex-1 min-w-[240px]">
               <input
                 type="text"
@@ -261,22 +229,22 @@ export default function InvoicesPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F1F5F9] p-1 rounded-2xl">
               <button
                 onClick={() => setSelectedStatus("ALL")}
-                className={`tab-btn ${selectedStatus === "ALL" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ALL" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 All ({invoices.length})
               </button>
               <button
                 onClick={() => setSelectedStatus("PAID")}
-                className={`tab-btn ${selectedStatus === "PAID" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "PAID" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Paid ({stats.paidCount})
               </button>
               <button
                 onClick={() => setSelectedStatus("UNPAID")}
-                className={`tab-btn ${selectedStatus === "UNPAID" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "UNPAID" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Unpaid ({stats.outstandingCount})
               </button>
@@ -284,10 +252,10 @@ export default function InvoicesPage() {
           </div>
 
           {/* Main Content Layout */}
-          <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+          <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
             <div>
               {filteredInvoices.length === 0 ? (
-                <div className="card">
+                <div className="py-10 text-center text-sm text-[#667085]">
                   <EmptyState
                     icon={
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -299,7 +267,7 @@ export default function InvoicesPage() {
                   />
                 </div>
               ) : (
-                <div className="card overflow-hidden">
+                <div className="overflow-x-auto">
                   <table className="data-table">
                     <thead>
                       <tr>
@@ -372,37 +340,19 @@ export default function InvoicesPage() {
 
             {/* Sidebar Controls */}
             <div className="flex flex-col gap-4">
-              <div className="card p-5">
-                <h2 className="section-heading mb-4">Financial Shortcuts</h2>
+              <div className="py-2">
+                <h2 className="section-heading mb-3">Financial Shortcuts</h2>
                 <div className="flex flex-col gap-2">
-                  <Link href="/payments/outstanding" className="btn btn-primary btn-sm w-full text-center hover-lift">
-                    ⚠️ View Outstanding Receivables
+                  <Link href="/payments/outstanding" className="btn btn-primary btn-sm w-full text-center">
+                    ⚠️ Outstanding Balances
                   </Link>
-                  <Link href="/payments" className="btn btn-ghost btn-sm w-full text-center hover-lift">
-                    💳 Payment Ledger History
+                  <Link href="/payments" className="btn btn-ghost btn-sm w-full text-center border border-slate-200">
+                    💳 Payment History
                   </Link>
-                  <Link href="/quotations" className="btn btn-ghost btn-sm w-full text-center hover-lift">
-                    📄 Commercial Quotations
+                  <Link href="/quotations" className="btn btn-ghost btn-sm w-full text-center border border-slate-200">
+                    📄 Quotations
                   </Link>
                 </div>
-              </div>
-
-              <div className="card p-5">
-                <span className="meta-label mb-3 block">Billing Summary</span>
-                <dl className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] pb-2">
-                    <dt className="text-[#667085]">Total Invoices</dt>
-                    <dd className="font-bold text-[#0B1220]">{invoices.length}</dd>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] pb-2">
-                    <dt className="text-[#667085]">Fully Settled</dt>
-                    <dd className="font-bold text-[#067647]">{stats.paidCount}</dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-[#667085]">Pending Action</dt>
-                    <dd className="font-bold text-[#B42318]">{stats.outstandingCount}</dd>
-                  </div>
-                </dl>
               </div>
             </div>
           </div>

@@ -30,7 +30,14 @@ const DEFAULT_PROJECT_ID =
  */
 export function getActiveUserId(): string {
   if (typeof window === "undefined") return DEFAULT_USER_ID;
-  return localStorage.getItem("neirah_customer_user_id") ?? DEFAULT_USER_ID;
+  const stored = localStorage.getItem("neirah_customer_user_id");
+  if (!stored) return DEFAULT_USER_ID;
+  // Auto-correct stale legacy demo key ID
+  if (stored === "a1b2c3d4-1234-5678-abcd-ef1234567890") {
+    localStorage.setItem("neirah_customer_user_id", SKYLINE_USER_ID);
+    return SKYLINE_USER_ID;
+  }
+  return stored;
 }
 
 /**
@@ -50,4 +57,17 @@ export function getActiveProjectId(): string {
  */
 export function getAuthHeaders(): { "x-user-id": string } {
   return { "x-user-id": getActiveUserId() };
+}
+
+/**
+ * Returns the base API URL dynamically matching the current hostname.
+ */
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined" && window.location?.hostname) {
+    return `http://${window.location.hostname}:3001`;
+  }
+  return "http://localhost:3001";
 }

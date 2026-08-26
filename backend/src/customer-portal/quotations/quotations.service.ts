@@ -9,36 +9,40 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class QuotationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getCustomerId(userId: string): Promise<string> {
-    const access = await this.prisma.customerPortalAccess.findUnique({
+  private async getPortalContext(
+    userId: string,
+  ): Promise<{ customerId: string; tenantId: string }> {
+    const cleanId = userId?.trim();
+    if (!cleanId) {
+      throw new UnauthorizedException('Customer portal access key is required');
+    }
+
+    const access = await this.prisma.customerPortalAccess.findFirst({
       where: {
-        userId,
+        OR: [
+          { userId: cleanId },
+          { id: cleanId },
+          { customerId: cleanId },
+        ],
       },
-      select: {
-        customerId: true,
-        isActive: true,
-      },
+      select: { customerId: true, tenantId: true, isActive: true },
     });
 
     if (!access || !access.isActive) {
       throw new UnauthorizedException(
-        'Customer portal access is not active',
+        'Invalid or inactive portal access key. Please contact your project manager.',
       );
     }
 
-    return access.customerId;
+    return { customerId: access.customerId, tenantId: access.tenantId };
   }
 
   async getQuotations(userId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     return this.prisma.quotation.findMany({
-      where: {
-        customerId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { customerId, tenantId },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         quotationNumber: true,
@@ -51,24 +55,17 @@ export class QuotationsService {
         status: true,
         documentUrl: true,
         project: {
-          select: {
-            id: true,
-            projectCode: true,
-            name: true,
-          },
+          select: { id: true, projectCode: true, name: true },
         },
       },
     });
   }
 
   async getQuotation(userId: string, quotationId: string) {
-    const customerId = await this.getCustomerId(userId);
+    const { customerId, tenantId } = await this.getPortalContext(userId);
 
     const quotation = await this.prisma.quotation.findFirst({
-      where: {
-        id: quotationId,
-        customerId,
-      },
+      where: { id: quotationId, customerId, tenantId },
       select: {
         id: true,
         quotationNumber: true,
@@ -82,7 +79,6 @@ export class QuotationsService {
         documentUrl: true,
         terms: true,
         notes: true,
-
         customer: {
           select: {
             id: true,
@@ -91,19 +87,11 @@ export class QuotationsService {
             email: true,
           },
         },
-
         project: {
-          select: {
-            id: true,
-            projectCode: true,
-            name: true,
-          },
+          select: { id: true, projectCode: true, name: true },
         },
-
         items: {
-          orderBy: {
-            id: 'asc',
-          },
+          orderBy: { id: 'asc' },
           select: {
             id: true,
             description: true,

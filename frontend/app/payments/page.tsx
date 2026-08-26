@@ -113,30 +113,17 @@ export default function PaymentsPage() {
   return (
     <div className="page-shell animate-fade-in-up">
       {/* Hero Visual Header Banner */}
-      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
-        <img
-          src="/images/project-industrial.png"
-          alt="Payment Transactions"
-          className="h-full w-full object-cover opacity-35"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
-        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
-              Remittance History
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
-              Payment Ledger & Receipts
-            </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Audit verified bank wire transfers, electronic receipts, and settled invoices across all project accounts.
-            </p>
-          </div>
-          <Link href="/payments/outstanding" className="btn btn-primary btn-sm hover-lift shrink-0 shadow-lg">
+      <PageHeader
+        kicker="REMITTANCE HISTORY"
+        title="Payment Ledger & Receipts"
+        subtitle="Audit verified bank wire transfers, electronic receipts, and settled invoices across all project accounts."
+        bgImage="/images/project-villa.png"
+        actions={
+          <Link href="/payments/outstanding" className="btn btn-primary btn-sm shrink-0 shadow-lg py-2 px-3.5 rounded-xl font-bold text-xs">
             ⚠️ Outstanding Balances →
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
         <div className="mb-6">
@@ -147,32 +134,32 @@ export default function PaymentsPage() {
       {!error && (
         <>
           {summary && (
-            <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="metric-card card-hover hover-lift shimmer-card">
-                <span className="metric-label">Total Settled</span>
-                <div className="metric-value text-[#067647]">{formatCurrency(summary.totalPaid)}</div>
-                <p className="mt-1 text-xs text-[#067647]">Verified Transfers</p>
+            <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+              <div className="flex flex-col justify-center">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Total Settled</span>
+                <div className="text-xl sm:text-2xl font-black text-[#067647]">{formatCurrency(summary.totalPaid)}</div>
+                <p className="text-[0.68rem] font-bold text-[#067647]">Verified Transfers</p>
               </div>
-              <div className="metric-card card-hover hover-lift shimmer-card">
-                <span className="metric-label">Total Invoiced</span>
-                <div className="metric-value">{formatCurrency(summary.totalInvoiced)}</div>
-                <p className="mt-1 text-xs text-[#667085]">Full Contract Billing</p>
+              <div className="flex flex-col justify-center pl-4">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Invoiced</span>
+                <div className="text-xl sm:text-2xl font-black text-[#0B1220]">{formatCurrency(summary.totalInvoiced)}</div>
+                <p className="text-[0.68rem] font-bold text-[#667085]">Full Contract Billing</p>
               </div>
-              <div className="metric-card card-hover hover-lift shimmer-card">
-                <span className="metric-label">Outstanding Balance</span>
-                <div className="metric-value text-[#B42318]">{formatCurrency(summary.totalOutstanding)}</div>
-                <p className="mt-1 text-xs text-[#B42318]">Pending Remittance</p>
+              <div className="flex flex-col justify-center pl-4">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#B42318] block mb-1">Outstanding</span>
+                <div className="text-xl sm:text-2xl font-black text-[#B42318]">{formatCurrency(summary.totalOutstanding)}</div>
+                <p className="text-[0.68rem] font-bold text-[#B42318]">Pending Remittance</p>
               </div>
-              <div className="metric-card card-hover hover-lift shimmer-card">
-                <span className="metric-label">Transaction Count</span>
-                <div className="metric-value text-[#2563EB]">{summary.paymentCount}</div>
-                <p className="mt-1 text-xs text-[#2563EB]">Ledger Entries</p>
+              <div className="flex flex-col justify-center pl-4">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#2563EB] block mb-1">Transactions</span>
+                <div className="text-xl sm:text-2xl font-black text-[#2563EB]">{summary.paymentCount}</div>
+                <p className="text-[0.68rem] font-bold text-[#2563EB]">Ledger Entries</p>
               </div>
             </div>
           )}
 
           {/* Controls Toolbar */}
-          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs">
+          <div className="mb-6 border-b border-slate-200 pb-4">
             <div className="relative w-full">
               <input
                 type="text"
@@ -194,7 +181,7 @@ export default function PaymentsPage() {
 
           {/* Payments Table */}
           {filteredPayments.length === 0 ? (
-            <div className="card">
+            <div className="py-10 text-center text-sm text-[#667085]">
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -206,7 +193,7 @@ export default function PaymentsPage() {
               />
             </div>
           ) : (
-            <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
                   <tr>

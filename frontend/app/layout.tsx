@@ -39,12 +39,25 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${inter.variable} ${geistMono.variable}`}
     >
-      <body className="flex min-h-screen flex-col bg-[#F7F9FC] text-[#0B1220] antialiased">
+      <body className="flex min-h-screen bg-[#F7F9FC] text-[#0B1220] antialiased flex-col lg:flex-row relative">
         <Header />
-        <div className="flex-1">{children}</div>
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-10">
+          {/* Global Architectural Blueprint Watermark Background (Matches Design Image) */}
+          <div className="absolute top-0 left-0 right-0 h-[500px] overflow-hidden pointer-events-none -z-10 opacity-35 select-none transition-opacity">
+            <img
+              src="/images/project-highrise.png"
+              alt=""
+              className="w-full h-full object-cover object-top filter contrast-125 brightness-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7F9FC]/30 to-[#F7F9FC]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F7F9FC]/40 via-transparent to-[#F7F7F7]/60" />
+          </div>
+          {children}
+        </main>
       </body>
     </html>
   );

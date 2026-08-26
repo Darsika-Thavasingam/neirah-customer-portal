@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import PageHeader from "../../components/PageHeader";
 import StatusBadge from "../../components/StatusBadge";
 import ProjectSubNav from "../../components/ProjectSubNav";
 import { PageLoading } from "../../components/SkeletonLoader";
@@ -78,7 +79,12 @@ const PROJECT_IMAGES = [
 ];
 
 function getProjectCoverImage(project: ProjectDetails): string {
-  if (project.photos && project.photos.length > 0 && project.photos[0].photoUrl && !project.photos[0].photoUrl.includes("placehold.co")) {
+  if (
+    project.photos &&
+    project.photos.length > 0 &&
+    project.photos[0].photoUrl &&
+    !project.photos[0].photoUrl.includes("placehold.co")
+  ) {
     return project.photos[0].photoUrl;
   }
   const nameLower = project.name.toLowerCase();
@@ -100,37 +106,73 @@ function formatDate(v: string | null | undefined) {
   });
 }
 
-function HubCard({
-  href,
-  title,
-  description,
-  icon,
-  count,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  count?: number;
-}) {
+/** SVG Circular Progress Ring */
+function ProgressRing({ progress, size = 72, strokeWidth = 7 }: { progress: number; size?: number; strokeWidth?: number }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
   return (
-    <Link href={href} className="card card-hover hover-lift shimmer-card p-5 transition flex flex-col justify-between group">
-      <div className="flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EAF2FF] text-[#2563EB] transition group-hover:bg-[#2563EB] group-hover:text-white">
-          {icon}
-        </div>
-        {count !== undefined && (
-          <span className="text-xl font-bold text-[#0B1220]">{count}</span>
-        )}
+    <div className="relative flex items-center justify-center shrink-0">
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="rgba(255, 255, 255, 0.2)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#2563EB"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute text-center leading-none">
+        <span className="text-sm font-black text-white">{progress}%</span>
       </div>
-      <div className="mt-4">
-        <p className="text-sm font-bold text-[#0B1220]">{title}</p>
-        <p className="mt-1 text-xs text-[#667085]">{description}</p>
-        <p className="mt-2 text-xs font-semibold text-[#2563EB] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-          Explore Section →
-        </p>
-      </div>
-    </Link>
+    </div>
+  );
+}
+
+/** Slim Underline-Tab Sub-Nav with inline update count */
+function SimpleSubNav({ project, updateCount }: { project: ProjectDetails; updateCount: number }) {
+  const base = `/projects/${project.id}`;
+  const tabs = [
+    { href: `${base}/progress`, label: "Progress" },
+    { href: `${base}/milestones`, label: "Milestones" },
+    { href: `${base}/updates`, label: `Updates${updateCount > 0 ? ` (${updateCount})` : ""}` },
+    { href: `${base}/documents`, label: "Documents" },
+    { href: `${base}/photos`, label: "Photos" },
+    { href: `${base}/quotations`, label: "Quotations" },
+    { href: `${base}/contracts`, label: "Contracts" },
+    { href: `${base}/payments`, label: "Payments" },
+    { href: `${base}/invoices`, label: "Invoices" },
+  ];
+
+  return (
+    <nav className="mb-6 border-b border-[rgba(15,23,42,0.08)]">
+      <ul className="flex flex-wrap gap-6 text-xs font-semibold">
+        {tabs.map((t) => (
+          <li key={t.href}>
+            <Link
+              href={t.href}
+              className="inline-block pb-3 text-[#667085] hover:text-[#2563EB] border-b-2 border-transparent hover:border-[#2563EB] transition-colors"
+            >
+              {t.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -142,56 +184,55 @@ export default function ProjectDetailsPage() {
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatesError, setUpdatesError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
-
     async function fetchProjectData() {
       try {
         const userId = getActiveUserId();
         const headers: Record<string, string> = userId ? { "x-user-id": userId } : {};
+        
+        const projectResponse = await fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers }).catch(() => null);
+        
+        if (projectResponse) {
+          if (!projectResponse.ok) {
+            if (!isMounted) return;
+            setError("Access Denied: You do not have permission to access this project or it does not exist.");
+            setProject(null);
+            setLoading(false);
+            return;
+          }
+          const projectData = await projectResponse.json();
+          const updatesResponse = await fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`, { headers }).catch(() => null);
+          const updatesData = updatesResponse && updatesResponse.ok ? await updatesResponse.json() : [];
 
-        const [projectResponse, updatesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers }).catch(() => null),
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}/updates`, { headers }).catch(() => null),
-        ]);
-
-        let projectData: ProjectDetails | null = null;
-        if (projectResponse && projectResponse.ok) {
-          projectData = await projectResponse.json();
+          if (!isMounted) return;
+          setProject(projectData);
+          setUpdates(updatesData);
+        } else {
+          // Backend server offline fallback
+          const demo = getDemoProjectById(projectId);
+          if (!isMounted) return;
+          setProject(demo);
         }
-
-        if (!projectData) {
-          // Fall back to demo project data so no project card ever fails to load
-          projectData = getDemoProjectById(projectId);
-        }
-
-        let updatesData: ProjectUpdate[] = [];
-        if (updatesResponse && updatesResponse.ok) {
-          updatesData = await updatesResponse.json();
-        }
-
-        if (!isMounted) return;
-        setProject(projectData);
-        setUpdates(updatesData);
       } catch (err) {
         console.error(err);
         if (!isMounted) return;
-        setProject(getDemoProjectById(projectId));
+        setError("Access Denied: Unable to fetch project details.");
       } finally {
         if (isMounted) setLoading(false);
       }
     }
-
     fetchProjectData();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [projectId]);
 
   if (loading) {
     return (
       <div className="page-shell">
-        <PageLoading message="Loading project command center…" />
+        <PageLoading message="Loading project details…" />
       </div>
     );
   }
@@ -203,254 +244,131 @@ export default function ProjectDetailsPage() {
         <ErrorState
           title="Unable to load project"
           message={error || "Project not found."}
-          backHref="/projects"
-          backLabel="Return to Portfolio"
+          backHref="/"
+          backLabel="Return to Dashboard"
         />
       </div>
     );
   }
 
-  const completedMilestones = project.milestones.filter(
-    (m) => m.status.toUpperCase() === "COMPLETED"
-  ).length;
-
+  const completedMilestones = project.milestones.filter((m) => m.status.toUpperCase() === "COMPLETED").length;
   const coverImage = getProjectCoverImage(project);
 
   return (
     <div className="page-shell animate-fade-in-up">
-      {/* Back to Portfolio Header */}
-      <Link href="/" className="back-link mb-5 inline-flex">
-        ← Back to Dashboard
-      </Link>
+      <PageHeader
+        kicker={`PROJECT ${project.projectCode} · ${project.currentPhase || "ACTIVE"}`}
+        title={project.name}
+        subtitle={`📍 ${project.location || "Site Development"} · Overall Construction Progress: ${project.progress}% (${completedMilestones}/${project.milestones.length} milestones completed)`}
+        bgImage={coverImage}
+        className="mb-0"
+        actions={
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl">
+              {project.status.replace("_", " ")}
+            </span>
+            <Link href="/projects" className="btn btn-sm btn-ghost text-xs text-white hover:bg-white/10">
+              ← All Projects
+            </Link>
+          </div>
+        }
+      />
 
-      {/* Project Sub-Nav Header */}
+      {/* Unified Sub Navigation */}
       <ProjectSubNav project={project} />
 
-      {/* Hero Cover Banner with Construction Image & High-Visual Overlay */}
-      <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
-        <img
-          src={coverImage}
-          alt={project.name}
-          className="h-full w-full object-cover opacity-85"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/60 to-transparent" />
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-          <StatusBadge status={project.status} />
-          <span className="glass-badge rounded-xl px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
-            {project.projectCode}
-          </span>
-        </div>
-        <div className="absolute bottom-6 left-6 right-6 text-white">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
-            {project.currentPhase || "Structural Execution Phase"}
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2 drop-shadow-md">
-            {project.name}
-          </h1>
-          {project.location && (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-200">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-              {project.location}
-            </p>
+      {/* Inline Project Details Strip (Plain text & metadata, no cards) */}
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-6 border-b border-[rgba(15,23,42,0.08)] pb-5 text-xs text-[#667085]">
+        <div>
+          <span className="font-bold text-[#0B1220]">Project Manager:</span>{" "}
+          <span>{project.projectManagerName ?? "Unassigned"}</span>
+          {project.projectManagerContact && (
+            <span className="ml-1 text-[#98A2B3]">({project.projectManagerContact})</span>
           )}
         </div>
-      </div>
 
-      {/* KPI Metric Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="metric-card">
-          <span className="metric-label">Execution Status</span>
-          <div className="mt-1.5"><StatusBadge status={project.status} /></div>
+        <div>
+          <span className="font-bold text-[#0B1220]">Client:</span>{" "}
+          <span>{project.customer?.companyName ?? "Direct Client"}</span>
+          {project.customer?.contactName && (
+            <span className="ml-1 text-[#98A2B3]">({project.customer.contactName})</span>
+          )}
         </div>
 
-        <div className="metric-card">
-          <span className="metric-label">Active Phase</span>
-          <p className="metric-value text-base font-bold text-[#0B1220] mt-1">
-            {project.currentPhase ?? "In Progress"}
-          </p>
-        </div>
-
-        <div className="metric-card">
-          <span className="metric-label">Completion Progress</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="metric-value text-xl font-bold text-[#2563EB]">{project.progress}%</span>
-          </div>
-          <div className="progress-track mt-2">
-            <div className="progress-fill" style={{ width: `${project.progress}%` }} />
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <span className="metric-label">Project Manager</span>
-          <p className="metric-value text-base font-bold text-[#0B1220] mt-1">
-            {project.projectManagerName ?? "Unassigned"}
-          </p>
+        <div>
+          <span className="font-bold text-[#0B1220]">Last Update:</span>{" "}
+          <span>{formatDate(project.updatedAt)}</span>
         </div>
       </div>
 
-      {/* Navigation Hub Grid */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <HubCard
-          href={`/projects/${project.id}/progress`}
-          title="Progress & S-Curve"
-          description="Track site progress charts and physical delivery milestones"
-          count={project.progress}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-          }
-        />
-        <HubCard
-          href={`/projects/${project.id}/milestones`}
-          title="Delivery Milestones"
-          description="Contractual target dates and completion statuses"
-          count={project.milestones.length}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-          }
-        />
-        <HubCard
-          href={`/projects/${project.id}/updates`}
-          title="Site Updates"
-          description="Engineering logs, notices, and site announcements"
-          count={updates.length}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          }
-        />
-        <HubCard
-          href={`/projects/${project.id}/documents`}
-          title="Project Documents"
-          description="Blueprints, structural drawings, and compliance files"
-          count={project.documents?.length ?? 0}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-            </svg>
-          }
-        />
-        <HubCard
-          href={`/projects/${project.id}/photos`}
-          title="Site Photo Gallery"
-          description="High-resolution site inspection and progress photos"
-          count={project.photos?.length ?? 0}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-            </svg>
-          }
-        />
-        <div className="card p-5 flex flex-col justify-between">
-          <div>
-            <span className="meta-label block mb-2">Commercial Navigation</span>
-            <p className="text-xs text-[#667085] mb-3">Quick access to project contracts & financial statements.</p>
-            <div className="flex flex-col gap-2">
-              <Link href={`/projects/${project.id}/quotations`} className="text-xs font-bold text-[#2563EB] hover:underline flex items-center justify-between">
-                <span>📄 Commercial Quotations</span> <span>→</span>
-              </Link>
-              <Link href={`/projects/${project.id}/contracts`} className="text-xs font-bold text-[#2563EB] hover:underline flex items-center justify-between">
-                <span>📜 Executed Contracts</span> <span>→</span>
-              </Link>
-              <Link href={`/projects/${project.id}/invoices`} className="text-xs font-bold text-[#2563EB] hover:underline flex items-center justify-between">
-                <span>💳 Billing & Invoices</span> <span>→</span>
-              </Link>
-              <Link href={`/projects/${project.id}/payments`} className="text-xs font-bold text-[#2563EB] hover:underline flex items-center justify-between">
-                <span>💵 Payment Status</span> <span>→</span>
-              </Link>
+      {/* Milestone Timeline — Horizontal Line with Graphical Nodes (No Cards) */}
+      {project.milestones.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B1220]">Milestone Progress Timeline</h2>
+            <Link href={`/projects/${project.id}/milestones`} className="text-xs font-bold text-[#2563EB] hover:underline">
+              View all milestones →
+            </Link>
+          </div>
+
+          <div className="relative pt-2">
+            {/* Connecting Timeline Bar */}
+            <div className="absolute top-5 left-6 right-6 h-1 bg-[#E9EDF4] -z-0" />
+
+            <div className="flex items-start justify-between gap-2 overflow-x-auto pb-4 relative z-10">
+              {project.milestones.slice(0, 5).map((m) => {
+                const isDone = m.status.toUpperCase() === "COMPLETED";
+                const isActive = m.status.toUpperCase() === "IN_PROGRESS" || m.status.toUpperCase() === "ACTIVE";
+                const isDelayed = m.status.toUpperCase() === "DELAYED";
+
+                const dotBg = isDone ? "#10B981" : isActive ? "#2563EB" : isDelayed ? "#EF4444" : "#98A2B3";
+                const statusLabel = isDone ? "Done" : isActive ? "Active" : isDelayed ? "Delayed" : "Upcoming";
+
+                return (
+                  <div key={m.id} className="flex flex-col items-center text-center min-w-[110px] flex-1 px-1">
+                    {/* Node Dot */}
+                    <div
+                      className="w-7 h-7 rounded-full border-2 border-white shadow-sm flex items-center justify-center mb-2"
+                      style={{ background: dotBg }}
+                    >
+                      {isDone ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : isActive ? (
+                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                      ) : (
+                        <div className="w-1.5 h-1.5 bg-white/70 rounded-full" />
+                      )}
+                    </div>
+
+                    <span className="text-[0.7rem] font-bold text-[#0B1220] line-clamp-1" title={m.name}>
+                      {m.name}
+                    </span>
+
+                    {/* Inline Progress Indicator */}
+                    <div className="mt-1 w-full max-w-[80px] h-1 bg-[#E9EDF4] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${m.progress}%`, background: dotBg }} />
+                    </div>
+
+                    <span className="text-[0.62rem] font-medium mt-1 text-[#667085]">
+                      {statusLabel} • {m.progress}%
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Two-Column Details Section */}
-      <div className="grid gap-6 lg:grid-cols-2 mb-8">
-        <div className="card p-6">
-          <h2 className="section-heading mb-5">Project Specifications</h2>
-          <dl className="space-y-3.5 text-xs">
-            {[
-              { label: "PM Contact Direct", value: project.projectManagerContact ?? "Not provided" },
-              { label: "Client Organization", value: project.customer?.companyName ?? "Not provided" },
-              { label: "Client Representative", value: project.customer?.contactName ?? "Not provided" },
-              { label: "Milestone Completion Rate", value: `${completedMilestones} of ${project.milestones.length} Delivered` },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between gap-4 border-b border-[rgba(15,23,42,0.06)] pb-3 last:border-0 last:pb-0">
-                <dt className="meta-label shrink-0">{label}</dt>
-                <dd className="text-right text-xs font-bold text-[#0B1220]">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        <div className="card p-6">
-          <h2 className="section-heading mb-4">Latest Engineering Update</h2>
-          <p className="text-xs leading-relaxed text-[#475467] bg-[#F8FAFC] p-4 rounded-xl border border-[rgba(15,23,42,0.06)] italic">
-            "{project.recentUpdate ?? "No recent update posted for this project."}"
+      {/* Recent Engineering Update Section (Clean quote line, no heavy boxed cards) */}
+      {project.recentUpdate && (
+        <div className="border-t border-[rgba(15,23,42,0.08)] pt-6">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B1220] mb-2">Latest Site Activity</h2>
+          <p className="text-xs leading-relaxed text-[#475467] pl-3 border-l-2 border-[#2563EB] italic">
+            "{project.recentUpdate}"
           </p>
-          <p className="mt-4 text-xs font-medium text-[#667085]">
-            Last updated: {formatDate(project.updatedAt)}
-          </p>
-        </div>
-      </div>
-
-      {/* Milestones Summary */}
-      {project.milestones.length > 0 && (
-        <div className="card p-6 mb-8">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="section-heading">Active Target Milestones</h2>
-            <Link
-              href={`/projects/${project.id}/milestones`}
-              className="text-xs font-bold text-[#2563EB] hover:underline"
-            >
-              View Full Schedule →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {project.milestones.slice(0, 3).map((milestone) => (
-              <div key={milestone.id} className="rounded-xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-[#0B1220]">
-                      {milestone.name}
-                    </h3>
-                    {milestone.description && (
-                      <p className="mt-0.5 text-xs text-[#475467]">
-                        {milestone.description}
-                      </p>
-                    )}
-                  </div>
-                  <StatusBadge status={milestone.status} />
-                </div>
-                <div className="mt-3">
-                  <div className="mb-1.5 flex justify-between text-xs font-semibold text-[#667085]">
-                    <span>Progress</span>
-                    <span className="text-[#0B1220]">{milestone.progress}%</span>
-                  </div>
-                  <div className="progress-track">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${milestone.progress}%`,
-                        background:
-                          milestone.status.toUpperCase() === "COMPLETED"
-                            ? "var(--success)"
-                            : "var(--primary)",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>

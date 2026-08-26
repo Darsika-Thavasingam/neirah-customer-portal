@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
-import PageHeader from "../../components/PageHeader";
 import { PageLoading } from "../../components/SkeletonLoader";
 import { ErrorState } from "../../components/EmptyState";
 import { getActiveUserId } from "../../lib/auth";
@@ -12,11 +11,11 @@ import { getActiveUserId } from "../../lib/auth";
 type InvoiceItem = {
   id: string;
   description: string;
-  quantity: number | string;
-  rate: number | string;
-  tax: number | string;
-  discount: number | string;
-  total: number | string;
+  quantity: number;
+  rate: number;
+  tax?: number;
+  discount?: number;
+  total: number;
 };
 
 type InvoicePayment = {
@@ -24,327 +23,231 @@ type InvoicePayment = {
   paymentReference: string;
   paymentDate: string;
   paymentMethod: string;
-  amount: number | string;
+  amount: number;
   status: string;
   receiptReference?: string | null;
 };
 
-type InvoiceDetails = {
+type InvoiceDetail = {
   id: string;
   invoiceNumber: string;
   invoiceDate: string;
   dueDate: string;
   contractReference?: string | null;
-  subtotal: number | string;
-  tax: number | string;
-  discount: number | string;
-  total: number | string;
-  paidAmount: number | string;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paidAmount: number;
   status: string;
   documentUrl?: string | null;
-  project?: {
-    id: string;
-    projectCode: string;
-    name: string;
-  } | null;
-  customer?: {
-    id: string;
-    companyName?: string | null;
-    contactName?: string | null;
-    email?: string | null;
-  } | null;
-  items?: InvoiceItem[];
-  payments?: InvoicePayment[];
+  customer: { id: string; companyName: string; contactName: string; email: string };
+  project: { id: string; projectCode: string; name: string };
+  items: InvoiceItem[];
+  payments: InvoicePayment[];
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function formatCurrency(value: number | string | null | undefined) {
-  const raw = Number(value ?? 0);
-  return new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(raw) ? raw : 0);
+function fmt(v: string | null | undefined) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+function curr(n: number | null | undefined) {
+  return new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 2 }).format(Number(n) || 0);
 }
 
 export default function InvoiceDetailPage() {
   const params = useParams();
   const invoiceId = params.id as string;
-  const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
+
+  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadInvoice = async () => {
+    async function fetch_() {
       try {
-        setLoading(true);
-        setError("");
-
-        if (!getActiveUserId()) {
-          throw new Error("Customer portal user is not configured.");
-        }
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/customer-portal/invoices/${invoiceId}`,
-          {
-            headers: {
-              "x-user-id": getActiveUserId(),
-            },
-            cache: "no-store",
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Invoice not found or you do not have access.");
-          }
-          throw new Error("Failed to load invoice details.");
-        }
-
-        const data: InvoiceDetails = await response.json();
-        setInvoice(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Unable to load invoice details."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (invoiceId) {
-      loadInvoice();
+        const uid = getActiveUserId();
+        if (!uid) throw new Error("No user configured.");
+        const res = await fetch(`${API_BASE_URL}/api/v1/customer-portal/invoices/${invoiceId}`, {
+          headers: { "x-user-id": uid }, cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Invoice not found or access denied.");
+        setInvoice(await res.json());
+      } catch (e: any) { setError(e.message || "Failed to load invoice."); }
+      finally { setLoading(false); }
     }
+    if (invoiceId) fetch_();
   }, [invoiceId]);
 
-  if (loading) {
-    return (
-      <div className="page-shell">
-        <Link href="/invoices" className="back-link mb-5 inline-flex">
-          ← Back to Invoices
-        </Link>
-        <PageHeader kicker="Invoice Details" title="Loading..." />
-        <PageLoading message="Loading invoice details…" />
-      </div>
-    );
-  }
+  if (loading) return <div className="page-shell max-w-4xl"><PageLoading message="Loading invoice details…" /></div>;
+  if (error || !invoice) return (
+    <div className="page-shell max-w-4xl">
+      <Link href="/invoices" className="back-link mb-6 inline-flex">← Back to Invoices</Link>
+      <ErrorState title="Invoice Not Found" message={error} backHref="/invoices" backLabel="Back to Invoices" />
+    </div>
+  );
 
-  if (error || !invoice) {
-    return (
-      <div className="page-shell">
-        <Link href="/invoices" className="back-link mb-5 inline-flex">
-          ← Back to Invoices
-        </Link>
-        <ErrorState
-          title="Unable to load invoice"
-          message={error || "Invoice not found."}
-          backHref="/invoices"
-          backLabel="Back to Invoices"
-        />
-      </div>
-    );
-  }
-
-  const balance = Math.max(Number(invoice.total ?? 0) - Number(invoice.paidAmount ?? 0), 0);
+  const balance = Math.max(Number(invoice.total) - Number(invoice.paidAmount), 0);
+  const isOverdue = invoice.status !== "PAID" && new Date(invoice.dueDate) < new Date();
 
   return (
-    <div className="page-shell">
-      <Link href="/invoices" className="back-link mb-5 inline-flex">
-        ← Back to Invoices
-      </Link>
+    <div className="page-shell max-w-4xl animate-fade-in-up">
+      <Link href="/invoices" className="back-link mb-6 inline-flex">← Back to Invoices</Link>
 
-      <PageHeader
-        kicker="Commercial"
-        title={invoice.invoiceNumber}
-        subtitle={
-          invoice.project
-            ? `${invoice.project.name} · ${invoice.project.projectCode}`
-            : undefined
-        }
-        actions={<StatusBadge status={invoice.status} />}
-      />
+      {/* Header Banner */}
+      <div className="rounded-2xl bg-[#0B1220] p-6 mb-6 text-white relative overflow-hidden shadow-lg">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem]" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-[0.65rem] font-black uppercase tracking-wider text-cyan-300 mb-1">Invoice Detail</p>
+            <h1 className="text-2xl font-black text-white">{invoice.invoiceNumber}</h1>
+            <p className="text-xs text-slate-300 mt-1">{invoice.project.name} · {invoice.project.projectCode}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <StatusBadge status={invoice.status} />
+            {isOverdue && (
+              <span className="text-[0.65rem] font-black bg-red-500/20 border border-red-400/30 text-red-300 px-2 py-0.5 rounded-md">
+                OVERDUE
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        {/* Invoice Overview */}
-        <section className="card p-6">
-          <h2 className="section-heading mb-5">Invoice Overview</h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <p className="meta-label">Invoice Number</p>
-              <p className="mt-1 font-bold text-[#0B1220]">{invoice.invoiceNumber}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        {/* Invoice Info */}
+        <div className="card p-5 col-span-2">
+          <h2 className="section-heading mb-4">Invoice Information</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {[
+              { label: "Invoice Date", value: fmt(invoice.invoiceDate) },
+              { label: "Due Date", value: fmt(invoice.dueDate) },
+              { label: "Contract Ref", value: invoice.contractReference || "—" },
+              { label: "Customer", value: invoice.customer.companyName },
+              { label: "Contact", value: invoice.customer.contactName },
+              { label: "Email", value: invoice.customer.email },
+            ].map(f => (
+              <div key={f.label}>
+                <p className="text-[0.65rem] font-black uppercase tracking-wider text-[#98A2B3]">{f.label}</p>
+                <p className="font-semibold text-[#0B1220] mt-0.5">{f.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="card p-5 flex flex-col justify-between">
+          <h2 className="section-heading mb-4">Payment Summary</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-[#667085]">Subtotal</span>
+              <span className="font-bold">{curr(invoice.subtotal)}</span>
             </div>
-            {invoice.project && (
-              <div>
-                <p className="meta-label">Project</p>
-                <p className="mt-1 font-semibold text-[#2563EB] hover:underline">
-                  <Link href={`/projects/${invoice.project.id}`}>
-                    {invoice.project.name}
-                  </Link>
-                </p>
+            {Number(invoice.tax) > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-[#667085]">Tax</span>
+                <span className="font-bold">{curr(invoice.tax)}</span>
               </div>
             )}
-            <div>
-              <p className="meta-label">Contract Reference</p>
-              <p className="mt-1 font-semibold text-[#0B1220]">{invoice.contractReference || "—"}</p>
+            {Number(invoice.discount) > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-[#667085]">Discount</span>
+                <span className="font-bold text-green-600">−{curr(invoice.discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm border-t pt-3 border-slate-100">
+              <span className="font-black text-[#0B1220]">Total</span>
+              <span className="font-black text-[#0B1220]">{curr(invoice.total)}</span>
             </div>
-            <div>
-              <p className="meta-label">Invoice Date</p>
-              <p className="mt-1 font-semibold text-[#0B1220]">{formatDate(invoice.invoiceDate)}</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#067647]">Paid</span>
+              <span className="font-bold text-[#067647]">{curr(invoice.paidAmount)}</span>
             </div>
-            <div>
-              <p className="meta-label">Due Date</p>
-              <p className="mt-1 font-semibold text-[#0B1220]">{formatDate(invoice.dueDate)}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Payment Summary */}
-        <section className="card p-6">
-          <h2 className="section-heading mb-5">Payment Summary</h2>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
-              <span className="text-[#667085]">Subtotal</span>
-              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.subtotal)}</span>
-            </div>
-            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
-              <span className="text-[#667085]">Tax</span>
-              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.tax)}</span>
-            </div>
-            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
-              <span className="text-[#667085]">Discount</span>
-              <span className="font-semibold text-[#0B1220]">{formatCurrency(invoice.discount)}</span>
-            </div>
-            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
-              <span className="font-bold text-[#0B1220]">Total</span>
-              <span className="font-black text-[#0B1220]">{formatCurrency(invoice.total)}</span>
-            </div>
-            <div className="flex justify-between border-b border-[rgba(15,23,42,0.06)] pb-2.5">
-              <span className="text-[#667085]">Paid Amount</span>
-              <span className="font-bold text-[#067647]">{formatCurrency(invoice.paidAmount)}</span>
-            </div>
-            <div className="flex justify-between pt-2">
-              <span className="font-bold text-[#0B1220]">Outstanding Balance</span>
-              <span className="text-lg font-black text-[#B42318]">{formatCurrency(balance)}</span>
+            <div className={`flex justify-between text-sm rounded-xl px-3.5 py-2.5 ${balance > 0 ? "bg-red-50 text-[#B42318]" : "bg-green-50 text-[#067647]"}`}>
+              <span className="font-black">Balance Due</span>
+              <span className="font-black">{curr(balance)}</span>
             </div>
           </div>
-        </section>
 
-        {/* Line Items */}
-        {invoice.items && invoice.items.length > 0 && (
-          <section className="card overflow-hidden md:col-span-2">
-            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-              <h2 className="section-heading">Line Items</h2>
-              <span className="text-xs text-[#667085] md:hidden">Swipe table to view all columns</span>
+          {/* Progress */}
+          <div className="mt-4">
+            <div className="flex justify-between text-[0.65rem] mb-1">
+              <span className="text-[#667085]">Payment Progress</span>
+              <span className="font-black text-[#0B1220]">
+                {invoice.total > 0 ? Math.round((Number(invoice.paidAmount) / Number(invoice.total)) * 100) : 0}%
+              </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Rate</th>
-                    <th>Tax</th>
-                    <th>Discount</th>
-                    <th className="text-right">Total</th>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-[#067647] rounded-full" style={{ width: `${invoice.total > 0 ? Math.min(Math.round((Number(invoice.paidAmount) / Number(invoice.total)) * 100), 100) : 0}%` }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Line Items */}
+      {invoice.items && invoice.items.length > 0 && (
+        <div className="card p-5 mb-5">
+          <h2 className="section-heading mb-4">Line Items</h2>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th className="text-right">Qty</th>
+                  <th className="text-right">Rate (LKR)</th>
+                  <th className="text-right">Tax</th>
+                  <th className="text-right">Discount</th>
+                  <th className="text-right">Total (LKR)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map(item => (
+                  <tr key={item.id}>
+                    <td className="font-medium">{item.description}</td>
+                    <td className="text-right">{item.quantity}</td>
+                    <td className="text-right">{Number(item.rate).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
+                    <td className="text-right">{Number(item.tax || 0).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
+                    <td className="text-right">{Number(item.discount || 0).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
+                    <td className="text-right font-bold">{Number(item.total).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {invoice.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="font-bold text-[#0B1220]">{item.description}</td>
-                      <td className="text-[#667085]">{item.quantity}</td>
-                      <td>{formatCurrency(item.rate)}</td>
-                      <td>{formatCurrency(item.tax)}</td>
-                      <td>{formatCurrency(item.discount)}</td>
-                      <td className="text-right font-bold text-[#0B1220]">{formatCurrency(item.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-        {/* Payment History */}
-        {invoice.payments && invoice.payments.length > 0 && (
-          <section className="card overflow-hidden md:col-span-2">
-            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-              <h2 className="section-heading">Payments Applied</h2>
-              <span className="text-xs text-[#667085] md:hidden">Swipe table to view all columns</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Reference</th>
-                    <th>Date</th>
-                    <th>Method</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Receipt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.payments.map((payment) => (
-                    <tr key={payment.id}>
-                      <td className="font-bold text-[#0B1220]">{payment.paymentReference}</td>
-                      <td className="text-[#667085]">{formatDate(payment.paymentDate)}</td>
-                      <td>{payment.paymentMethod}</td>
-                      <td className="font-bold text-[#067647]">{formatCurrency(payment.amount)}</td>
-                      <td>
-                        <StatusBadge status={payment.status} />
-                      </td>
-                      <td className="font-mono text-xs text-[#667085]">{payment.receiptReference || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+      {/* Payment History */}
+      {invoice.payments && invoice.payments.length > 0 && (
+        <div className="card p-5 mb-5">
+          <h2 className="section-heading mb-4">Payment History</h2>
+          <div className="space-y-3">
+            {invoice.payments.map(p => (
+              <div key={p.id} className="flex items-center justify-between rounded-2xl bg-[#F8FAFC] p-4">
+                <div>
+                  <p className="text-sm font-bold text-[#0B1220]">{p.paymentReference}</p>
+                  <p className="text-xs text-[#667085] mt-0.5">{p.paymentMethod} · {fmt(p.paymentDate)}</p>
+                  {p.receiptReference && <p className="text-xs text-[#98A2B3]">Receipt: {p.receiptReference}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-[#067647]">{curr(p.amount)}</p>
+                  <StatusBadge status={p.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-        {/* Invoice Document / PDF Download */}
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Link href="/invoices" className="btn btn-ghost btn-sm">← Back to Invoices</Link>
         {invoice.documentUrl && (
-          <section className="card p-6 md:col-span-2">
-            <h2 className="section-heading mb-3">Invoice PDF Document</h2>
-            <p className="text-sm text-[#667085]">
-              You can view or download the certified copy of this invoice document.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href={invoice.documentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-                View Invoice PDF
-              </a>
-              <a
-                href={invoice.documentUrl}
-                download
-                className="btn btn-ghost"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Document
-              </a>
-            </div>
-          </section>
+          <a href={invoice.documentUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm">
+            📥 Download Invoice PDF
+          </a>
         )}
       </div>
     </div>

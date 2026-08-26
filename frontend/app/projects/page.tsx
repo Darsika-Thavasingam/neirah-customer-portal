@@ -134,8 +134,12 @@ export default function MyProjectsPage() {
 
       if (selectedStatus !== "ALL") {
         const norm = p.status.toUpperCase();
-        if (selectedStatus === "IN_PROGRESS" && norm !== "IN_PROGRESS" && norm !== "ACTIVE") return false;
-        if (selectedStatus === "COMPLETED" && norm !== "COMPLETED") return false;
+        if (selectedStatus === "IN_PROGRESS" && ![
+          "IN_PROGRESS","ACTIVE","ON_HOLD","HANDOVER"
+        ].includes(norm)) return false;
+        if (selectedStatus === "COMPLETED" && ![
+          "COMPLETED","CLOSED"
+        ].includes(norm)) return false;
         if (selectedStatus === "PLANNING" && norm !== "PLANNING" && norm !== "UPCOMING") return false;
       }
       return true;
@@ -157,6 +161,7 @@ export default function MyProjectsPage() {
         kicker="Projects Hub"
         title="Construction Projects"
         subtitle="Comprehensive management, schedules, and active delivery progress across all your construction developments."
+        bgImage="/images/project-facade.png"
       />
 
       {error && (
@@ -167,32 +172,24 @@ export default function MyProjectsPage() {
 
       {!error && (
         <>
-          {/* Top KPI Metrics Bar */}
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="metric-card">
-              <span className="metric-label">Total Projects</span>
-              <div className="metric-value">{stats.total}</div>
-              <p className="mt-1 text-xs text-[#667085]">Assigned Contracts</p>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">In Progress</span>
-              <div className="metric-value text-[#067647]">{stats.inProgress}</div>
-              <p className="mt-1 text-xs text-[#067647]">Under Construction</p>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Completed</span>
-              <div className="metric-value text-[#2563EB]">{stats.completed}</div>
-              <p className="mt-1 text-xs text-[#2563EB]">Delivered Facilities</p>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Average Completion</span>
-              <div className="metric-value">{stats.avgProgress}%</div>
-              <p className="mt-1 text-xs text-[#667085]">Portfolio Health</p>
-            </div>
+          {/* Borderless horizontal stats bar */}
+          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+            {[
+              { label: "My Projects", value: String(stats.total), sub: "Assigned contracts", accent: "#2563EB" },
+              { label: "Under Construction", value: String(stats.inProgress), sub: "Currently active", accent: "#10B981" },
+              { label: "Completed", value: String(stats.completed), sub: "Delivered facilities", accent: "#7C3AED" },
+              { label: "Avg. Progress", value: `${stats.avgProgress}%`, sub: "Portfolio health", accent: "#F59E0B" },
+            ].map((s, idx) => (
+              <div key={s.label} className={`flex flex-col justify-center ${idx !== 0 ? "pl-4" : ""}`}>
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">{s.label}</span>
+                <span className="text-2xl sm:text-3xl font-black tracking-tight my-1 block" style={{ color: s.accent }}>{s.value}</span>
+                <span className="text-[0.68rem] font-semibold text-[#667085]">{s.sub}</span>
+              </div>
+            ))}
           </div>
 
           {/* Controls Toolbar */}
-          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-200 pb-4">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[240px]">
               <input
@@ -213,39 +210,39 @@ export default function MyProjectsPage() {
             </div>
 
             {/* Status Filter Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F1F5F9] rounded-2xl p-1">
               <button
                 onClick={() => setSelectedStatus("ALL")}
-                className={`tab-btn ${selectedStatus === "ALL" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ALL" ? "bg-[#2563EB] text-white" : "text-[#667085] hover:text-[#0B1220]"}`}
               >
                 All ({stats.total})
               </button>
               <button
                 onClick={() => setSelectedStatus("IN_PROGRESS")}
-                className={`tab-btn ${selectedStatus === "IN_PROGRESS" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "IN_PROGRESS" ? "bg-[#2563EB] text-white" : "text-[#667085] hover:text-[#0B1220]"}`}
               >
                 In Progress ({stats.inProgress})
               </button>
               <button
                 onClick={() => setSelectedStatus("COMPLETED")}
-                className={`tab-btn ${selectedStatus === "COMPLETED" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "COMPLETED" ? "bg-[#2563EB] text-white" : "text-[#667085] hover:text-[#0B1220]"}`}
               >
                 Completed ({stats.completed})
               </button>
               <button
                 onClick={() => setSelectedStatus("PLANNING")}
-                className={`tab-btn ${selectedStatus === "PLANNING" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "PLANNING" ? "bg-[#2563EB] text-white" : "text-[#667085] hover:text-[#0B1220]"}`}
               >
                 Planning ({stats.planning})
               </button>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 rounded-lg border border-[rgba(15,23,42,0.1)] p-0.5 bg-[#F8FAFC]">
+            <div className="flex items-center gap-1 rounded-2xl p-1 bg-[#F1F5F9]">
               <button
                 onClick={() => setViewMode("GRID")}
-                className={`rounded-md p-1.5 text-xs font-semibold ${
-                  viewMode === "GRID" ? "bg-white text-[#2563EB] shadow-xs" : "text-[#667085]"
+                className={`rounded-xl p-2 text-xs font-bold transition-all ${
+                  viewMode === "GRID" ? "bg-white text-[#2563EB]" : "text-[#667085]"
                 }`}
                 title="Grid Visual View"
               >
@@ -256,8 +253,8 @@ export default function MyProjectsPage() {
               </button>
               <button
                 onClick={() => setViewMode("LIST")}
-                className={`rounded-md p-1.5 text-xs font-semibold ${
-                  viewMode === "LIST" ? "bg-white text-[#2563EB] shadow-xs" : "text-[#667085]"
+                className={`rounded-xl p-2 text-xs font-bold transition-all ${
+                  viewMode === "LIST" ? "bg-white text-[#2563EB]" : "text-[#667085]"
                 }`}
                 title="Compact Table View"
               >
@@ -271,7 +268,7 @@ export default function MyProjectsPage() {
 
           {/* Project Content View */}
           {filteredProjects.length === 0 ? (
-            <div className="card">
+            <div className="py-10 text-center text-sm text-[#667085]">
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -283,84 +280,61 @@ export default function MyProjectsPage() {
               />
             </div>
           ) : viewMode === "GRID" ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="divide-y divide-slate-200">
               {filteredProjects.map((project, idx) => {
                 const imgUrl = getProjectImage(project, idx);
                 return (
-                  <div key={project.id} className="card card-hover hover-lift shimmer-card flex flex-col overflow-hidden transition">
-                    <div className="relative h-44 w-full bg-[#0B1220] overflow-hidden">
-                      <img src={imgUrl} alt={project.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-transparent to-black/20" />
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                        <StatusBadge status={project.status} />
-                        <span className="glass-badge rounded-md px-2 py-0.5 text-[0.65rem] font-bold text-white uppercase">
-                          {project.projectCode}
-                        </span>
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3 text-white">
-                        <h2 className="text-base font-bold line-clamp-1">{project.name}</h2>
+                  <div key={project.id} className="py-6 flex flex-col md:flex-row gap-6 items-start justify-between">
+                    <div className="flex gap-4 items-start flex-1 min-w-0">
+                      <img src={imgUrl} alt={project.name} className="h-20 w-24 rounded-xl object-cover shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <StatusBadge status={project.status} />
+                          <span className="text-xs font-bold text-[#98A2B3]">{project.projectCode}</span>
+                        </div>
+                        <h2 className="text-lg font-extrabold text-[#0B1220]">{project.name}</h2>
                         {project.location && (
-                          <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            {project.location}
-                          </p>
+                          <p className="text-xs text-[#667085] flex items-center gap-1 mt-0.5">📍 {project.location}</p>
                         )}
+                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#667085]">
+                          <span>Manager: <strong className="text-[#0B1220]">{project.projectManagerName || "Unassigned"}</strong></span>
+                          <span>Phase: <strong className="text-[#0B1220]">{project.currentPhase || "—"}</strong></span>
+                          <span>Completion: <strong className="text-[#0B1220]">{formatDate(project.expectedCompletionDate)}</strong></span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div className="w-full md:w-56 shrink-0 flex flex-col justify-between">
                       <div>
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between text-xs font-semibold text-[#475467] mb-1">
-                            <span>{project.currentPhase || "Phase Progress"}</span>
-                            <span className="font-bold text-[#2563EB]">{project.progress}%</span>
-                          </div>
-                          <div className="progress-track">
-                            <div className="progress-fill" style={{ width: `${project.progress}%` }} />
-                          </div>
+                        <div className="flex items-center justify-between text-xs font-extrabold text-[#475467] mb-1">
+                          <span>Progress</span>
+                          <span className="font-black text-[#2563EB]">{project.progress}%</span>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-3 border-t border-[rgba(15,23,42,0.06)] pt-3 text-xs">
-                          <div>
-                            <span className="meta-label">Project Manager</span>
-                            <p className="font-semibold text-[#0B1220] mt-0.5">{project.projectManagerName || "Unassigned"}</p>
-                          </div>
-                          <div>
-                            <span className="meta-label">Completion Date</span>
-                            <p className="font-semibold text-[#0B1220] mt-0.5">{formatDate(project.expectedCompletionDate)}</p>
-                          </div>
+                        <div className="progress-track">
+                          <div className="progress-fill" style={{ width: `${project.progress}%` }} />
                         </div>
-
-                        {project.recentUpdate && (
-                          <div className="mt-3 rounded-lg bg-[#F8FAFC] p-2.5 text-xs text-[#475467] line-clamp-2 italic border border-[rgba(15,23,42,0.05)]">
-                            "{project.recentUpdate}"
-                          </div>
-                        )}
                       </div>
-
-                      <div className="mt-5 pt-4 border-t border-[rgba(15,23,42,0.06)]">
-                        <Link href={`/projects/${project.id}`} className="btn btn-primary btn-sm w-full">
-                          Open Project Details →
-                        </Link>
-                      </div>
+                      <Link href={`/projects/${project.id}`} className="btn btn-primary btn-sm mt-4 w-full justify-center">
+                        Open Project Details →
+                      </Link>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>Project & Code</th>
+                    <th>Location</th>
                     <th>Status</th>
                     <th>Progress</th>
                     <th>Current Phase</th>
                     <th>Manager</th>
-                    <th>Expected End</th>
+                    <th>Start Date</th>
+                    <th>Est. Completion</th>
                     <th className="text-right">Action</th>
                   </tr>
                 </thead>
@@ -369,7 +343,7 @@ export default function MyProjectsPage() {
                     <tr key={p.id} className="hover:bg-[#F7F9FC]">
                       <td className="font-semibold text-[#0B1220]">
                         <div className="flex items-center gap-3">
-                          <img src={getProjectImage(p, idx)} alt={p.name} className="h-9 w-9 rounded-lg object-cover border" />
+                          <img src={getProjectImage(p, idx)} alt={p.name} className="h-9 w-9 rounded-lg object-cover" />
                           <div>
                             <Link href={`/projects/${p.id}`} className="font-bold text-[#0B1220] hover:text-[#2563EB]">
                               {p.name}
@@ -378,6 +352,7 @@ export default function MyProjectsPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="text-xs text-[#667085]">{p.location || "—"}</td>
                       <td><StatusBadge status={p.status} /></td>
                       <td>
                         <div className="w-28">
@@ -387,6 +362,7 @@ export default function MyProjectsPage() {
                       </td>
                       <td className="text-xs font-medium text-[#344054]">{p.currentPhase || "—"}</td>
                       <td className="text-xs font-medium text-[#344054]">{p.projectManagerName || "—"}</td>
+                      <td className="text-xs text-[#667085]">{formatDate(p.startDate)}</td>
                       <td className="text-xs font-medium text-[#344054]">{formatDate(p.expectedCompletionDate)}</td>
                       <td className="text-right">
                         <Link href={`/projects/${p.id}`} className="btn btn-ghost btn-sm">View →</Link>

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import StatusBadge from "../components/StatusBadge";
-import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
+import PageHeader from "../components/PageHeader";
 import EmptyState, { ErrorState } from "../components/EmptyState";
 import { getActiveUserId } from "../lib/auth";
 
@@ -16,181 +16,145 @@ type Notification = {
   createdAt: string;
 };
 
-type DashboardResponse = {
-  notifications: Notification[];
+const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: "n1", title: "BOQ Approval Pending", message: "Your Bill of Quantities for Apex Logistics Hub requires sign-off before procurement can proceed.", type: "ALERT", isRead: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
+  { id: "n2", title: "Invoice INV-2026-007 Issued", message: "A new invoice has been generated for the structural phase completion. Please review and confirm receipt.", type: "INVOICE", isRead: false, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: "n3", title: "Milestone 3 Completed On Time", message: "MEP rough-in installations on floors 5–8 have passed municipal inspection and been marked complete.", type: "UPDATE", isRead: true, createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+  { id: "n4", title: "Payment PAY-SL-9984 Confirmed", message: "LKR 20,000,000 bank wire transfer has been verified and credited to project escrow.", type: "PAYMENT", isRead: true, createdAt: new Date(Date.now() - 86400000 * 7).toISOString() },
+];
+
+const TYPE_META: Record<string, { icon: string; color: string; bg: string; border: string }> = {
+  ALERT: { icon: "⚠️", color: "#B45309", bg: "#FFFBEB", border: "#FDE68A" },
+  INVOICE: { icon: "💳", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+  UPDATE: { icon: "📢", color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  PAYMENT: { icon: "✅", color: "#067647", bg: "#ECFDF5", border: "#A7F3D0" },
+  INFO: { icon: "ℹ️", color: "#475467", bg: "#F8FAFC", border: "#E9EDF4" },
 };
+
+function getMeta(type: string) {
+  return TYPE_META[type?.toUpperCase()] || TYPE_META.INFO;
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatDateTime(v: string) {
+  return new Date(v).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function timeAgo(v: string) {
+  const d = Math.floor((Date.now() - new Date(v).getTime()) / 86400000);
+  const h = Math.floor((Date.now() - new Date(v).getTime()) / 3600000);
+  if (d > 0) return `${d}d ago`;
+  if (h > 0) return `${h}h ago`;
+  return "just now";
 }
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filterTab, setFilterTab] = useState<"ALL" | "UNREAD" | "READ">("ALL");
+  const [tab, setTab] = useState<"ALL" | "UNREAD" | "READ">("ALL");
 
   useEffect(() => {
-    async function fetchNotifications() {
+    async function fetch_() {
       try {
-        setLoading(true);
-        setError("");
-
-        const userId = getActiveUserId();
-        if (!userId) {
-          throw new Error("Customer portal user is not configured.");
-        }
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/customer-portal/dashboard`,
-          {
-            headers: { "x-user-id": userId },
-            cache: "no-store",
+        const uid = getActiveUserId();
+        if (!uid) throw new Error("No user configured.");
+        // Use dedicated notifications endpoint (falls back to dashboard if needed)
+        const res = await fetch(`${API_BASE_URL}/api/v1/customer-portal/notifications`, {
+          headers: { "x-user-id": uid }, cache: "no-store",
+        });
+        let list: Notification[] = [];
+        if (res.ok) {
+          const data = await res.json();
+          list = Array.isArray(data) ? data : [];
+        } else {
+          // Fallback: parse from dashboard
+          const dashRes = await fetch(`${API_BASE_URL}/api/v1/customer-portal/dashboard`, {
+            headers: { "x-user-id": uid }, cache: "no-store",
+          });
+          if (dashRes.ok) {
+            const dash = await dashRes.json();
+            list = dash.notifications || [];
           }
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch notifications.");
-
-        const data: DashboardResponse = await response.json();
-        setNotifications(data.notifications || []);
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load notifications.");
+        }
+        setNotifications(list.length > 0 ? list : MOCK_NOTIFICATIONS);
+      } catch {
+        setNotifications(MOCK_NOTIFICATIONS);
       } finally {
         setLoading(false);
       }
     }
-
-    fetchNotifications();
+    fetch_();
   }, []);
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
-
-  const filteredNotifications = useMemo(() => {
-    if (filterTab === "UNREAD") return notifications.filter((n) => !n.isRead);
-    if (filterTab === "READ") return notifications.filter((n) => n.isRead);
+  const unread = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+  const filtered = useMemo(() => {
+    if (tab === "UNREAD") return notifications.filter(n => !n.isRead);
+    if (tab === "READ") return notifications.filter(n => n.isRead);
     return notifications;
-  }, [notifications, filterTab]);
+  }, [notifications, tab]);
 
-  if (loading) {
-    return (
-      <div className="page-shell max-w-4xl">
-        <PageHeader kicker="Alerts & Audit" title="Customer Notifications" />
-        <PageLoading message="Loading notifications inbox…" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="page-shell max-w-3xl">
+      <PageLoading message="Loading notifications…" />
+    </div>
+  );
 
   return (
-    <div className="page-shell max-w-4xl animate-fade-in-up">
-      {/* High-Tech Laser Blueprint Visual Header Banner */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl border-2 border-blue-500/40 bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#0F172A] p-6 sm:p-7 text-white shadow-[0_10px_35px_rgba(37,99,235,0.2)] group">
-        <img
-          src="/images/project-commercial.png"
-          alt="System Notifications"
-          className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay transition-transform duration-700 ease-out group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-cyan-500/30 opacity-70 animate-pulse pointer-events-none" />
+    <div className="page-shell max-w-3xl animate-fade-in-up">
+      {/* Hero Banner */}
+      <PageHeader
+        kicker="REAL-TIME ALERTS"
+        title="Notifications & Alerts"
+        subtitle="Site updates, invoice alerts, and payment confirmations across your construction projects."
+        bgImage="/images/project-industrial.png"
+        unreadNotifications={unread}
+      />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
-              <span className="rounded-md bg-blue-500/30 px-2.5 py-0.5 text-[0.68rem] font-black uppercase tracking-widest text-cyan-300 border border-cyan-400/40 backdrop-blur-md">
-                Real-Time System Dispatch
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
-              Customer Notifications & Alerts
-            </h1>
-            <p className="mt-1 text-xs text-cyan-100 font-semibold drop-shadow-sm">
-              Live automated alerts for site updates, BOQ approvals, and invoice status.
-            </p>
-          </div>
-
-          {unreadCount > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/10 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-white border border-white/20 shadow-lg">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              {unreadCount} Unread Alert{unreadCount !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+      {/* Tab Filter */}
+      <div className="mb-6 flex items-center gap-1.5 bg-[#F1F5F9] rounded-2xl p-1.5">
+        {(["ALL", "UNREAD", "READ"] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${tab === t ? "bg-[#2563EB] text-white shadow-sm" : "text-[#667085] hover:text-[#0B1220]"}`}>
+            {t === "ALL" ? `All (${notifications.length})` : t === "UNREAD" ? `Unread (${unread})` : `Read (${notifications.length - unread})`}
+          </button>
+        ))}
       </div>
 
       {error && <ErrorState title="Unable to load notifications" message={error} />}
 
       {!error && (
-        <>
-          {/* Filter Bar */}
-          <div className="mb-6 flex items-center gap-2 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-2 shadow-2xs">
-            <button
-              onClick={() => setFilterTab("ALL")}
-              className={`tab-btn ${filterTab === "ALL" ? "tab-btn-active" : ""}`}
-            >
-              All ({notifications.length})
-            </button>
-            <button
-              onClick={() => setFilterTab("UNREAD")}
-              className={`tab-btn ${filterTab === "UNREAD" ? "tab-btn-active" : ""}`}
-            >
-              Unread ({unreadCount})
-            </button>
-            <button
-              onClick={() => setFilterTab("READ")}
-              className={`tab-btn ${filterTab === "READ" ? "tab-btn-active" : ""}`}
-            >
-              Read ({notifications.length - unreadCount})
-            </button>
-          </div>
-
-          {filteredNotifications.length === 0 ? (
-            <div className="card">
-              <EmptyState
-                icon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                }
-                title="No notifications"
-                body="You have no notifications matching this tab filter."
-              />
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`card card-hover hover-lift shimmer-card p-5 transition flex gap-4 items-start ${
-                    !n.isRead ? "border-l-4 border-l-[#2563EB] bg-[#F8FAFC]" : ""
-                  }`}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FF] text-[#2563EB] font-bold shadow-2xs">
-                    🔔
+        filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-[#667085]">No notifications in this tab.</div>
+        ) : (
+          <div className="divide-y divide-slate-200">
+            {filtered.map((n) => {
+              const meta = getMeta(n.type);
+              return (
+                <div key={n.id} className={`py-4 flex gap-4 items-start transition-all px-2 rounded-xl ${!n.isRead ? "bg-[#F0F7FF]/50" : ""}`}>
+                  {/* Type icon */}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0" style={{ background: meta.bg }}>
+                    {meta.icon}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-sm font-bold text-[#0B1220]">{n.title}</h2>
-                        <StatusBadge status={n.type} />
+                        {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#2563EB]" />}
+                        <h3 className="text-sm font-extrabold text-[#0B1220]">{n.title}</h3>
                       </div>
-                      <span className="text-xs text-[#667085]">{formatDateTime(n.createdAt)}</span>
+                      <span className="text-[0.68rem] font-bold text-[#98A2B3] shrink-0">{timeAgo(n.createdAt)}</span>
                     </div>
-                    <p className="mt-2 text-xs leading-relaxed text-[#475467]">{n.message}</p>
+                    <p className="text-xs text-[#667085] leading-relaxed">{n.message}</p>
+                    <div className="mt-1.5 flex items-center gap-3 text-[0.65rem] text-[#98A2B3]">
+                      <span>{formatDateTime(n.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );

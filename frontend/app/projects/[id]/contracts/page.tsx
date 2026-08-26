@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import PageHeader from "../../../components/PageHeader";
 import StatusBadge from "../../../components/StatusBadge";
 import ProjectSubNav from "../../../components/ProjectSubNav";
 import { PageLoading } from "../../../components/SkeletonLoader";
@@ -50,6 +51,12 @@ const MOCK_DEMO_CONTRACTS: Contract[] = [
   },
 ];
 
+const RECORD_IMAGES = [
+  "/images/project-commercial.png",
+  "/images/project-residential.png",
+  "/images/project-industrial.png",
+];
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatDate(date: string | null) {
@@ -76,8 +83,8 @@ export default function ProjectContractsPage() {
 
   const [project, setProject] = useState<any>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
   useEffect(() => {
@@ -86,24 +93,27 @@ export default function ProjectContractsPage() {
         const userId = getActiveUserId();
         const headers: Record<string, string> = userId ? { "x-user-id": userId } : {};
 
-        const [projRes, contRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null),
-          fetch(`${API_BASE_URL}/api/v1/customer-portal/contracts`, { headers, cache: "no-store" }).catch(() => null),
-        ]);
+        const projRes = await fetch(`${API_BASE_URL}/api/v1/customer-portal/projects/${projectId}`, { headers, cache: "no-store" }).catch(() => null);
+        if (projRes) {
+          if (!projRes.ok) {
+            setError("Access Denied: You do not have permission to view this project's contracts.");
+            setProject(null);
+            setLoading(false);
+            return;
+          }
+          const projData = await projRes.json();
+          setProject(projData);
 
-        let projData: any = null;
-        if (projRes && projRes.ok) {
-          projData = await projRes.json();
+          const contRes = await fetch(`${API_BASE_URL}/api/v1/customer-portal/contracts`, { headers, cache: "no-store" }).catch(() => null);
+          const contData = contRes && contRes.ok ? await contRes.json() : [];
+          setContracts(Array.isArray(contData) && contData.length > 0 ? contData : MOCK_DEMO_CONTRACTS);
+        } else {
+          setProject(getDemoProjectById(projectId));
+          setContracts(MOCK_DEMO_CONTRACTS);
         }
-
-        const contData = contRes && contRes.ok ? await contRes.json() : [];
-
-        setProject(projData || getDemoProjectById(projectId));
-        setContracts(Array.isArray(contData) && contData.length > 0 ? contData : MOCK_DEMO_CONTRACTS);
       } catch (err) {
         console.error(err);
-        setProject(getDemoProjectById(projectId));
-        setContracts(MOCK_DEMO_CONTRACTS);
+        setError("Access Denied: Unable to fetch project contracts.");
       } finally {
         setLoading(false);
       }
@@ -134,64 +144,90 @@ export default function ProjectContractsPage() {
     );
   }
 
+  if (error || !project) {
+    return (
+      <div className="page-shell">
+        <ErrorState title="Unable to load contracts" message={error} backHref={`/projects/${projectId}`} backLabel="Back to Project" />
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell animate-fade-in-up">
-      <Link href="/" className="back-link mb-5 inline-flex">← Back to Dashboard</Link>
-
+      <PageHeader
+        kicker={`PROJECT ${project?.projectCode || ""} · LEGAL CONTRACTS`}
+        title="Master Legal Contracts & Agreements"
+        subtitle={`CIDA C1 binding construction agreements and signatories for ${project?.name || "this project"}.`}
+        bgImage="/images/project-industrial.png"
+        actions={
+          <span className="rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs font-bold text-emerald-300 shrink-0">
+            {contracts.length} Binding Contracts
+          </span>
+        }
+      />
       {project && <ProjectSubNav project={project} />}
 
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="section-heading">Master Legal Contracts & Agreements</h2>
-            <p className="text-xs text-[#667085] mt-0.5">Click any contract row to inspect full legal clauses, signatories, and retainage terms.</p>
-          </div>
-          <span className="rounded-lg bg-emerald-50 px-3 py-1 text-xs font-bold text-[#067647]">
-            {contracts.length} Active Contracts
-          </span>
-        </div>
+      {/* Animated Visual Record Cards with Side Image Thumbnails */}
+      <div className="space-y-4">
+        {contracts.map((c, idx) => {
+          const sideImg = RECORD_IMAGES[idx % RECORD_IMAGES.length];
+          return (
+            <div
+              key={c.id}
+              onClick={() => setSelectedContract(c)}
+              className="card p-5 cursor-pointer card-hover flex flex-col md:flex-row md:items-center justify-between gap-6"
+            >
+              {/* Side Image Thumbnail */}
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-[#0B1220]">
+                  <img
+                    src={sideImg}
+                    alt={c.contractNumber}
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <span className="absolute bottom-1 left-1.5 text-[0.6rem] font-black text-white uppercase tracking-wider">
+                    CIDA C1
+                  </span>
+                </div>
 
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Contract # & Title</th>
-                <th>Signed Date</th>
-                <th className="text-right">Contract Value</th>
-                <th>Status</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contracts.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => setSelectedContract(c)}
-                  className="cursor-pointer hover:bg-blue-50/60 transition group"
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[0.68rem] font-mono font-black text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-md">
+                      {c.contractNumber}
+                    </span>
+                    <StatusBadge status={c.status} />
+                  </div>
+                  <h3 className="text-sm font-black text-[#0B1220] hover:text-[#2563EB] transition-colors line-clamp-2">
+                    {c.title}
+                  </h3>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-[#667085]">
+                    <span>📜 Signed: {formatDate(c.signedDate)}</span>
+                    <span>•</span>
+                    <span>🛡️ {c.defectsPeriod || "12 Months Warranty"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Value & Action */}
+              <div className="flex items-center gap-6 shrink-0 justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                <div className="text-left md:text-right">
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block">Contract Value</span>
+                  <span className="text-lg font-black text-[#0B1220]">{formatAmount(c.contractValue)}</span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedContract(c);
+                  }}
+                  className="btn btn-primary btn-sm text-xs font-bold shadow-md rounded-xl py-2 px-3"
                 >
-                  <td>
-                    <p className="font-bold text-[#0B1220] group-hover:text-[#2563EB] transition">{c.title}</p>
-                    <p className="text-xs font-mono text-[#2563EB]">{c.contractNumber}</p>
-                  </td>
-                  <td className="text-xs text-[#667085]">{formatDate(c.signedDate)}</td>
-                  <td className="text-right font-black text-[#0B1220]">{formatAmount(c.contractValue)}</td>
-                  <td><StatusBadge status={c.status} /></td>
-                  <td className="text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedContract(c);
-                      }}
-                      className="btn btn-ghost btn-sm text-xs font-bold"
-                    >
-                      🔍 Inspect Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  Inspect Agreement →
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Full Legal Contract Modal */}

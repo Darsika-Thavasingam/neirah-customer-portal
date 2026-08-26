@@ -120,31 +120,17 @@ export default function QuotationsPage() {
 
   return (
     <div className="page-shell animate-fade-in-up">
-      {/* Hero Visual Header */}
-      <div className="relative mb-8 h-48 w-full overflow-hidden rounded-3xl bg-[#0B1220] shadow-md">
-        <img
-          src="/images/project-industrial.png"
-          alt="Commercial Proposals"
-          className="h-full w-full object-cover opacity-35"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-transparent" />
-        <div className="absolute bottom-6 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#2563EB] bg-white/90 px-2.5 py-1 rounded-md shadow-2xs">
-              Commercial Estimations
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
-              Project Quotations & BOQs
-            </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Itemized cost estimates, structural bills of quantities, and formal commercial proposals for active engineering developments.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+      <PageHeader
+        kicker="COMMERCIAL ESTIMATIONS"
+        title="Project Quotations & BOQs"
+        subtitle="Itemized cost estimates, structural bills of quantities, and formal commercial proposals for active engineering developments."
+        bgImage="/images/project-commercial.png"
+        actions={
+          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-2xl">
             <button
               onClick={() => setViewMode("GRID")}
               className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === "GRID" ? "bg-[#2563EB] text-white" : "bg-white/10 text-slate-300 hover:bg-white/20"
+                viewMode === "GRID" ? "bg-[#2563EB] text-white" : "text-slate-300 hover:text-white"
               }`}
             >
               Grid View
@@ -152,14 +138,14 @@ export default function QuotationsPage() {
             <button
               onClick={() => setViewMode("TABLE")}
               className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === "TABLE" ? "bg-[#2563EB] text-white" : "bg-white/10 text-slate-300 hover:bg-white/20"
+                viewMode === "TABLE" ? "bg-[#2563EB] text-white" : "text-slate-300 hover:text-white"
               }`}
             >
               Table View
             </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
         <ErrorState title="Unable to load quotations" message={error} />
@@ -167,34 +153,34 @@ export default function QuotationsPage() {
 
       {!error && (
         <>
-          {/* Executive KPI Summary */}
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Total Proposals</span>
-              <div className="metric-value">{stats.total}</div>
-              <p className="mt-1 text-xs text-[#667085]">Prepared Estimates</p>
+          {/* Executive KPI Summary — Borderless Horizontal Stats Bar */}
+          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+            <div className="flex flex-col justify-center">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Proposals</span>
+              <div className="text-2xl font-black text-[#0B1220]">{stats.total}</div>
+              <p className="text-[0.68rem] font-bold text-[#667085]">Prepared Estimates</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Accepted</span>
-              <div className="metric-value text-[#067647]">{stats.accepted}</div>
-              <p className="mt-1 text-xs text-[#067647]">Approved Contracts</p>
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Accepted</span>
+              <div className="text-2xl font-black text-[#067647]">{stats.accepted}</div>
+              <p className="text-[0.68rem] font-bold text-[#067647]">Approved Contracts</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Under Review</span>
-              <div className="metric-value text-[#2563EB]">{stats.sent}</div>
-              <p className="mt-1 text-xs text-[#2563EB]">Sent & Pending</p>
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#2563EB] block mb-1">Under Review</span>
+              <div className="text-2xl font-black text-[#2563EB]">{stats.sent}</div>
+              <p className="text-[0.68rem] font-bold text-[#2563EB]">Sent & Pending</p>
             </div>
-            <div className="metric-card card-hover hover-lift shimmer-card">
-              <span className="metric-label">Total Quoted Value</span>
-              <div className="metric-value text-sm sm:text-base text-[#0B1220] truncate">
+            <div className="flex flex-col justify-center pl-4">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#D97706] block mb-1">Total Value</span>
+              <div className="text-xl font-black text-[#B45309] truncate">
                 LKR {formatAmount(stats.totalValue)}
               </div>
-              <p className="mt-1 text-xs text-[#667085]">Total Quotation Value</p>
+              <p className="text-[0.68rem] font-bold text-[#D97706]">Total Quotation Value</p>
             </div>
           </div>
 
           {/* Controls Toolbar */}
-          <div className="mb-6 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-4 shadow-2xs flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
             <div className="relative flex-1 min-w-[240px]">
               <input
                 type="text"
@@ -213,22 +199,22 @@ export default function QuotationsPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F1F5F9] p-1 rounded-2xl">
               <button
                 onClick={() => setSelectedStatus("ALL")}
-                className={`tab-btn ${selectedStatus === "ALL" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ALL" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 All ({stats.total})
               </button>
               <button
                 onClick={() => setSelectedStatus("ACCEPTED")}
-                className={`tab-btn ${selectedStatus === "ACCEPTED" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "ACCEPTED" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Accepted ({stats.accepted})
               </button>
               <button
                 onClick={() => setSelectedStatus("SENT")}
-                className={`tab-btn ${selectedStatus === "SENT" ? "tab-btn-active" : ""}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === "SENT" ? "bg-[#2563EB] text-white" : "text-[#667085]"}`}
               >
                 Sent ({stats.sent})
               </button>
@@ -237,7 +223,7 @@ export default function QuotationsPage() {
 
           {/* Quotations List / Cards */}
           {filteredQuotations.length === 0 ? (
-            <div className="card">
+            <div className="py-10 text-center text-sm text-[#667085]">
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -249,49 +235,50 @@ export default function QuotationsPage() {
               />
             </div>
           ) : viewMode === "GRID" ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredQuotations.map((quotation) => (
-                <div key={quotation.id} className="card card-hover hover-lift shimmer-card p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="text-xs font-bold text-[#2563EB] bg-[#EAF2FF] px-2.5 py-1 rounded-lg border border-blue-200">
-                        {quotation.quotationNumber}
-                      </span>
-                      <StatusBadge status={quotation.status} />
+            <div className="divide-y divide-slate-200">
+              {filteredQuotations.map((quotation, idx) => {
+                const sideImg = [
+                  "/images/project-commercial.png",
+                  "/images/project-residential.png",
+                  "/images/project-industrial.png",
+                ][idx % 3];
+
+                return (
+                  <div key={quotation.id} className="py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl bg-[#0B1220]">
+                        <img src={sideImg} alt="Thumbnail" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[0.68rem] font-mono font-bold text-[#2563EB] bg-[#EAF2FF] px-2 py-0.5 rounded-md">
+                            {quotation.quotationNumber}
+                          </span>
+                          <StatusBadge status={quotation.status} />
+                        </div>
+                        <h3 className="text-base font-extrabold text-[#0B1220] hover:text-[#2563EB] transition-colors truncate">{quotation.project.name}</h3>
+                        <p className="text-xs text-[#667085]">{quotation.project.projectCode} · Quoted: {formatDate(quotation.date)} · Valid: {formatDate(quotation.validUntil)}</p>
+                      </div>
                     </div>
 
-                    <h3 className="text-sm font-bold text-[#0B1220]">{quotation.project.name}</h3>
-                    <p className="text-xs text-[#667085] mt-0.5">{quotation.project.projectCode}</p>
-
-                    <div className="mt-4 rounded-xl bg-[#F8FAFC] p-3 border border-[rgba(15,23,42,0.06)]">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[#667085]">Quoted Date:</span>
-                        <span className="font-semibold text-[#0B1220]">{formatDate(quotation.date)}</span>
+                    <div className="flex items-center gap-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-right">
+                        <span className="meta-label block">Total Valuation</span>
+                        <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(quotation.total)}</span>
                       </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-[#667085]">Valid Until:</span>
-                        <span className="font-semibold text-[#0B1220]">{formatDate(quotation.validUntil)}</span>
-                      </div>
+                      <Link
+                        href={`/quotations/${quotation.id}`}
+                        className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                      >
+                        View Details →
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-[rgba(15,23,42,0.08)] flex items-center justify-between">
-                    <div>
-                      <span className="meta-label block">Total Valuation</span>
-                      <span className="text-sm font-bold text-[#0B1220]">LKR {formatAmount(quotation.total)}</span>
-                    </div>
-                    <Link
-                      href={`/quotations/${quotation.id}`}
-                      className="btn btn-primary btn-sm hover-lift"
-                    >
-                      View Details →
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
-            <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
                   <tr>

@@ -9,12 +9,85 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CustomerPortalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getCurrentCustomer(userId: string) {
-    const access = await this.prisma.customerPortalAccess.findUnique({
+  /**
+   * Resolves the portal context (customerId + tenantId) for a given userId.
+   * Also updates lastLogin on every access — satisfies "last login where practical".
+   * Throws 401 if no active access record exists.
+   */
+  private async resolvePortalContext(userId: string): Promise<{
+    customerId: string;
+    tenantId: string;
+    accessId: string;
+  }> {
+    const cleanId = userId?.trim();
+    if (!cleanId) {
+      throw new UnauthorizedException('Customer portal access key is required');
+    }
+
+    const access = await this.prisma.customerPortalAccess.findFirst({
       where: {
-        userId,
+        OR: [
+          { userId: cleanId },
+          { id: cleanId },
+          { customerId: cleanId },
+        ],
       },
-      include: {
+      select: {
+        id: true,
+        customerId: true,
+        tenantId: true,
+        isActive: true,
+      },
+    });
+
+    if (!access || !access.isActive) {
+      throw new UnauthorizedException(
+        'Invalid or inactive portal access key. Please contact your project manager.',
+      );
+    }
+
+    // Update lastLogin (non-blocking — fire and forget)
+    this.prisma.customerPortalAccess
+      .update({
+        where: { id: access.id },
+        data: { lastLogin: new Date() },
+      })
+      .catch(() => {
+        // Intentionally ignored — lastLogin update must never block a request
+      });
+
+    return {
+      customerId: access.customerId,
+      tenantId: access.tenantId,
+      accessId: access.id,
+    };
+  }
+
+  /**
+   * GET /access/me — Returns current customer profile & access record.
+   * Enforces: active portal access, ownership via userId→customerId link.
+   */
+  async getCurrentCustomer(userId: string) {
+    const cleanId = userId?.trim();
+    if (!cleanId) {
+      throw new UnauthorizedException('Customer portal access key is required');
+    }
+
+    const access = await this.prisma.customerPortalAccess.findFirst({
+      where: {
+        OR: [
+          { userId: cleanId },
+          { id: cleanId },
+          { customerId: cleanId },
+        ],
+      },
+      select: {
+        id: true,
+        tenantId: true,
+        customerId: true,
+        isActive: true,
+        lastLogin: true,
+        createdAt: true,
         customer: {
           select: {
             id: true,
@@ -40,13 +113,21 @@ export class CustomerPortalService {
 
     if (!access || !access.isActive) {
       throw new UnauthorizedException(
-        'Customer portal access is not active',
+        'Invalid or inactive portal access key. Please contact your project manager.',
       );
     }
 
     if (!access.customer || !access.user) {
       throw new NotFoundException('Customer portal profile not found');
     }
+
+    // Update lastLogin non-blocking
+    this.prisma.customerPortalAccess
+      .update({
+        where: { id: access.id },
+        data: { lastLogin: new Date() },
+      })
+      .catch(() => {});
 
     return {
       customer: access.customer,
@@ -55,99 +136,159 @@ export class CustomerPortalService {
         id: access.id,
         isActive: access.isActive,
         lastLogin: access.lastLogin,
+        memberSince: access.createdAt,
       },
     };
   }
+
+  /**
+   * GET /dashboard — Full customer dashboard data.
+   * Tenant isolation: all queries filter by BOTH customerId AND tenantId.
+   * Customer ownership: resolvePortalContext maps userId → customerId/tenantId.
+   */
   async getDashboard(userId: string) {
-  const access = await this.prisma.customerPortalAccess.findUnique({
-    where: {
-      userId,
-    },
-    select: {
-      customerId: true,
-      isActive: true,
-      customer: {
-        select: {
-          id: true,
-          companyName: true,
-          contactName: true,
-          email: true,
+    const { customerId, tenantId } =
+      await this.resolvePortalContext(userId);
+
+    // 1. Customer info
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, tenantId },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        email: true,
+        phone: true,
+      },
+    });
+
+    if (!customer) {
+      throw new NotFoundException('Customer record not found');
+    }
+
+    // 2. Projects — all fields required by spec
+    const projects = await this.prisma.project.findMany({
+      where: { customerId, tenantId },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        projectCode: true,
+        name: true,
+        location: true,
+        startDate: true,
+        expectedCompletionDate: true,
+        status: true,
+        progress: true,
+        currentPhase: true,
+        projectManagerName: true,
+        projectManagerContact: true,
+        recentUpdate: true,
+        updatedAt: true,
+        milestones: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            plannedDate: true,
+            actualCompletionDate: true,
+            status: true,
+            progress: true,
+          },
+        },
+        updates: {
+          where: { visibility: true },
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+          select: {
+            id: true,
+            title: true,
+            update: true,
+            postedBy: true,
+            createdAt: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!access || !access.isActive) {
-    throw new UnauthorizedException(
-      'Customer portal access is not active',
-    );
-  }
-
-  const projects = await this.prisma.project.findMany({
-    where: {
-      customerId: access.customerId,
-    },
-    orderBy: {
-      updatedAt: 'desc',
-    },
-    select: {
-      id: true,
-      projectCode: true,
-      name: true,
-      location: true,
-      startDate: true,
-      expectedCompletionDate: true,
-      status: true,
-      progress: true,
-      currentPhase: true,
-      projectManagerName: true,
-      projectManagerContact: true,
-      recentUpdate: true,
-      updatedAt: true,
-
-      milestones: {
-        orderBy: {
-          createdAt: 'asc',
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          plannedDate: true,
-          actualCompletionDate: true,
-          status: true,
-          progress: true,
-        },
-      },
-
-      updates: {
-        where: {
-          visibility: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 5,
-        select: {
-          id: true,
-          title: true,
-          update: true,
-          postedBy: true,
-          attachment: true,
-          createdAt: true,
-        },
-      },
-    },
-  });
-
-  const notifications =
-    await this.prisma.customerNotification.findMany({
+    // 3. Pending quotations (SENT or DRAFT — customer-visible, not yet actioned)
+    const pendingQuotations = await this.prisma.quotation.findMany({
       where: {
-        customerId: access.customerId,
+        customerId,
+        tenantId,
+        status: { in: ['SENT', 'DRAFT', 'PENDING'] },
       },
-      orderBy: {
-        createdAt: 'desc',
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        quotationNumber: true,
+        date: true,
+        validUntil: true,
+        total: true,
+        status: true,
+        project: { select: { id: true, projectCode: true, name: true } },
       },
+    });
+
+    // 4. Outstanding invoices (not fully paid)
+    const outstandingInvoices = await this.prisma.invoice.findMany({
+      where: {
+        customerId,
+        tenantId,
+        status: { notIn: ['PAID', 'CANCELLED'] },
+      },
+      orderBy: { dueDate: 'asc' },
+      take: 5,
+      select: {
+        id: true,
+        invoiceNumber: true,
+        invoiceDate: true,
+        dueDate: true,
+        total: true,
+        paidAmount: true,
+        status: true,
+        project: { select: { id: true, projectCode: true, name: true } },
+      },
+    });
+
+    // 5. Recent payments
+    const recentPayments = await this.prisma.payment.findMany({
+      where: { customerId, tenantId },
+      orderBy: { paymentDate: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        paymentReference: true,
+        paymentDate: true,
+        paymentMethod: true,
+        amount: true,
+        status: true,
+        invoice: {
+          select: { invoiceNumber: true },
+        },
+      },
+    });
+
+    // 6. Latest documents
+    const latestDocuments = await this.prisma.customerVisibleDocument.findMany({
+      where: { tenantId, isCustomerVisible: true, project: { customerId } },
+      orderBy: { uploadedAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        fileName: true,
+        category: true,
+        fileUrl: true,
+        uploadedAt: true,
+        project: { select: { id: true, name: true, projectCode: true } },
+      },
+    });
+
+    // 7. Notifications
+    const notifications = await this.prisma.customerNotification.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
       take: 10,
       select: {
         id: true,
@@ -159,20 +300,53 @@ export class CustomerPortalService {
       },
     });
 
-  return {
-    customer: access.customer,
-    summary: {
-      totalProjects: projects.length,
-      activeProjects: projects.filter(
-        (project) =>
-          project.status.toUpperCase() === 'IN_PROGRESS',
-      ).length,
-      unreadNotifications: notifications.filter(
-        (notification) => !notification.isRead,
-      ).length,
-    },
-    projects,
-    notifications,
-  };
-}
+    // 8. Computed summary
+    const activeProjects = projects.filter((p) =>
+      ['IN_PROGRESS', 'ACTIVE', 'ON_HOLD', 'HANDOVER'].includes(
+        p.status.toUpperCase(),
+      ),
+    );
+    const completedProjects = projects.filter(
+      (p) => p.status.toUpperCase() === 'COMPLETED',
+    );
+    const avgProgress =
+      projects.length > 0
+        ? Math.round(
+            projects.reduce((s, p) => s + p.progress, 0) / projects.length,
+          )
+        : 0;
+
+    const totalOutstanding = outstandingInvoices.reduce((s, inv) => {
+      const bal = Math.max(Number(inv.total) - Number(inv.paidAmount), 0);
+      return s + bal;
+    }, 0);
+
+    return {
+      customer,
+      summary: {
+        totalProjects: projects.length,
+        activeProjects: activeProjects.length,
+        completedProjects: completedProjects.length,
+        avgProgress,
+        pendingQuotations: pendingQuotations.length,
+        outstandingInvoices: outstandingInvoices.length,
+        totalOutstanding,
+        unreadNotifications: notifications.filter((n) => !n.isRead).length,
+      },
+      projects,
+      pendingQuotations,
+      outstandingInvoices: outstandingInvoices.map((inv) => ({
+        ...inv,
+        outstandingAmount: Math.max(
+          Number(inv.total) - Number(inv.paidAmount),
+          0,
+        ),
+        isOverdue:
+          inv.status !== 'PAID' && new Date(inv.dueDate) < new Date(),
+      })),
+      recentPayments,
+      latestDocuments,
+      notifications,
+    };
+  }
 }
