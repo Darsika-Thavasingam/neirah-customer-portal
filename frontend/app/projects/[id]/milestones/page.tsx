@@ -383,7 +383,7 @@ export default function ProjectMilestonesPage() {
                       <span className="text-slate-300">•</span>
                       <div>
                         <span className="text-[#667085] font-bold">Completed: </span>
-                        <span className="font-semibold" style={{ color: milestone.actualCompletionDate ? "#059669" : "#667085" }}>
+                        <span className="font-semibold" style={{ color: milestone.actualCompletionDate ? "#067647" : "#667085" }}>
                           {formatDate(milestone.actualCompletionDate)}
                         </span>
                       </div>

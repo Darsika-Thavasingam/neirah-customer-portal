@@ -94,7 +94,25 @@ if (typeof window !== "undefined" && !(window as any).__fetch_intercepted__) {
         }
       }
     }
-    return originalFetch(input, init);
+    const res = await originalFetch(input, init);
+    const contentType = res.headers.get("content-type");
+    if (res.ok && contentType && contentType.includes("application/json")) {
+      const clone = res.clone();
+      try {
+        const json = await clone.json();
+        if (
+          json &&
+          typeof json === "object" &&
+          "success" in json &&
+          "data" in json
+        ) {
+          res.json = async () => json.data;
+        }
+      } catch (e) {
+        // Fallback if not valid JSON
+      }
+    }
+    return res;
   };
 }
 

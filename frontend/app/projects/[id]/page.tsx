@@ -321,7 +321,7 @@ export default function ProjectDetailsPage() {
                 const isActive = m.status.toUpperCase() === "IN_PROGRESS" || m.status.toUpperCase() === "ACTIVE";
                 const isDelayed = m.status.toUpperCase() === "DELAYED";
 
-                const dotBg = isDone ? "#10B981" : isActive ? "#2563EB" : isDelayed ? "#EF4444" : "#98A2B3";
+                const dotBg = isDone ? "#067647" : isActive ? "#2563EB" : isDelayed ? "#B42318" : "#98A2B3";
                 const statusLabel = isDone ? "Done" : isActive ? "Active" : isDelayed ? "Delayed" : "Upcoming";
 
                 return (

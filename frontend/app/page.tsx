@@ -28,7 +28,7 @@ function StatusDonut({ projects }: { projects: any[] }) {
   const active = projects.filter(p => ["IN_PROGRESS", "ACTIVE", "ON_HOLD", "HANDOVER"].includes(p.status.toUpperCase())).length;
   const done = projects.filter(p => p.status.toUpperCase() === "COMPLETED").length;
   const other = total - active - done;
-  const segs = [{ n: active, color: "#2563EB", label: "Active" }, { n: done, color: "#059669", label: "Completed" }, { n: other, color: "#667085", label: "Other" }].filter(s => s.n > 0);
+  const segs = [{ n: active, color: "#2563EB", label: "Active" }, { n: done, color: "#067647", label: "Completed" }, { n: other, color: "#667085", label: "Other" }].filter(s => s.n > 0);
   const size = 160, sw = 22, r = (size - sw) / 2, circ = 2 * Math.PI * r;
   let off = 0;
   return (
@@ -78,7 +78,7 @@ function StatusDonut({ projects }: { projects: any[] }) {
 
 function ProgressRing({ p }: { p: number }) {
   const size = 48, stroke = 5, r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c - (p / 100) * c;
-  const color = p >= 100 ? "#059669" : p >= 50 ? "#2563EB" : "#D97706";
+  const color = p >= 100 ? "#067647" : p >= 50 ? "#2563EB" : "#D97706";
   return (
     <div className="relative flex items-center justify-center shrink-0">
       <svg width={size} height={size} className="-rotate-90">
@@ -94,7 +94,7 @@ function ProgressRing({ p }: { p: number }) {
 function FinancialBarChart() {
   const bars = [
     { label: "Billed", amount: "LKR 1.9M", h: "75%", color: "#2563EB" },
-    { label: "Paid", amount: "LKR 4.0M", h: "100%", color: "#059669" },
+    { label: "Paid", amount: "LKR 4.0M", h: "100%", color: "#067647" },
     { label: "Due", amount: "LKR 1.9M", h: "45%", color: "#B42318" },
   ];
   return (
@@ -254,7 +254,7 @@ export default function Home() {
           <div className="space-y-3.5">
             {[
               { label: "Total Billed", val: "LKR 1,900,000", color: "#2563EB", pct: 100 },
-              { label: "Paid", val: "LKR 4,000,000", color: "#059669", pct: 68 },
+              { label: "Paid", val: "LKR 4,000,000", color: "#067647", pct: 68 },
               { label: "Outstanding", val: "LKR 1,900,000", color: "#B42318", pct: 32 },
             ].map(r => (
               <div key={r.label} className="py-1">

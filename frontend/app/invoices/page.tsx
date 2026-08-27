@@ -199,8 +199,8 @@ export default function InvoicesPage() {
             {stats.totalInvoiced > 0 && (
               <div className="flex items-center gap-3 pt-2">
                 <div className="flex-1 flex h-2 rounded-full overflow-hidden bg-slate-100">
-                  <div className="h-full bg-[#10B981] transition-all duration-700" style={{ width: `${Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%` }} />
-                  <div className="h-full bg-[#EF4444] transition-all duration-700" style={{ width: `${Math.round((stats.totalOutstanding / stats.totalInvoiced) * 100)}%` }} />
+                  <div className="h-full bg-[#067647] transition-all duration-700" style={{ width: `${Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%` }} />
+                  <div className="h-full bg-[#B42318] transition-all duration-700" style={{ width: `${Math.round((stats.totalOutstanding / stats.totalInvoiced) * 100)}%` }} />
                 </div>
                 <span className="text-[0.68rem] font-extrabold text-[#667085] whitespace-nowrap">
                   {Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}% settled

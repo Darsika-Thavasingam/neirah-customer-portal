@@ -57,7 +57,7 @@ function BigProgressRing({ progress }: { progress: number }) {
     <div className="relative flex items-center justify-center shrink-0">
       <svg width={size} height={size} className="-rotate-90 drop-shadow-sm">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={sw} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={progress >= 80 ? "#059669" : "#2563EB"} strokeWidth={sw}
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={progress >= 80 ? "#067647" : "#2563EB"} strokeWidth={sw}
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-1000" />
       </svg>
       <div className="absolute text-center">
@@ -200,7 +200,7 @@ export default function ProjectProgressPage() {
             <div className="h-4 bg-white/80 border border-blue-200 rounded-full overflow-hidden mb-3">
               <div
                 className="h-full rounded-full transition-all duration-1000 shadow-xs"
-                style={{ width: `${project.progress}%`, background: project.progress >= 80 ? "#059669" : "#2563EB" }}
+                style={{ width: `${project.progress}%`, background: project.progress >= 80 ? "#067647" : "#2563EB" }}
               />
             </div>
 
@@ -212,7 +212,7 @@ export default function ProjectProgressPage() {
         {/* KPI Strip — Transparent light blue surfaces with subtle hover scale */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Completed", count: completed, color: "#059669", bg: "rgba(255, 255, 255, 0.31)", border: "#D1FAE5" },
+            { label: "Completed", count: completed, color: "#067647", bg: "rgba(255, 255, 255, 0.31)", border: "#D1FAE5" },
             { label: "In Progress", count: inProgress, color: "#2563EB", bg: "rgba(255, 255, 255, 0.31)", border: "#DBEAFE" },
             { label: "Upcoming", count: upcoming, color: "#667085", bg: "rgba(255, 255, 255, 0.31)", border: "#E2E8F0" },
             { label: "Delayed", count: delayed, color: "#B42318", bg: "rgba(255, 255, 255, 0.31)", border: "#FEE2E2" },
@@ -294,7 +294,7 @@ export default function ProjectProgressPage() {
                       <div className="flex gap-4 text-[0.68rem] text-[#98A2B3] shrink-0 font-medium">
                         <span>Planned: <span className="font-bold text-[#475467]">{formatDate(m.plannedDate)}</span></span>
                         {m.actualCompletionDate && (
-                          <span>Completed: <span className="font-bold text-[#059669]">{formatDate(m.actualCompletionDate)}</span></span>
+                          <span>Completed: <span className="font-bold text-[#067647]">{formatDate(m.actualCompletionDate)}</span></span>
                         )}
                       </div>
                     </div>

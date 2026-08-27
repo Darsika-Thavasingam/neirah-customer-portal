@@ -175,7 +175,7 @@ export default function MyProjectsPage() {
           <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
             {[
               { label: "My Projects", value: String(stats.total), sub: "Assigned contracts", accent: "#2563EB" },
-              { label: "Under Construction", value: String(stats.inProgress), sub: "Currently active", accent: "#10B981" },
+              { label: "Under Construction", value: String(stats.inProgress), sub: "Currently active", accent: "#067647" },
               { label: "Completed", value: String(stats.completed), sub: "Delivered facilities", accent: "#7C3AED" },
               { label: "Avg. Progress", value: `${stats.avgProgress}%`, sub: "Portfolio health", accent: "#F59E0B" },
             ].map((s, idx) => (
