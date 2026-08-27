@@ -295,9 +295,10 @@ export default function ProjectDocumentsPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · DOCUMENT REPOSITORY`}
-        title="Project Drawings & Documentation"
-        subtitle={`Verified architectural blueprints, engineering CAD drawings, and compliance permits for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Documents"}
+        subtitle={`Verified architectural blueprints, engineering CAD drawings, and compliance permits.`}
         bgImage="/images/project-industrial.png"
+        className="mb-0"
         actions={
           <input
             type="text"
@@ -311,18 +312,17 @@ export default function ProjectDocumentsPage() {
       {project && <ProjectSubNav project={project} />}
 
       {/* Summary Card with Donut Chart */}
-      <div className="card p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+      <div className="bg-[#EAF2FF] rounded-xl p-5 border border-[#BFDBFE] mb-6 flex-wrap gap-6">
         <DonutChart data={chartData} />
         <div className="flex-1">
           <p className="text-xs font-bold text-[#98A2B3] uppercase tracking-wider mb-2">Filter by Category</p>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory("ALL")}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors ${
-                selectedCategory === "ALL"
-                  ? "bg-[#2563EB] text-white shadow-xs"
-                  : "bg-[#F8FAFC] text-[#667085] hover:text-[#0B1220]"
-              }`}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors ${selectedCategory === "ALL"
+                ? "bg-[#2563EB] text-white shadow-xs"
+                : "bg-[#F8FAFC] text-[#667085] hover:text-[#0B1220]"
+                }`}
             >
               All Files ({documents.length})
             </button>
@@ -333,11 +333,10 @@ export default function ProjectDocumentsPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors border ${
-                    selectedCategory === cat
-                      ? "text-white"
-                      : "bg-[#F8FAFC] text-[#667085] hover:text-[#0B1220]"
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors border ${selectedCategory === cat
+                    ? "text-white"
+                    : "bg-[#F8FAFC] text-[#667085] hover:text-[#0B1220]"
+                    }`}
                   style={
                     selectedCategory === cat
                       ? { background: meta?.color || "#667085", borderColor: meta?.color || "#667085" }
@@ -381,14 +380,12 @@ export default function ProjectDocumentsPage() {
                   <div className="flex-1 h-px bg-[rgba(15,23,42,0.06)]" />
                 </div>
 
-                {/* Documents List */}
-                <div className="card overflow-hidden">
-                  {docs.map((doc, idx) => (
+                {/* Documents List — High Visibility Dividers with Hover Interaction */}
+                <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
+                  {docs.map((doc) => (
                     <div
                       key={doc.id}
-                      className={`flex items-center gap-4 px-5 py-4 group hover:bg-[#F8FAFC] transition-colors cursor-pointer ${
-                        idx < docs.length - 1 ? "border-b border-[rgba(15,23,42,0.05)]" : ""
-                      }`}
+                      className="flex items-center gap-4 px-5 py-4 group hover:bg-blue-50/60 transition-all duration-200 cursor-pointer"
                       onClick={() => setActiveDoc(doc)}
                     >
                       {/* File Type Badge */}
@@ -440,8 +437,8 @@ export default function ProjectDocumentsPage() {
                           title="Preview"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
                           </svg>
                         </button>
                         <button
@@ -453,9 +450,9 @@ export default function ProjectDocumentsPage() {
                           title="Download"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
                           </svg>
                         </button>
                       </div>

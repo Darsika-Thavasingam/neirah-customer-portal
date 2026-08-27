@@ -146,58 +146,53 @@ export default function Header() {
 
   return (
     <>
-      {/* ── DESKTOP SIDEBAR (BORDERLESS DYNAMIC ANIMATED CONSTRUCTION OS) ── */}
-      <aside className="hidden lg:flex w-68 h-screen sticky top-0 bg-[#0B1220] text-white shadow-[8px_0_32px_rgba(0,0,0,0.18)] flex-col justify-between p-6 shrink-0 z-40 overflow-hidden relative group">
-        {/* Animated Background Architectural Watermark */}
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden lg:flex w-64 h-screen sticky top-0 bg-[#0B1220] text-white flex-col justify-between p-6 shrink-0 z-40 relative overflow-hidden group">
+        {/* Background Architectural Watermark Image Overlay (Increased Opacity) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <img
             src="/images/project-highrise.png"
             alt=""
-            className="absolute -right-20 -bottom-10 w-96 h-auto object-cover opacity-15 mix-blend-overlay filter blur-[1px] transition-all duration-1000 group-hover:scale-110 group-hover:opacity-25"
+            className="absolute -right-20 -bottom-10 w-96 h-auto object-cover opacity-35 mix-blend-overlay filter blur-[0.5px] transition-all duration-700 group-hover:scale-105 group-hover:opacity-45"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1220] via-[#0B1220]/90 to-[#0B1220]" />
-          {/* Subtle Ambient Moving Glow Orb */}
-          <div className="absolute top-1/4 -left-12 w-40 h-40 bg-[#2563EB]/20 rounded-full filter blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1220] via-[#0B1220]/85 to-[#0B1220]" />
         </div>
 
         <div className="relative z-10">
-          {/* Brand Logo & Live OS Badge */}
-          <Link href="/" className="flex items-center gap-3.5 mb-8 group/brand">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 backdrop-blur-md p-1.5 shadow-inner border border-white/10 transition-transform group-hover/brand:scale-105">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-3 mb-8">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-1.5 border border-white/10">
               <img
                 src="/neirah-logo.png?v=3"
-                alt="Neirah"
+                alt="Neirah Construction OS"
                 className="h-full w-full object-contain"
               />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="block text-[0.6rem] font-extrabold uppercase tracking-[0.2em] text-[#38BDF8]">
-                  Customer OS
-                </span>
-                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              </div>
-              <p className="text-base font-black text-white tracking-tight leading-none">Neirah Portal</p>
+              <span className="block text-[0.62rem] font-bold uppercase tracking-widest text-[#3B82F6]">
+                Construction OS
+              </span>
+              <p className="text-base font-bold text-white tracking-tight leading-none mt-0.5">Neirah Portal</p>
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <nav className="space-y-2" aria-label="Sidebar navigation">
+          <nav className="space-y-1.5" aria-label="Sidebar navigation">
             {navItems.map((item) => {
               const active = isActive(item);
               return (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-xs font-extrabold transition-all duration-300 ${
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-200 ease-out active:scale-95 ${
                     active
-                      ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-lg shadow-blue-600/30 scale-[1.02]"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? "bg-[#2563EB] text-white shadow-md font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/10 hover:translate-x-0.5"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     {item.label === "Dashboard" && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={active ? "text-cyan-300" : "text-slate-400"}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={active ? "text-white" : "text-slate-400"}>
                         <rect x="3" y="3" width="7" height="7" rx="1.5" />
                         <rect x="14" y="3" width="7" height="7" rx="1.5" />
                         <rect x="14" y="14" width="7" height="7" rx="1.5" />
@@ -205,75 +200,71 @@ export default function Header() {
                       </svg>
                     )}
                     {item.label === "Updates" && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={active ? "text-cyan-300" : "text-slate-400"}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={active ? "text-white" : "text-slate-400"}>
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                       </svg>
                     )}
                     {item.label === "Profile" && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={active ? "text-cyan-300" : "text-slate-400"}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={active ? "text-white" : "text-slate-400"}>
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                       </svg>
                     )}
                     <span>{item.label}</span>
                   </div>
-
-                  {item.label === "Updates" && (
-                    <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-                  )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Quick Shortcuts */}
+          {/* Quick Modules */}
           <div className="mt-8 pt-6 border-t border-white/10">
-            <span className="text-[0.6rem] font-extrabold uppercase tracking-widest text-slate-400 block mb-3 px-2">Quick Modules</span>
+            <span className="text-[0.62rem] font-bold uppercase tracking-wider text-slate-400 block mb-3 px-2">Quick Modules</span>
             <div className="space-y-1">
-              <Link href="/projects" className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition">
+              <Link href="/projects" className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 hover:translate-x-0.5">
                 <span>🏗</span> All Projects
               </Link>
-              <Link href="/quotations" className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition">
+              <Link href="/quotations" className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 hover:translate-x-0.5">
                 <span>📄</span> Quotations
               </Link>
-              <Link href="/contracts" className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition">
+              <Link href="/contracts" className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 hover:translate-x-0.5">
                 <span>⚖️</span> Contracts
               </Link>
-              <Link href="/payments" className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition">
+              <Link href="/payments" className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 hover:translate-x-0.5">
                 <span>💳</span> Payments & Invoices
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Bottom Profile Summary & Live System Status */}
+        {/* Bottom Profile Summary & Status */}
         <div className="relative z-10 space-y-3">
-          <div className="bg-white/5 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 transition-all hover:bg-white/10">
-            <Link href="/profile" className="flex items-center gap-3 group">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-[#2563EB] text-white font-black text-sm shadow-md">
+          <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+            <Link href="/profile" className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB] text-white font-bold text-xs">
                 C
               </div>
               <div className="overflow-hidden text-left">
-                <p className="text-xs font-extrabold text-white group-hover:text-cyan-300 truncate transition-colors">
+                <p className="text-xs font-semibold text-white truncate">
                   My Customer Account
                 </p>
-                <p className="text-[0.65rem] text-slate-400 truncate flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Active Client Session
+                <p className="text-[0.65rem] text-slate-400 truncate">
+                  Active Session
                 </p>
               </div>
             </Link>
           </div>
 
-          <div className="flex items-center justify-between text-[0.62rem] font-bold text-slate-400 px-2">
-            <span>System: <strong className="text-emerald-400">Online</strong></span>
-            <span className="text-slate-300 font-mono">v3.4 Production</span>
+          <div className="flex items-center justify-between text-[0.65rem] font-semibold text-slate-400 px-2">
+            <span>System: <strong className="text-[#067647]">Online</strong></span>
+            <span className="text-slate-400 font-mono">v3.4</span>
           </div>
         </div>
       </aside>
 
       {/* ── MOBILE TOP BAR & DRAWER ── */}
-      <header className="lg:hidden sticky top-0 z-50 bg-[#0B1220] text-white shadow-md px-4 py-3 flex items-center justify-between">
+      <header className="lg:hidden sticky top-0 z-50 bg-[#0B1220] text-white px-4 py-3 flex items-center justify-between border-b border-white/10">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 p-1">
             <img
@@ -282,7 +273,7 @@ export default function Header() {
               className="h-full w-full object-contain"
             />
           </div>
-          <span className="text-xs font-black tracking-wider text-white uppercase">Neirah OS</span>
+          <span className="text-xs font-bold tracking-wider text-white uppercase">Neirah OS</span>
         </Link>
 
         <button
@@ -302,7 +293,7 @@ export default function Header() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <nav className="lg:hidden bg-[#0B1220] text-white shadow-xl px-4 py-3 space-y-1.5 z-40 border-b border-white/10">
+        <nav className="lg:hidden bg-[#0B1220] text-white px-4 py-3 space-y-1.5 z-40 border-b border-white/10">
           {navItems.map((item) => {
             const active = isActive(item);
             return (
@@ -310,7 +301,7 @@ export default function Header() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
                   active ? "bg-[#2563EB] text-white" : "text-slate-300 hover:bg-white/5"
                 }`}
               >
@@ -319,16 +310,16 @@ export default function Header() {
             );
           })}
           <div className="pt-2 border-t border-white/10 space-y-1">
-            <Link href="/projects" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-bold text-slate-300">
+            <Link href="/projects" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-300">
               🏗 Projects Hub
             </Link>
-            <Link href="/quotations" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-bold text-slate-300">
+            <Link href="/quotations" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-300">
               📄 Quotations
             </Link>
-            <Link href="/contracts" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-bold text-slate-300">
+            <Link href="/contracts" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-300">
               ⚖️ Contracts
             </Link>
-            <Link href="/payments" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-bold text-slate-300">
+            <Link href="/payments" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-300">
               💳 Payments
             </Link>
           </div>
@@ -337,3 +328,4 @@ export default function Header() {
     </>
   );
 }
+

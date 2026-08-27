@@ -97,7 +97,7 @@ function PaymentBarChart({ payments }: { payments: Payment[] }) {
   };
 
   return (
-    <div className="card p-5">
+    <div className="bg-[#EAF2FF] border border-[#BFDBFE] p-5 rounded-2xl">
       <p className="text-xs font-black uppercase tracking-wider text-[#667085] mb-4">Payment Amounts by Transaction</p>
       <div className="space-y-3">
         {payments.map((p, idx) => {
@@ -172,7 +172,7 @@ function PaymentStatusChart({ payments }: { payments: Payment[] }) {
     .reduce((sum, p) => sum + (typeof p.amount === "string" ? parseFloat(p.amount) : Number(p.amount)), 0);
 
   return (
-    <div className="card p-5">
+    <div className="bg-[#EAF2FF] border border-[#BFDBFE] p-5 rounded-2xl">
       <p className="text-xs font-black uppercase tracking-wider text-[#667085] mb-4">Payment Status Overview</p>
       <div className="flex items-center gap-5">
         <div className="relative flex-shrink-0">
@@ -303,9 +303,10 @@ export default function ProjectPaymentsPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · REMITTANCES`}
-        title="Payment Receipts & Bank Remittances"
-        subtitle={`Verified bank wire receipts and escrow payment confirmations for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Payments"}
+        subtitle={`Verified bank wire receipts and escrow payment confirmations.`}
         bgImage="/images/project-villa.png"
+        className="mb-0"
       />
       {project && <ProjectSubNav project={project} />}
 
@@ -315,26 +316,24 @@ export default function ProjectPaymentsPage() {
         <PaymentBarChart payments={payments} />
       </div>
 
-      {/* Payment Rows */}
-      <div className="card overflow-hidden">
-        <div className="px-5 py-3 border-b border-[rgba(15,23,42,0.06)] flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#667085]">Transaction Ledger</h3>
+      {/* Payment Ledger List with High-Visibility Dividers & Hover Effects */}
+      <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
+        <div className="px-5 py-3.5 bg-slate-100/40 flex items-center justify-between">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[#0B1220]">Transaction Ledger</h3>
           <span className="text-xs font-bold text-[#667085]">{payments.length} records</span>
         </div>
-        {payments.map((p, idx) => (
+        {payments.map((p) => (
           <div
             key={p.id}
             onClick={() => setActivePayment(p)}
-            className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 py-4 cursor-pointer hover:bg-[#F8FAFC] transition-colors group ${
-              idx < payments.length - 1 ? "border-b border-[rgba(15,23,42,0.05)]" : ""
-            }`}
+            className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 py-4 cursor-pointer hover:bg-blue-50/60 hover:pl-7 transition-all duration-200 group"
           >
             {/* Left: Reference + Info */}
             <div className="flex items-center gap-4 min-w-0">
               {/* Icon */}
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 border border-emerald-100">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#067647" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                  <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
                 </svg>
               </div>
               <div className="min-w-0">

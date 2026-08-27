@@ -1,39 +1,39 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────
-   NEIRAH DESIGN SYSTEM — Brand Tokens
+   NEIRAH CONSTRUCTION OS DESIGN SYSTEM — BRAND TOKENS
 ───────────────────────────────────────────── */
 :root {
-  --background: #f4f6fa;
-  --foreground: #0b1220;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-bright: #3b82f6;
-  --primary-soft: #eaf2ff;
-  --navy: #0b1220;
+  --background: #F7F9FC;
+  --foreground: #0B1220;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-bright: #3B82F6;
+  --primary-soft: #EAF2FF;
+  --navy: #0B1220;
   --slate-700: #344054;
   --slate-500: #667085;
-  --slate-300: #d0d5dd;
+  --slate-300: #D0D5DD;
   --muted: #667085;
   --body-text: #475467;
   --success: #067647;
-  --success-bg: #ecfdf5;
-  --success-border: transparent;
-  --danger: #b42318;
-  --danger-bg: #fef3f2;
-  --danger-border: transparent;
-  --warning: #b54708;
-  --warning-bg: #fffaeb;
-  --warning-border: transparent;
-  --border: transparent;
-  --border-subtle: transparent;
-  --surface: transparent;
-  --surface-soft: #f8fafc;
-  --shadow-card: none;
-  --shadow-card-hover: none;
-  --shadow-header: none;
-  --radius-card: 0px;
-  --radius-inner: 0.5rem;
+  --success-bg: #ECFDF5;
+  --success-border: #ABEFC6;
+  --danger: #B42318;
+  --danger-bg: #FEF3F2;
+  --danger-border: #FECDCA;
+  --warning: #B54708;
+  --warning-bg: #FFFAEB;
+  --warning-border: #FEDF89;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --surface: #FFFFFF;
+  --surface-soft: #EAF2FF;
+  --shadow-card: 0 1px 3px rgba(11, 18, 32, 0.04);
+  --shadow-card-hover: 0 4px 16px rgba(37, 99, 235, 0.08);
+  --shadow-header: 0 4px 20px rgba(37, 99, 235, 0.08);
+  --radius-card: 14px;
+  --radius-inner: 10px;
   --radius-badge: 9999px;
 }
 
@@ -45,7 +45,7 @@
 }
 
 /* ─────────────────────────────────────────────
-   BASE
+   BASE TYPOGRAPHY & BODY
 ───────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
@@ -54,12 +54,7 @@ html {
 }
 
 body {
-  background-color: #f8fafc;
-  background-image: linear-gradient(to bottom, rgba(248, 250, 252, 0.92), rgba(248, 250, 252, 0.96)), url("/images/project-industrial.png");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-color: #F7F9FC;
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, Arial, sans-serif;
   font-size: 15px;
@@ -77,7 +72,7 @@ img {
 }
 
 /* ─────────────────────────────────────────────
-   PAGE SHELL
+   PAGE SHELL & TYPOGRAPHY
 ───────────────────────────────────────────── */
 .page-shell {
   max-width: 84rem;
@@ -97,21 +92,18 @@ img {
   }
 }
 
-/* ─────────────────────────────────────────────
-   PAGE HEADER
-───────────────────────────────────────────── */
 .page-kicker {
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   color: var(--primary);
 }
 
 .page-title {
-  font-size: clamp(1.6rem, 3.2vw, 2.25rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.75rem, 3vw, 2rem); /* 28-32px */
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--navy);
   margin: 0.35rem 0 0;
   line-height: 1.25;
@@ -124,99 +116,42 @@ img {
 }
 
 /* ─────────────────────────────────────────────
-   GLOBAL HEADER ANIMATIONS
-───────────────────────────────────────────── */
-@keyframes header-ambient-pan {
-  0% {
-    transform: scale(1) translate(0%, 0%);
-  }
-  50% {
-    transform: scale(1.08) translate(-1.5%, -1%);
-  }
-  100% {
-    transform: scale(1) translate(0%, 0%);
-  }
-}
-
-@keyframes header-laser-flow {
-  0% {
-    background-position: 0px 0px;
-  }
-  100% {
-    background-position: 48px 48px;
-  }
-}
-
-.animate-header-ambient {
-  animation: header-ambient-pan 28s ease-in-out infinite;
-  will-change: transform;
-}
-
-.animate-laser-flow {
-  animation: header-laser-flow 35s linear infinite;
-  will-change: background-position;
-}
-
-@keyframes sidebar-orb-float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-25px) scale(1.18);
-  }
-}
-
-.animate-sidebar-orb {
-  animation: sidebar-orb-float 12s ease-in-out infinite;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-header-ambient,
-  .animate-laser-flow,
-  .animate-sidebar-orb {
-    animation: none !important;
-  }
-}
-
-/* ─────────────────────────────────────────────
-   CARDS (BORDERLESS CONTINUOUS CANVAS)
+   CARDS & CONTAINERS (STRUCTURED WHITE CARDS)
 ───────────────────────────────────────────── */
 .card {
-  background: transparent;
-  border: none !important;
-  border-radius: 0;
-  box-shadow: none !important;
-  padding: 1.25rem 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card) !important;
+  padding: 1.25rem 1.5rem;
 }
 
 .card-hover {
-  transition: background 0.15s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card-hover:hover {
-  box-shadow: none !important;
-  transform: none;
-  background: rgba(241, 245, 249, 0.5);
-  border: none !important;
+  transform: translateY(-2px);
+  border-color: #CBD5E1 !important;
+  box-shadow: var(--shadow-card-hover) !important;
 }
 
 .card-inner {
-  background: #f1f5f9;
-  border: none !important;
+  background: #F8FAFC;
+  border: 1px solid var(--border) !important;
   border-radius: var(--radius-inner);
   padding: 1rem 1.25rem;
 }
 
 /* ─────────────────────────────────────────────
-   METRIC CARDS (BORDERLESS HORIZONTAL STATS)
+   METRIC / STAT CARDS
 ───────────────────────────────────────────── */
 .metric-card {
-  background: transparent;
-  border: none !important;
-  border-radius: 0;
-  box-shadow: none !important;
-  padding: 0.75rem 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card) !important;
+  padding: 1.25rem;
 }
 
 .metric-icon {
@@ -227,23 +162,25 @@ img {
   height: 2.5rem;
   border-radius: 0.5rem;
   flex-shrink: 0;
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .metric-label {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--muted);
 }
 
 .metric-value {
-  font-size: clamp(1.35rem, 2.7vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--navy);
   margin-top: 0.25rem;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 /* ─────────────────────────────────────────────

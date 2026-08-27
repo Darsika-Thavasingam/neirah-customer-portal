@@ -68,7 +68,6 @@ export default function MyProjectsPage() {
   // Filters & Views
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"GRID" | "LIST">("GRID");
 
   useEffect(() => {
     const handleSwitch = () => {
@@ -237,33 +236,7 @@ export default function MyProjectsPage() {
               </button>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 rounded-2xl p-1 bg-[#F1F5F9]">
-              <button
-                onClick={() => setViewMode("GRID")}
-                className={`rounded-xl p-2 text-xs font-bold transition-all ${
-                  viewMode === "GRID" ? "bg-white text-[#2563EB]" : "text-[#667085]"
-                }`}
-                title="Grid Visual View"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                  <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode("LIST")}
-                className={`rounded-xl p-2 text-xs font-bold transition-all ${
-                  viewMode === "LIST" ? "bg-white text-[#2563EB]" : "text-[#667085]"
-                }`}
-                title="Compact Table View"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                  <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-                </svg>
-              </button>
-            </div>
+
           </div>
 
           {/* Project Content View */}
@@ -279,7 +252,7 @@ export default function MyProjectsPage() {
                 body="Try adjusting your search keywords or switching your filter tabs."
               />
             </div>
-          ) : viewMode === "GRID" ? (
+          ) : (
             <div className="divide-y divide-slate-200">
               {filteredProjects.map((project, idx) => {
                 const imgUrl = getProjectImage(project, idx);
@@ -321,56 +294,6 @@ export default function MyProjectsPage() {
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Project & Code</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Progress</th>
-                    <th>Current Phase</th>
-                    <th>Manager</th>
-                    <th>Start Date</th>
-                    <th>Est. Completion</th>
-                    <th className="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProjects.map((p, idx) => (
-                    <tr key={p.id} className="hover:bg-[#F7F9FC]">
-                      <td className="font-semibold text-[#0B1220]">
-                        <div className="flex items-center gap-3">
-                          <img src={getProjectImage(p, idx)} alt={p.name} className="h-9 w-9 rounded-lg object-cover" />
-                          <div>
-                            <Link href={`/projects/${p.id}`} className="font-bold text-[#0B1220] hover:text-[#2563EB]">
-                              {p.name}
-                            </Link>
-                            <div className="text-xs text-[#667085]">{p.projectCode}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-xs text-[#667085]">{p.location || "—"}</td>
-                      <td><StatusBadge status={p.status} /></td>
-                      <td>
-                        <div className="w-28">
-                          <span className="text-xs font-bold text-[#2563EB]">{p.progress}%</span>
-                          <div className="progress-track mt-1"><div className="progress-fill" style={{ width: `${p.progress}%` }} /></div>
-                        </div>
-                      </td>
-                      <td className="text-xs font-medium text-[#344054]">{p.currentPhase || "—"}</td>
-                      <td className="text-xs font-medium text-[#344054]">{p.projectManagerName || "—"}</td>
-                      <td className="text-xs text-[#667085]">{formatDate(p.startDate)}</td>
-                      <td className="text-xs font-medium text-[#344054]">{formatDate(p.expectedCompletionDate)}</td>
-                      <td className="text-right">
-                        <Link href={`/projects/${p.id}`} className="btn btn-ghost btn-sm">View →</Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
         </>

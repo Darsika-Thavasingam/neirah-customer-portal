@@ -267,73 +267,59 @@ export default function InvoicesPage() {
                   />
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Invoice #</th>
-                        <th>Project</th>
-                        <th>Issue Date</th>
-                        <th>Due Date</th>
-                        <th className="text-right">Total Amount</th>
-                        <th>Status</th>
-                        <th className="text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredInvoices.map((invoice) => {
-                        const isOverdue =
-                          invoice.status !== "PAID" &&
-                          new Date(invoice.dueDate) < new Date();
+                <div className="divide-y divide-slate-200">
+                  {filteredInvoices.map((invoice) => {
+                    const isOverdue =
+                      invoice.status !== "PAID" &&
+                      new Date(invoice.dueDate) < new Date();
 
-                        return (
-                          <tr key={invoice.id} className="hover:bg-[#F7F9FC]">
-                            <td className="font-bold text-[#2563EB]">
-                              <Link href={`/invoices/${invoice.id}`} className="hover:underline">
+                    return (
+                      <div
+                        key={invoice.id}
+                        className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        {/* Left: Info */}
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 border border-blue-100">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[0.68rem] font-mono font-bold text-[#2563EB] bg-[#EAF2FF] px-2 py-0.5 rounded-md">
                                 {invoice.invoiceNumber}
-                              </Link>
-                            </td>
-                            <td>
-                              <p className="text-sm font-semibold text-[#0B1220]">
-                                {invoice.project?.name || "—"}
-                              </p>
-                              {invoice.project?.projectCode && (
-                                <p className="text-xs text-[#667085]">
-                                  {invoice.project.projectCode}
-                                </p>
-                              )}
-                            </td>
-                            <td className="text-xs text-[#667085]">
-                              {formatDate(invoice.invoiceDate)}
-                            </td>
-                            <td
-                              className={`text-xs ${
-                                isOverdue
-                                  ? "font-semibold text-[#B42318]"
-                                  : "text-[#667085]"
-                              }`}
-                            >
-                              {formatDate(invoice.dueDate)}
-                            </td>
-                            <td className="text-right font-bold text-[#0B1220]">
-                              LKR {formatAmount(getAmount(invoice))}
-                            </td>
-                            <td>
+                              </span>
                               <StatusBadge status={invoice.status} />
-                            </td>
-                            <td className="text-right">
-                              <Link
-                                href={`/invoices/${invoice.id}`}
-                                className="btn btn-primary btn-sm hover-lift"
-                              >
-                                View →
-                              </Link>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                              {isOverdue && (
+                                <span className="rounded-md bg-red-50 border border-red-200 px-1.5 py-0.5 text-[0.65rem] font-bold text-red-700">OVERDUE</span>
+                              )}
+                            </div>
+                            <h3 className="text-base font-extrabold text-[#0B1220] hover:text-[#2563EB] transition-colors truncate">
+                              {invoice.project?.name || "—"}
+                            </h3>
+                            <p className="text-xs text-[#667085]">
+                              {invoice.project?.projectCode} · Issued: {formatDate(invoice.invoiceDate)} · Due: {formatDate(invoice.dueDate)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right: Amount & Action */}
+                        <div className="flex items-center gap-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                          <div className="text-left sm:text-right">
+                            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Due</span>
+                            <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(getAmount(invoice))}</span>
+                          </div>
+                          <Link
+                            href={`/invoices/${invoice.id}`}
+                            className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                          >
+                            View →
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

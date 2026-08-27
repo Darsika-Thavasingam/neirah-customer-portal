@@ -32,18 +32,18 @@ export default function ProjectSubNav({ project }: ProjectSubNavProps) {
   ];
 
   return (
-    <div className="mb-6 overflow-x-auto rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+    <div className="mb-6 overflow-x-auto rounded-b-2xl bg-[#0B1220] border-t border-white/10 shadow-lg px-2 pt-1 pb-2">
       <nav className="flex items-center min-w-max">
-        {/* Back link — inline as first item with right divider */}
+        {/* Back link — inline as first item */}
         <Link
           href="/projects"
-          className="inline-flex items-center gap-1.5 py-3.5 px-4 text-xs font-bold text-[#667085] hover:text-[#2563EB] hover:bg-[#F0F6FF] rounded-xl my-1.5 ml-1 whitespace-nowrap transition-all"
+          className="inline-flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl whitespace-nowrap transition-all"
         >
           ← Projects
         </Link>
 
         {/* Vertical divider */}
-        <span className="w-px h-5 bg-slate-200 mx-1 flex-shrink-0" />
+        <span className="w-px h-4 bg-white/20 mx-1 flex-shrink-0" />
 
         {/* Tab links */}
         {tabs.map((t) => {
@@ -52,10 +52,10 @@ export default function ProjectSubNav({ project }: ProjectSubNavProps) {
             <Link
               key={t.href}
               href={t.href}
-              className={`inline-block py-3.5 px-4 text-xs font-bold transition-all rounded-xl my-1.5 whitespace-nowrap ${
+              className={`inline-block py-2 px-3 text-xs font-semibold transition-all rounded-xl whitespace-nowrap ${
                 isActive
-                  ? "bg-[#2563EB]/10 text-[#2563EB]"
-                  : "text-[#667085] hover:text-[#0B1220] hover:bg-[#F8FAFC]"
+                  ? "bg-[#2563EB] text-white font-bold shadow-sm"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
             >
               {t.label}

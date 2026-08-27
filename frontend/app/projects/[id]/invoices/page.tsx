@@ -166,14 +166,15 @@ export default function ProjectInvoicesPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · BILLING LEDGER`}
-        title="Project Invoices & Interim Claims"
-        subtitle={`Certified progress valuations, billing certificates, and payment statements for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Invoices"}
+        subtitle={`Certified progress valuations, billing certificates, and payment statements.`}
         bgImage="/images/project-residential.png"
+        className="mb-0"
       />
       {project && <ProjectSubNav project={project} />}
 
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-4 bg-slate-100/40 p-3 rounded-xl border border-slate-200/50 shrink-0">
           <div>
             <span className="text-[0.62rem] font-bold text-[#667085] uppercase block tracking-wider">Total Billed</span>
             <span className="text-sm font-black text-[#0B1220]">{formatAmount(stats.totalBilled)}</span>
@@ -186,8 +187,8 @@ export default function ProjectInvoicesPage() {
         </div>
       </div>
 
-      {/* Animated Visual Record Cards with Side Image Thumbnails */}
-      <div className="space-y-4">
+      {/* Animated Visual Record List with High-Visibility Dividers & Hover Effects */}
+      <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
         {invoices.map((inv, idx) => {
           const sideImg = RECORD_IMAGES[idx % RECORD_IMAGES.length];
           const total = Number(inv.totalAmount ?? inv.balanceAmount ?? 0);
@@ -198,7 +199,7 @@ export default function ProjectInvoicesPage() {
             <div
               key={inv.id}
               onClick={() => setActiveInvoice(inv)}
-              className="card p-5 cursor-pointer card-hover flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="p-5 cursor-pointer hover:bg-blue-50/60 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 group"
             >
               {/* Side Image Thumbnail */}
               <div className="flex items-center gap-4 min-w-0">

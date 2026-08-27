@@ -208,39 +208,31 @@ export default function QuotationDetailPage() {
           </div>
         </section>
 
-        {/* Line Items Table */}
-        <section className="card overflow-hidden md:col-span-2">
-          <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-6 py-4">
-            <h2 className="section-heading">Line Items</h2>
-            <span className="text-xs text-[#667085] md:hidden">Swipe table to view all columns</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Quantity</th>
-                  <th>Unit</th>
-                  <th className="text-right">Unit Price</th>
-                  <th className="text-right">Tax</th>
-                  <th className="text-right">Discount</th>
-                  <th className="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quotation.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="font-bold text-[#0B1220]">{item.description}</td>
-                    <td className="text-[#667085]">{item.quantity}</td>
-                    <td className="text-[#667085]">{item.unit}</td>
-                    <td className="text-right text-[#0B1220]">{formatAmount(item.unitPrice)}</td>
-                    <td className="text-right text-[#0B1220]">{formatAmount(item.tax)}</td>
-                    <td className="text-right text-[#0B1220]">{formatAmount(item.discount)}</td>
-                    <td className="text-right font-bold text-[#0B1220]">{formatAmount(item.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Line Items List */}
+        <section className="card p-6 md:col-span-2">
+          <h2 className="section-heading mb-4">Line Items</h2>
+          <div className="divide-y divide-slate-100">
+            {quotation.items.map((item) => (
+              <div key={item.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-extrabold text-[#0B1220]">{item.description}</h4>
+                  <div className="flex flex-wrap gap-x-4 mt-1 text-[0.7rem] text-[#667085]">
+                    <span>Quantity: <strong className="text-[#0B1220]">{item.quantity} {item.unit}</strong></span>
+                    <span>Unit Price: <strong className="text-[#0B1220]">{formatAmount(item.unitPrice)}</strong></span>
+                    {Number(item.tax) > 0 && (
+                      <span>Tax: <strong className="text-[#B42318]">{formatAmount(item.tax)}</strong></span>
+                    )}
+                    {Number(item.discount) > 0 && (
+                      <span>Discount: <strong className="text-green-600">-{formatAmount(item.discount)}</strong></span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Item Total</span>
+                  <span className="text-sm font-black text-[#0B1220]">{formatAmount(item.total)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

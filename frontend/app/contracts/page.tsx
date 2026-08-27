@@ -150,7 +150,7 @@ export default function ContractsPage() {
 
   const handleDownloadContractPdf = (contract: Contract) => {
     const textContent = `NEIRAH CONSTRUCTION OS - MASTER LEGAL AGREEMENT\n----------------------------------------------------\nContract Ref: ${contract.contractNumber}\nProject: ${contract.project?.name || "Construction Project"}\nTotal Agreed Value: LKR ${formatAmount(contract.contractValue)}\nSigning Date: ${formatDate(contract.contractDate)}\nCommencement Date: ${formatDate(contract.startDate)}\nCompletion Target: ${formatDate(contract.completionDate)}\nClient Signatory: ${contract.clientSignatory || "Authorized Client Executive"}\nContractor Signatory: ${contract.contractorSignatory || "Eng. Damith Perera (Managing Director)"}\nRetainage Terms: ${contract.retainageRate || "5% Retention"}\nDefect Liability Period: ${contract.defectsPeriod || "12 Months"}\nStandard: CIDA C1 Construction Conditions of Contract (2026 Rev)\n----------------------------------------------------\nTHIS AGREEMENT IS BINDING UNDER THE LAWS OF SRI LANKA.`;
-    
+
     const blob = new Blob([textContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -261,7 +261,7 @@ export default function ContractsPage() {
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
                   </svg>
                 }
                 title="No contracts found"

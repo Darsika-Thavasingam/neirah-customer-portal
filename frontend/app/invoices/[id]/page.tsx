@@ -190,31 +190,28 @@ export default function InvoiceDetailPage() {
       {invoice.items && invoice.items.length > 0 && (
         <div className="card p-5 mb-5">
           <h2 className="section-heading mb-4">Line Items</h2>
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th className="text-right">Qty</th>
-                  <th className="text-right">Rate (LKR)</th>
-                  <th className="text-right">Tax</th>
-                  <th className="text-right">Discount</th>
-                  <th className="text-right">Total (LKR)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map(item => (
-                  <tr key={item.id}>
-                    <td className="font-medium">{item.description}</td>
-                    <td className="text-right">{item.quantity}</td>
-                    <td className="text-right">{Number(item.rate).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
-                    <td className="text-right">{Number(item.tax || 0).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
-                    <td className="text-right">{Number(item.discount || 0).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
-                    <td className="text-right font-bold">{Number(item.total).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-slate-100">
+            {invoice.items.map(item => (
+              <div key={item.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-extrabold text-[#0B1220]">{item.description}</h4>
+                  <div className="flex flex-wrap gap-x-4 mt-1 text-[0.7rem] text-[#667085]">
+                    <span>Qty: <strong className="text-[#0B1220]">{item.quantity}</strong></span>
+                    <span>Rate: <strong className="text-[#0B1220]">LKR {Number(item.rate).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</strong></span>
+                    {Number(item.tax || 0) > 0 && (
+                      <span>Tax: <strong className="text-[#B42318]">{Number(item.tax).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</strong></span>
+                    )}
+                    {Number(item.discount || 0) > 0 && (
+                      <span>Discount: <strong className="text-green-600">-{Number(item.discount).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</strong></span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Item Total</span>
+                  <span className="text-sm font-black text-[#0B1220]">LKR {Number(item.total).toLocaleString("en-LK", { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

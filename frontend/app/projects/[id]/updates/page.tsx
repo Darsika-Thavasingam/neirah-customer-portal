@@ -128,11 +128,12 @@ export default function ProjectUpdatesPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · SITE UPDATES`}
-        title="Site Logs & Progress Announcements"
-        subtitle={`Chronological engineering updates for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Updates"}
+        subtitle={`Chronological engineering updates and site logs.`}
         bgImage="/images/project-highrise.png"
+        className="mb-0"
         actions={
-          <span className="rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-xs font-black text-white">
+          <span className="rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-xs font-bold text-white">
             {updates.length} Updates
           </span>
         }
@@ -152,21 +153,21 @@ export default function ProjectUpdatesPage() {
                 {idx < updates.length - 1 && <div className="w-0.5 flex-1 my-1 bg-slate-200 min-h-[24px]" />}
               </div>
 
-              <div className={`flex-1 mb-5 rounded-2xl border p-5 transition-all hover:shadow-md ${isFirst ? "bg-blue-50/40 border-blue-100" : "bg-white border-[rgba(15,23,42,0.08)]"}`}>
+              <div className={`flex-1 mb-5 rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${isFirst ? "bg-[#EAF2FF]/60 border-blue-200 hover:border-blue-400" : "bg-slate-100/40 border-slate-200 hover:border-blue-300"}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[0.6rem] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border" style={{ color: tag.color, background: tag.bg, borderColor: tag.border }}>
                       {tag.label}
                     </span>
                     {isFirst && (
-                      <span className="flex items-center gap-1 text-[0.6rem] font-black text-[#2563EB] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                      <span className="flex items-center gap-1 text-[0.6rem] font-black text-[#2563EB] bg-[#EAF2FF] border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-pulse" />Latest
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[0.7rem] text-[#98A2B3] shrink-0">
+                  <div className="flex items-center gap-2 text-[0.7rem] text-[#667085] shrink-0">
                     <span>{formatDate(item.createdAt)}</span>
-                    <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold">{timeAgo(item.createdAt)}</span>
+                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>
 
@@ -174,12 +175,12 @@ export default function ProjectUpdatesPage() {
                 <p className="text-xs leading-relaxed text-[#475467]">{item.update}</p>
 
                 {item.postedBy && (
-                  <div className="mt-4 pt-3 border-t border-[rgba(15,23,42,0.06)] flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[0.6rem] font-black text-slate-600">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[0.6rem] font-black text-[#2563EB]">
                       {item.postedBy.charAt(0).toUpperCase()}
                     </div>
                     <p className="text-[0.7rem] text-[#667085]">
-                      Posted by <span className="font-bold text-[#344054]">{item.postedBy}</span>
+                      Posted by <span className="font-bold text-[#0B1220]">{item.postedBy}</span>
                     </p>
                   </div>
                 )}

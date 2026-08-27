@@ -19,7 +19,7 @@ export interface PageHeaderProps {
 const SKYLINE_USER_ID = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d";
 
 export default function PageHeader({
-  kicker = "NEIRAH CUSTOMER PORTAL",
+  kicker = "NEIRAH CONSTRUCTION OS",
   title,
   subtitle,
   actions,
@@ -85,60 +85,53 @@ export default function PageHeader({
   const displaySubtitle =
     subtitle || `${customerInfo.companyName} · Last login: Portal session active`;
 
+  const isAttachedToSubNav = className.includes("mb-0");
+
   return (
-    <div className={`relative overflow-hidden rounded-[28px] bg-[#0B1220]/80 backdrop-blur-xl border border-white/10 p-6 sm:p-7 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] group ${className}`}>
-      {/* Background Architectural Overlay Image with Hardware-Accelerated Animation */}
+    <div
+      className={`relative overflow-hidden ${isAttachedToSubNav ? "rounded-t-2xl rounded-b-none border-b-0" : "rounded-2xl"} bg-[#0B1220] text-white p-6 sm:p-7 shadow-[0_4px_20px_rgba(37,99,235,0.08)] border border-white/10 ${className}`}
+    >
+      {/* Header Background Image (Increased Opacity) */}
       <img
         src={bgImage}
         alt="Header Background"
-        className="absolute inset-0 h-full w-full object-cover opacity-35 filter brightness-110 contrast-125 saturate-90 animate-header-ambient pointer-events-none"
+        className="absolute inset-0 h-full w-full object-cover opacity-65 filter brightness-110 contrast-115 saturate-100 pointer-events-none"
       />
-      {/* Lightened Translucent Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0B1220]/75 via-[#0B1220]/50 to-transparent pointer-events-none" />
-      {/* Subtle Blueprint Mesh Grid Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:1.25rem_1.25rem] animate-laser-flow pointer-events-none" />
+      {/* Lighter Gradient Overlay for Vivid Visibility */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0B1220]/75 via-[#0B1220]/50 to-[#0B1220]/25 pointer-events-none" />
 
       <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            <span className="text-[0.68rem] font-black uppercase tracking-widest text-[#00E5FF]">
+          <div className="mb-2 flex items-center gap-2.5 flex-wrap">
+            <span className="text-[0.68rem] font-bold uppercase tracking-wider text-[#3B82F6]">
               {kicker}
             </span>
+            {showDefaultActions && unreadCount > 0 && (
+              <Link
+                href="/notifications"
+                className="inline-flex items-center gap-1 bg-[#2563EB]/20 text-[#3B82F6] border border-[#2563EB]/30 text-[0.7rem] font-semibold px-2.5 py-0.5 rounded-full hover:bg-[#2563EB]/30 transition"
+              >
+                🔔 {unreadCount} Unread
+              </Link>
+            )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
             {displayTitle}
           </h1>
-          <p className="mt-1 text-xs text-slate-300 font-medium max-w-2xl drop-shadow-sm">
+          <p className="mt-1 text-xs text-slate-300 font-normal max-w-2xl drop-shadow-sm">
             {displaySubtitle}
           </p>
         </div>
 
-        {/* Action Elements */}
-        <div className="flex shrink-0 flex-wrap items-center gap-3 relative z-10">
-          {actions}
-          {showDefaultActions && (
-            <>
-              {unreadCount > 0 && (
-                <Link
-                  href="/notifications"
-                  className="flex items-center gap-1.5 bg-[#3B1722]/90 text-[#FCA5A5] border border-red-500/20 text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-red-950/80 transition shadow-sm backdrop-blur-md"
-                >
-                  🔔 {unreadCount} Unread
-                </Link>
-              )}
-              {pathname !== "/projects" && (
-                <Link
-                  href="/projects"
-                  className="btn btn-primary btn-sm text-xs font-bold py-2 px-4 rounded-xl shadow-md bg-[#2563EB] hover:bg-blue-600 text-white border-none"
-                >
-                  View All Projects →
-                </Link>
-              )}
-            </>
-          )}
-        </div>
+        {/* Custom Actions */}
+        {actions && (
+          <div className="flex shrink-0 flex-wrap items-center gap-3 relative z-10">
+            {actions}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+

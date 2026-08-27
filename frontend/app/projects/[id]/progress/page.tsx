@@ -49,20 +49,20 @@ function getStatusColor(status: string) {
 
 /** Overall progress ring */
 function BigProgressRing({ progress }: { progress: number }) {
-  const size = 120, sw = 12;
+  const size = 160, sw = 18;
   const radius = (size - sw) / 2;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (progress / 100) * circ;
   return (
-    <div className="relative flex items-center justify-center">
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#F1F5F9" strokeWidth={sw} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={progress >= 80 ? "#067647" : "#2563EB"} strokeWidth={sw}
+    <div className="relative flex items-center justify-center shrink-0">
+      <svg width={size} height={size} className="-rotate-90 drop-shadow-sm">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={sw} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={progress >= 80 ? "#059669" : "#2563EB"} strokeWidth={sw}
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-1000" />
       </svg>
       <div className="absolute text-center">
-        <span className="text-2xl font-black text-[#0B1220]">{progress}%</span>
-        <span className="block text-[0.6rem] font-bold text-[#667085]">Complete</span>
+        <span className="text-3xl font-black text-[#0B1220]">{progress}%</span>
+        <span className="block text-xs font-extrabold text-[#667085] uppercase tracking-wider mt-0.5">Complete</span>
       </div>
     </div>
   );
@@ -101,6 +101,27 @@ function StackedBar({ milestones }: { milestones: Milestone[] }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Graphical donut node indicating phase progress on a timeline */
+function MilestoneGraphNode({ progress, status, phaseIndex }: { progress: number, status: string, phaseIndex: number }) {
+  const size = 32;
+  const sw = 3;
+  const radius = (size - sw) / 2;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ - (progress / 100) * circ;
+  const color = getStatusColor(status);
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0 w-8 h-8">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="#FFFFFF" stroke="#E2E8F0" strokeWidth={sw} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={sw}
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-700" />
+      </svg>
+      <span className="absolute text-[0.62rem] font-black text-[#0B1220]">{phaseIndex}</span>
     </div>
   );
 }
@@ -155,30 +176,31 @@ export default function ProjectProgressPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project.projectCode} · PROGRESS TRACKER`}
-        title="Project Progress & S-Curve"
-        subtitle={`Overall delivery status and milestone-by-milestone progress for ${project.name}.`}
+        title={project.name}
+        subtitle={`📍 ${project.location || "Site Development"} · Overall Construction Progress: ${project.progress}%`}
         bgImage="/images/project-facade.png"
+        className="mb-0"
       />
       {project && <ProjectSubNav project={project} />}
 
-      {/* Summary Card */}
-      <div className="card p-6 mb-6">
+      {/* Progress Hero Banner — Soft Light Blue Surface */}
+      <div className="bg-[#EAF2FF] border border-blue-200 rounded-2xl p-6 mb-8 text-[#0B1220] shadow-sm">
         <div className="flex flex-col sm:flex-row items-center gap-8">
           <BigProgressRing progress={project.progress} />
           <div className="flex-1 w-full">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-xs font-bold text-[#98A2B3] uppercase tracking-wider">Overall Completion</p>
+                <p className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Overall Completion</p>
                 <p className="text-3xl font-black text-[#0B1220]">{project.progress}<span className="text-xl text-[#667085]">%</span></p>
               </div>
               <StatusBadge status={project.status} />
             </div>
 
             {/* Fat progress bar */}
-            <div className="h-4 bg-[#F1F5F9] rounded-full overflow-hidden mb-3">
+            <div className="h-4 bg-white/80 border border-blue-200 rounded-full overflow-hidden mb-3">
               <div
-                className="h-full rounded-full transition-all duration-1000"
-                style={{ width: `${project.progress}%`, background: project.progress >= 80 ? "#067647" : "#2563EB" }}
+                className="h-full rounded-full transition-all duration-1000 shadow-xs"
+                style={{ width: `${project.progress}%`, background: project.progress >= 80 ? "#059669" : "#2563EB" }}
               />
             </div>
 
@@ -187,15 +209,15 @@ export default function ProjectProgressPage() {
           </div>
         </div>
 
-        {/* KPI Strip — Borderless pills */}
+        {/* KPI Strip — Transparent light blue surfaces with subtle hover scale */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Completed", count: completed, color: "#067647", bg: "#ECFDF5" },
-            { label: "In Progress", count: inProgress, color: "#2563EB", bg: "#EFF6FF" },
-            { label: "Upcoming", count: upcoming, color: "#667085", bg: "#F8FAFC" },
-            { label: "Delayed", count: delayed, color: "#B42318", bg: "#FEF3F2" },
-          ].map(({ label, count, color, bg }) => (
-            <div key={label} className="rounded-2xl p-4 text-center" style={{ background: bg }}>
+            { label: "Completed", count: completed, color: "#059669", bg: "rgba(255, 255, 255, 0.31)", border: "#D1FAE5" },
+            { label: "In Progress", count: inProgress, color: "#2563EB", bg: "rgba(255, 255, 255, 0.31)", border: "#DBEAFE" },
+            { label: "Upcoming", count: upcoming, color: "#667085", bg: "rgba(255, 255, 255, 0.31)", border: "#E2E8F0" },
+            { label: "Delayed", count: delayed, color: "#B42318", bg: "rgba(255, 255, 255, 0.31)", border: "#FEE2E2" },
+          ].map(({ label, count, color, bg, border }) => (
+            <div key={label} className="rounded-xl p-4 text-center border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm" style={{ background: bg, borderColor: border }}>
               <p className="text-2xl font-black" style={{ color }}>{count}</p>
               <p className="mt-0.5 text-xs font-extrabold text-[#475467]">{label}</p>
             </div>
@@ -203,50 +225,79 @@ export default function ProjectProgressPage() {
         </div>
       </div>
 
-      {/* Milestone detail list */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-5">
+      {/* Milestone detail list — Borderless with High Visibility Dividers */}
+      <div className="pt-2 color-primary-soft">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="section-heading">Milestone Progress Detail</h2>
-          <Link href={`/projects/${project.id}/milestones`} className="text-xs font-bold text-[#2563EB] hover:underline">
+          <Link href={`/projects/${project.id}/milestones`} className="text-xs font-bold text-[#1973EA] hover:underline flex items-center gap-1 transition-transform hover:translate-x-1">
             Full Timeline →
           </Link>
         </div>
 
         {project.milestones.length === 0 ? (
-          <div className="rounded-2xl bg-[#F7F9FC] p-8 text-center text-sm text-[#667085]">
+          <div className="rounded-2xl bg-slate-50/50 p-8 text-center text-sm text-[#667085] border border-slate-200">
             No milestone progress published yet.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="relative pl-2 mt-6 space-y-6">
             {project.milestones.map((m, idx) => {
               const color = getStatusColor(m.status);
+              const nextMilestone = project.milestones[idx + 1];
+              const lineBg = (m.status.toUpperCase() === "COMPLETED" && nextMilestone && nextMilestone.status.toUpperCase() === "COMPLETED")
+                ? "#067647"
+                : (m.status.toUpperCase() === "COMPLETED")
+                  ? "linear-gradient(to bottom, #067647, #E2E8F0)"
+                  : "#E2E8F0";
+
               return (
-                <div key={m.id} className="rounded-2xl bg-[#F8FAFC] p-5 hover:bg-[#F1F5F9] transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200 text-slate-600">P{idx + 1}</span>
-                      <h3 className="text-sm font-extrabold text-[#0B1220]">{m.name}</h3>
-                    </div>
-                    <StatusBadge status={m.status} />
-                  </div>
-
-                  {m.description && <p className="text-xs text-[#475467] mb-3">{m.description}</p>}
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#667085]">Phase Progress</span>
-                      <span className="font-black" style={{ color }}>{m.progress}%</span>
-                    </div>
-                    <div className="h-2.5 bg-slate-200/80 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${m.progress}%`, background: color }} />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex gap-4 text-[0.7rem] text-[#98A2B3]">
-                    <span>Planned: <span className="font-bold text-[#475467]">{formatDate(m.plannedDate)}</span></span>
-                    {m.actualCompletionDate && (
-                      <span>Completed: <span className="font-bold text-[#067647]">{formatDate(m.actualCompletionDate)}</span></span>
+                <div key={m.id} className="relative flex gap-6 group">
+                  {/* Timeline node & connector column */}
+                  <div className="relative flex flex-col items-center shrink-0">
+                    <MilestoneGraphNode progress={m.progress} status={m.status} phaseIndex={idx + 1} />
+                    {idx < project.milestones.length - 1 && (
+                      <div 
+                        className="w-0.5 absolute top-8 bottom-[-24px] left-1/2 -translate-x-1/2"
+                        style={{ background: lineBg }}
+                      />
                     )}
+                  </div>
+
+                  {/* Graph Data Section (completely borderless and backgroundless) */}
+                  <div className="flex-1 min-w-0 pb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.62rem] font-bold text-[#667085] uppercase tracking-wider">Phase {idx + 1}</span>
+                        <h3 className="text-sm font-extrabold text-[#0B1220] group-hover:text-[#2563EB] transition-colors">
+                          {m.name}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-black" style={{ color }}>{m.progress}%</span>
+                        <StatusBadge status={m.status} />
+                      </div>
+                    </div>
+
+                    {m.description && (
+                      <p className="text-xs text-[#667085] mb-3 leading-relaxed max-w-3xl">
+                        {m.description}
+                      </p>
+                    )}
+
+                    {/* Miniature Horizontal Graph line */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 h-1.5 bg-slate-200/50 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-700" 
+                          style={{ width: `${m.progress}%`, background: color }} 
+                        />
+                      </div>
+                      <div className="flex gap-4 text-[0.68rem] text-[#98A2B3] shrink-0 font-medium">
+                        <span>Planned: <span className="font-bold text-[#475467]">{formatDate(m.plannedDate)}</span></span>
+                        {m.actualCompletionDate && (
+                          <span>Completed: <span className="font-bold text-[#059669]">{formatDate(m.actualCompletionDate)}</span></span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );

@@ -150,9 +150,10 @@ export default function ProjectQuotationsPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · QUOTATIONS`}
-        title="Quotations & BOQ Estimates"
-        subtitle={`Approved commercial proposals and itemized BOQ estimates for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Quotations"}
+        subtitle={`Approved commercial proposals and itemized BOQ estimates.`}
         bgImage="/images/project-commercial.png"
+        className="mb-0"
         actions={
           <span className="rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs font-bold text-white shrink-0">
             {quotations.length} Active Proposals
@@ -161,15 +162,15 @@ export default function ProjectQuotationsPage() {
       />
       {project && <ProjectSubNav project={project} />}
 
-      {/* Animated Visual Record Cards with Side Image Thumbnails */}
-      <div className="space-y-4">
+      {/* Animated Visual Record List with High-Visibility Dividers & Hover Effects */}
+      <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
         {quotations.map((q, idx) => {
           const sideImg = RECORD_IMAGES[idx % RECORD_IMAGES.length];
           return (
             <div
               key={q.id}
               onClick={() => setActiveQuotation(q)}
-              className="card p-5 cursor-pointer card-hover flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="p-5 cursor-pointer hover:bg-blue-50/60 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 group"
             >
               {/* Side Thumbnail Image with Overlay */}
               <div className="flex items-center gap-4 min-w-0">

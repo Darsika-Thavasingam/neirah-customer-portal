@@ -134,9 +134,10 @@ export default function ProjectPhotosPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · PHOTO GALLERY`}
-        title="Site Inspection Photos"
-        subtitle={`Progress photography and structural inspection records for ${project?.name || "this project"}.`}
+        title={project?.name || "Site Photos"}
+        subtitle={`Progress photography and structural inspection records.`}
         bgImage="/images/project-villa.png"
+        className="mb-0"
       />
       {project && <ProjectSubNav project={project} />}
 
@@ -184,8 +185,8 @@ export default function ProjectPhotosPage() {
       )}
 
       {!error && (
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="py-2">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-200 pb-4">
             <div>
               <h2 className="section-heading">High-Resolution Site Photo Gallery</h2>
               <p className="text-xs text-[#667085] mt-0.5">
@@ -202,18 +203,18 @@ export default function ProjectPhotosPage() {
               <article
                 key={photo.id}
                 onClick={() => setSelectedPhoto(photo)}
-                className="card overflow-hidden cursor-pointer card-hover transition-all duration-300"
+                className="overflow-hidden cursor-pointer rounded-2xl border border-slate-200/60 hover:-translate-y-1 hover:shadow-md transition-all duration-300 group"
               >
                 {/* Photo Image Container */}
                 <div className="relative h-56 w-full overflow-hidden bg-[#0B1220]">
                   <img
                     src={photo.photoUrl}
                     alt={photo.caption || "Project progress photo"}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
+
                   {/* Category Tag */}
                   <div className="absolute top-3 left-3">
                     <StatusBadge status={photo.category || "PHOTO"} />
@@ -228,7 +229,7 @@ export default function ProjectPhotosPage() {
                 </div>
 
                 {/* Caption Footer */}
-                <div className="p-4 bg-white">
+                <div className="p-4 bg-transparent border-t border-slate-200/50">
                   <h3 className="text-xs font-bold text-[#0B1220] line-clamp-2 leading-relaxed">
                     {photo.caption || "Project inspection photo"}
                   </h3>

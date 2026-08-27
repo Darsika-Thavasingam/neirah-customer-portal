@@ -124,7 +124,7 @@ export default function ProjectContractsPage() {
 
   const handleDownloadContractPdf = (contract: Contract) => {
     const textContent = `NEIRAH CONSTRUCTION OS - MASTER LEGAL AGREEMENT\n----------------------------------------------------\nContract Ref: ${contract.contractNumber}\nTitle: ${contract.title}\nTotal Agreed Value: LKR ${formatAmount(contract.contractValue)}\nSigning Date: ${formatDate(contract.signedDate)}\nClient Signatory: ${contract.clientSignatory || "Authorized Client Representative"}\nContractor Signatory: ${contract.contractorSignatory || "Eng. Damith Perera (Managing Director)"}\nRetainage Terms: ${contract.retainageRate || "5% Retention"}\nDefect Liability Period: ${contract.defectsPeriod || "12 Months"}\nStandard: CIDA C1 Construction Conditions of Contract (2026 Rev)\n----------------------------------------------------\nTHIS AGREEMENT IS BINDING UNDER THE LAWS OF SRI LANKA.`;
-    
+
     const blob = new Blob([textContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -156,9 +156,10 @@ export default function ProjectContractsPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project?.projectCode || ""} · LEGAL CONTRACTS`}
-        title="Master Legal Contracts & Agreements"
-        subtitle={`CIDA C1 binding construction agreements and signatories for ${project?.name || "this project"}.`}
+        title={project?.name || "Project Contracts"}
+        subtitle={`CIDA C1 binding construction agreements and signatories.`}
         bgImage="/images/project-industrial.png"
+        className="mb-0"
         actions={
           <span className="rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs font-bold text-emerald-300 shrink-0">
             {contracts.length} Binding Contracts
@@ -167,15 +168,15 @@ export default function ProjectContractsPage() {
       />
       {project && <ProjectSubNav project={project} />}
 
-      {/* Animated Visual Record Cards with Side Image Thumbnails */}
-      <div className="space-y-4">
+      {/* Animated Visual Record List with High-Visibility Dividers & Hover Effects */}
+      <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
         {contracts.map((c, idx) => {
           const sideImg = RECORD_IMAGES[idx % RECORD_IMAGES.length];
           return (
             <div
               key={c.id}
               onClick={() => setSelectedContract(c)}
-              className="card p-5 cursor-pointer card-hover flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="p-5 cursor-pointer hover:bg-blue-50/60 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 group"
             >
               {/* Side Image Thumbnail */}
               <div className="flex items-center gap-4 min-w-0">

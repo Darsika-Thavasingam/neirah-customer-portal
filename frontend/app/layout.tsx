@@ -46,15 +46,15 @@ export default function RootLayout({
       <body className="flex min-h-screen bg-[#F7F9FC] text-[#0B1220] antialiased flex-col lg:flex-row relative">
         <Header />
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-10">
-          {/* Global Architectural Blueprint Watermark Background (Matches Design Image) */}
-          <div className="absolute top-0 left-0 right-0 h-[500px] overflow-hidden pointer-events-none -z-10 opacity-35 select-none transition-opacity">
+          {/* Architectural Background Image Overlay (Increased Opacity) */}
+          <div className="absolute top-0 left-0 right-0 h-[480px] overflow-hidden pointer-events-none -z-10 opacity-60 select-none">
             <img
               src="/images/project-highrise.png"
               alt=""
-              className="w-full h-full object-cover object-top filter contrast-125 brightness-105"
+              className="w-full h-full object-cover object-top filter contrast-110 brightness-105"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7F9FC]/30 to-[#F7F9FC]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#F7F9FC]/40 via-transparent to-[#F7F7F7]/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F7F9FC]/30 via-transparent to-[#F7F9FC]/30" />
           </div>
           {children}
         </main>
@@ -62,3 +62,4 @@ export default function RootLayout({
     </html>
   );
 }
+

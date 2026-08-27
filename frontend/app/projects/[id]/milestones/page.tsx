@@ -122,7 +122,7 @@ function DonutPieChart({ milestones }: { milestones: Milestone[] }) {
   const completedPct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   return (
-    <div className="card p-5">
+    <div className="py-2">
       <p className="text-xs font-black uppercase tracking-wider text-[#667085] mb-4">Milestone Status Distribution</p>
       <div className="flex items-center gap-6">
         <div className="relative flex-shrink-0">
@@ -174,7 +174,7 @@ function ProgressBarChart({ milestones }: { milestones: Milestone[] }) {
   if (milestones.length === 0) return null;
 
   return (
-    <div className="card p-5">
+    <div className="py-2">
       <p className="text-xs font-black uppercase tracking-wider text-[#667085] mb-4">Phase-by-Phase Progress</p>
       <div className="space-y-3">
         {milestones.map((m, idx) => {
@@ -269,27 +269,28 @@ export default function ProjectMilestonesPage() {
     <div className="page-shell animate-fade-in-up">
       <PageHeader
         kicker={`PROJECT ${project.projectCode} · MILESTONE SCHEDULE`}
-        title="Milestone Master Schedule"
+        title={project.name}
         subtitle={`Sequential construction phases and milestone deliverables for ${project.name}.`}
         bgImage="/images/project-commercial.png"
+        className="mb-0"
       />
       {project && <ProjectSubNav project={project} />}
 
       {/* KPI Strip */}
       <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-xl bg-blue-50 px-4 py-2 text-center border border-blue-100">
-            <span className="text-[0.62rem] font-bold text-blue-600 uppercase block tracking-wider">Total</span>
-            <span className="text-base font-black text-[#0B1220]">{project.milestones.length}</span>
-          </div>
-          <div className="rounded-xl bg-emerald-50 px-4 py-2 text-center border border-emerald-100">
-            <span className="text-[0.62rem] font-bold text-emerald-600 uppercase block tracking-wider">Done</span>
-            <span className="text-base font-black text-[#067647]">{completedCount}</span>
-          </div>
-          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center border border-slate-200">
-            <span className="text-[0.62rem] font-bold text-[#667085] uppercase block tracking-wider">Progress</span>
-            <span className="text-base font-black text-[#2563EB]">{overallProgress}%</span>
-          </div>
+        <div className="rounded-xl bg-blue-50 px-4 py-2 text-center border border-blue-100">
+          <span className="text-[0.62rem] font-bold text-blue-600 uppercase block tracking-wider">Total</span>
+          <span className="text-base font-black text-[#0B1220]">{project.milestones.length}</span>
         </div>
+        <div className="rounded-xl bg-emerald-50 px-4 py-2 text-center border border-emerald-100">
+          <span className="text-[0.62rem] font-bold text-emerald-600 uppercase block tracking-wider">Done</span>
+          <span className="text-base font-black text-[#067647]">{completedCount}</span>
+        </div>
+        <div className="rounded-xl bg-slate-50 px-4 py-2 text-center border border-slate-200">
+          <span className="text-[0.62rem] font-bold text-[#667085] uppercase block tracking-wider">Progress</span>
+          <span className="text-base font-black text-[#2563EB]">{overallProgress}%</span>
+        </div>
+      </div>
 
       {/* Charts Row */}
       {project.milestones.length > 0 && (
@@ -299,12 +300,12 @@ export default function ProjectMilestonesPage() {
         </div>
       )}
 
-      {/* Timeline Card */}
-      <div className="card p-6">
+      {/* Timeline Section — Borderless Edge-to-Edge Layout */}
+      <div className="border-t-2 border-slate-300 pt-6">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="section-heading">Phase Milestones Timeline</h2>
           <div className="flex items-center gap-2">
-            <div className="h-2 w-24 bg-[#F1F5F9] rounded-full overflow-hidden">
+            <div className="h-2 w-24 bg-slate-200 rounded-full overflow-hidden">
               <div className="h-full bg-[#2563EB] rounded-full" style={{ width: `${completedPct}%` }} />
             </div>
             <span className="text-xs font-black text-[#2563EB]">{completedPct}%</span>
@@ -312,7 +313,7 @@ export default function ProjectMilestonesPage() {
         </div>
 
         {project.milestones.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[rgba(15,23,42,0.12)] bg-[#F7F9FC] p-8 text-center text-sm text-[#667085]">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-[#667085]">
             There are no milestones for this project yet.
           </div>
         ) : (
@@ -325,28 +326,27 @@ export default function ProjectMilestonesPage() {
                   <div className="flex flex-col items-center">
                     <MilestoneDot status={milestone.status} />
                     {idx < project.milestones.length - 1 && (
-                      <div className="w-0.5 flex-1 my-1 bg-slate-200 min-h-[24px]" />
+                      <div className="w-0.5 flex-1 my-1 bg-slate-300 min-h-[24px]" />
                     )}
                   </div>
 
-                  {/* Content Card */}
+                  {/* Content Card with Hover Effect */}
                   <div
-                    className={`flex-1 mb-4 rounded-xl border p-4 hover:shadow-sm transition-shadow ${
-                      milestone.status.toUpperCase() === "COMPLETED"
-                        ? "bg-emerald-50/50 border-emerald-100"
-                        : milestone.status.toUpperCase() === "DELAYED"
-                        ? "bg-red-50/50 border-red-100"
+                    className={`flex-1 mb-4 rounded-xl border p-4 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 ${milestone.status.toUpperCase() === "COMPLETED"
+                      ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-400"
+                      : milestone.status.toUpperCase() === "DELAYED"
+                        ? "bg-red-50/40 border-red-200 hover:border-red-400"
                         : milestone.status.toUpperCase() === "IN_PROGRESS" || milestone.status.toUpperCase() === "ACTIVE"
-                        ? "bg-blue-50/50 border-blue-100"
-                        : "bg-slate-50/50 border-slate-100"
-                    }`}
+                          ? "bg-blue-50/40 border-blue-200 hover:border-blue-400"
+                          : "bg-slate-50/60 border-slate-200 hover:border-slate-300"
+                      }`}
                   >
                     {/* Top Row */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className="text-[0.6rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            className="text-[0.6rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-2xs"
                             style={{ color: meta.color, background: meta.bg }}
                           >
                             Phase {idx + 1}
@@ -362,13 +362,13 @@ export default function ProjectMilestonesPage() {
 
                     {/* Progress Bar */}
                     <div className="mt-3">
-                      <div className="flex items-center justify-between text-[0.65rem] text-[#98A2B3] mb-1">
+                      <div className="flex items-center justify-between text-[0.65rem] text-[#667085] mb-1">
                         <span className="font-bold">Phase Completion</span>
                         <span className="font-black" style={{ color: meta.color }}>{milestone.progress}%</span>
                       </div>
-                      <div className="h-1.5 bg-white/80 rounded-full overflow-hidden border border-slate-100">
+                      <div className="h-2 bg-slate-200/50 rounded-full overflow-hidden border border-slate-200/30">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full rounded-full transition-all duration-700 shadow-2xs"
                           style={{ width: `${milestone.progress}%`, background: meta.color }}
                         />
                       </div>
@@ -377,13 +377,13 @@ export default function ProjectMilestonesPage() {
                     {/* Dates Row */}
                     <div className="mt-3 flex flex-wrap gap-3 text-[0.7rem]">
                       <div>
-                        <span className="text-[#98A2B3] font-bold">Planned: </span>
-                        <span className="font-semibold text-[#475467]">{formatDate(milestone.plannedDate)}</span>
+                        <span className="text-[#667085] font-bold">Planned: </span>
+                        <span className="font-semibold text-[#0B1220]">{formatDate(milestone.plannedDate)}</span>
                       </div>
                       <span className="text-slate-300">•</span>
                       <div>
-                        <span className="text-[#98A2B3] font-bold">Completed: </span>
-                        <span className="font-semibold" style={{ color: milestone.actualCompletionDate ? "#067647" : "#98A2B3" }}>
+                        <span className="text-[#667085] font-bold">Completed: </span>
+                        <span className="font-semibold" style={{ color: milestone.actualCompletionDate ? "#059669" : "#667085" }}>
                           {formatDate(milestone.actualCompletionDate)}
                         </span>
                       </div>

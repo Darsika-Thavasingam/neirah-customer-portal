@@ -43,13 +43,87 @@ function formatAmount(amount: string | number) {
   });
 }
 
+function QuotationDistributionChart({ stats }: { stats: { total: number; accepted: number; sent: number; rejected: number; draft: number } }) {
+  const segs = [
+    { n: stats.accepted, color: "#067647", label: "Accepted" },
+    { n: stats.sent, color: "#2563EB", label: "Under Review" },
+    { n: stats.draft, color: "#667085", label: "Draft" },
+    { n: stats.rejected, color: "#B42318", label: "Declined" },
+  ].filter(s => s.n > 0);
+
+  const total = stats.total || 1;
+  const size = 120, sw = 16, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+  let off = 0;
+
+  return (
+    <div className="mb-8 p-5 bg-[#EAF2FF] border border-blue-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex items-center gap-6">
+        <div className="relative shrink-0 flex items-center justify-center">
+          <svg width={size} height={size} className="-rotate-90">
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#CBD5E1" strokeWidth={sw} />
+            {segs.map((s, i) => {
+              const dash = (s.n / total) * circ;
+              const seg = (
+                <circle
+                  key={i}
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={r}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={sw}
+                  strokeDasharray={`${Math.max(dash - 2, 0)} ${circ}`}
+                  strokeDashoffset={-off}
+                  strokeLinecap="round"
+                />
+              );
+              off += dash;
+              return seg;
+            })}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-xl font-black text-[#0B1220]">{stats.total}</span>
+            <span className="text-[0.6rem] font-bold text-[#667085] uppercase">Proposals</span>
+          </div>
+        </div>
+        <div>
+          <h4 className="text-xs font-bold text-[#0B1220] uppercase tracking-wider mb-2">Proposal Status Ratio</h4>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+            {segs.map(s => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
+                <span className="text-[#667085] font-semibold">{s.label}:</span>
+                <strong className="text-[#0B1220]">{s.n}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full md:w-1/2 flex items-end justify-between gap-3 h-24 pt-2">
+        {segs.map(s => {
+          const pct = Math.round((s.n / total) * 100);
+          return (
+            <div key={s.label} className="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+              <span className="text-[0.65rem] font-bold text-[#0B1220]">{pct}%</span>
+              <div className="w-full max-w-[32px] bg-blue-100/60 rounded-t-lg overflow-hidden flex items-end h-full p-0.5">
+                <div className="w-full rounded-t-md transition-all duration-500" style={{ height: `${pct}%`, backgroundColor: s.color }} />
+              </div>
+              <span className="text-[0.65rem] font-semibold text-[#667085] truncate max-w-[60px] text-center">{s.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function QuotationsPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
-  const [viewMode, setViewMode] = useState<"GRID" | "TABLE">("GRID");
 
   useEffect(() => {
     async function fetchQuotations() {
@@ -84,8 +158,10 @@ export default function QuotationsPage() {
     const total = quotations.length;
     const accepted = quotations.filter((q) => q.status.toUpperCase() === "ACCEPTED").length;
     const sent = quotations.filter((q) => q.status.toUpperCase() === "SENT" || q.status.toUpperCase() === "PENDING").length;
+    const rejected = quotations.filter((q) => q.status.toUpperCase() === "REJECTED" || q.status.toUpperCase() === "DECLINED").length;
+    const draft = quotations.filter((q) => q.status.toUpperCase() === "DRAFT").length;
     const totalValue = quotations.reduce((acc, q) => acc + (parseFloat(q.total) || 0), 0);
-    return { total, accepted, sent, totalValue };
+    return { total, accepted, sent, rejected, draft, totalValue };
   }, [quotations]);
 
   const filteredQuotations = useMemo(() => {
@@ -125,26 +201,6 @@ export default function QuotationsPage() {
         title="Project Quotations & BOQs"
         subtitle="Itemized cost estimates, structural bills of quantities, and formal commercial proposals for active engineering developments."
         bgImage="/images/project-commercial.png"
-        actions={
-          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-2xl">
-            <button
-              onClick={() => setViewMode("GRID")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === "GRID" ? "bg-[#2563EB] text-white" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Grid View
-            </button>
-            <button
-              onClick={() => setViewMode("TABLE")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === "TABLE" ? "bg-[#2563EB] text-white" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Table View
-            </button>
-          </div>
-        }
       />
 
       {error && (
@@ -154,30 +210,33 @@ export default function QuotationsPage() {
       {!error && (
         <>
           {/* Executive KPI Summary — Borderless Horizontal Stats Bar */}
-          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-200">
             <div className="flex flex-col justify-center">
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Proposals</span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085] block mb-1">Total Proposals</span>
               <div className="text-2xl font-black text-[#0B1220]">{stats.total}</div>
-              <p className="text-[0.68rem] font-bold text-[#667085]">Prepared Estimates</p>
+              <p className="text-[0.68rem] font-semibold text-[#667085]">Prepared Estimates</p>
             </div>
             <div className="flex flex-col justify-center pl-4">
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Accepted</span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#067647] block mb-1">Accepted</span>
               <div className="text-2xl font-black text-[#067647]">{stats.accepted}</div>
-              <p className="text-[0.68rem] font-bold text-[#067647]">Approved Contracts</p>
+              <p className="text-[0.68rem] font-semibold text-[#067647]">Approved Contracts</p>
             </div>
             <div className="flex flex-col justify-center pl-4">
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#2563EB] block mb-1">Under Review</span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#2563EB] block mb-1">Under Review</span>
               <div className="text-2xl font-black text-[#2563EB]">{stats.sent}</div>
-              <p className="text-[0.68rem] font-bold text-[#2563EB]">Sent & Pending</p>
+              <p className="text-[0.68rem] font-semibold text-[#2563EB]">Sent & Pending</p>
             </div>
             <div className="flex flex-col justify-center pl-4">
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#D97706] block mb-1">Total Value</span>
-              <div className="text-xl font-black text-[#B45309] truncate">
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085] block mb-1">Total Value</span>
+              <div className="text-xl font-black text-[#0B1220] truncate">
                 LKR {formatAmount(stats.totalValue)}
               </div>
-              <p className="text-[0.68rem] font-bold text-[#D97706]">Total Quotation Value</p>
+              <p className="text-[0.68rem] font-semibold text-[#667085]">Total Quotation Value</p>
             </div>
           </div>
+
+          {/* Quotation Distribution & Ratio Visual Charts */}
+          <QuotationDistributionChart stats={stats} />
 
           {/* Controls Toolbar */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
@@ -227,14 +286,14 @@ export default function QuotationsPage() {
               <EmptyState
                 icon={
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 }
                 title="No quotations found"
                 body="No quotation estimates match your current search or filter criteria."
               />
             </div>
-          ) : viewMode === "GRID" ? (
+          ) : (
             <div className="divide-y divide-slate-200">
               {filteredQuotations.map((quotation, idx) => {
                 const sideImg = [
@@ -276,64 +335,6 @@ export default function QuotationsPage() {
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Quotation #</th>
-                    <th>Project</th>
-                    <th>Date</th>
-                    <th>Valid Until</th>
-                    <th className="text-right">Total Amount</th>
-                    <th>Status</th>
-                    <th className="text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredQuotations.map((quotation) => (
-                    <tr key={quotation.id} className="hover:bg-[#F7F9FC]">
-                      <td>
-                        <Link
-                          href={`/quotations/${quotation.id}`}
-                          className="font-bold text-[#2563EB] hover:underline"
-                        >
-                          {quotation.quotationNumber}
-                        </Link>
-                      </td>
-                      <td>
-                        <p className="font-semibold text-[#0B1220]">
-                          {quotation.project.name}
-                        </p>
-                        <p className="text-xs text-[#667085]">
-                          {quotation.project.projectCode}
-                        </p>
-                      </td>
-                      <td className="text-xs text-[#667085]">
-                        {formatDate(quotation.date)}
-                      </td>
-                      <td className="text-xs text-[#667085]">
-                        {formatDate(quotation.validUntil)}
-                      </td>
-                      <td className="text-right font-bold text-[#0B1220]">
-                        LKR {formatAmount(quotation.total)}
-                      </td>
-                      <td>
-                        <StatusBadge status={quotation.status} />
-                      </td>
-                      <td className="text-right">
-                        <Link
-                          href={`/quotations/${quotation.id}`}
-                          className="btn btn-primary btn-sm hover-lift"
-                        >
-                          View Details →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
         </>

@@ -104,10 +104,11 @@ export default function StatusBadge({
 
   return (
     <span
-      className={`status-badge inline-flex items-center gap-1.5 border px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-wider rounded-lg backdrop-blur-sm transition-all duration-200 ${theme} ${className}`}
+      className={`status-badge inline-flex items-center gap-1.5 border px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wider rounded-lg transition-all duration-200 ${theme} ${className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotColor}`} />
       {displayText}
     </span>
   );
 }
+

@@ -134,26 +134,26 @@ export default function PaymentsPage() {
       {!error && (
         <>
           {summary && (
-            <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+            <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-200">
               <div className="flex flex-col justify-center">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#067647] block mb-1">Total Settled</span>
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#067647] block mb-1">Total Settled</span>
                 <div className="text-xl sm:text-2xl font-black text-[#067647]">{formatCurrency(summary.totalPaid)}</div>
-                <p className="text-[0.68rem] font-bold text-[#067647]">Verified Transfers</p>
+                <p className="text-[0.68rem] font-semibold text-[#067647]">Verified Transfers</p>
               </div>
               <div className="flex flex-col justify-center pl-4">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block mb-1">Total Invoiced</span>
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085] block mb-1">Total Invoiced</span>
                 <div className="text-xl sm:text-2xl font-black text-[#0B1220]">{formatCurrency(summary.totalInvoiced)}</div>
-                <p className="text-[0.68rem] font-bold text-[#667085]">Full Contract Billing</p>
+                <p className="text-[0.68rem] font-semibold text-[#667085]">Full Contract Billing</p>
               </div>
               <div className="flex flex-col justify-center pl-4">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#B42318] block mb-1">Outstanding</span>
-                <div className="text-xl sm:text-2xl font-black text-[#B42318]">{formatCurrency(summary.totalOutstanding)}</div>
-                <p className="text-[0.68rem] font-bold text-[#B42318]">Pending Remittance</p>
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#2563EB] block mb-1">Outstanding</span>
+                <div className="text-xl sm:text-2xl font-black text-[#2563EB]">{formatCurrency(summary.totalOutstanding)}</div>
+                <p className="text-[0.68rem] font-semibold text-[#2563EB]">Pending Remittance</p>
               </div>
               <div className="flex flex-col justify-center pl-4">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#2563EB] block mb-1">Transactions</span>
-                <div className="text-xl sm:text-2xl font-black text-[#2563EB]">{summary.paymentCount}</div>
-                <p className="text-[0.68rem] font-bold text-[#2563EB]">Ledger Entries</p>
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#667085] block mb-1">Transactions</span>
+                <div className="text-xl sm:text-2xl font-black text-[#0B1220]">{summary.paymentCount}</div>
+                <p className="text-[0.68rem] font-semibold text-[#667085]">Ledger Entries</p>
               </div>
             </div>
           )}
@@ -193,41 +193,56 @@ export default function PaymentsPage() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Payment Ref</th>
-                    <th>Invoice Reference</th>
-                    <th>Date</th>
-                    <th>Payment Method</th>
-                    <th className="text-right">Amount Settled</th>
-                    <th>Status</th>
-                    <th>Receipt Reference</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPayments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-[#F7F9FC]">
-                      <td className="font-bold text-[#0B1220]">{payment.paymentReference}</td>
-                      <td>
-                        {payment.invoice ? (
-                          <Link href={`/invoices/${payment.invoice.id}`} className="font-semibold text-[#2563EB] hover:underline">
-                            {payment.invoice.invoiceNumber}
-                          </Link>
-                        ) : (
-                          <span className="text-[#667085]">—</span>
+            <div className="divide-y-2 divide-slate-300 border-y-2 border-slate-300 overflow-hidden bg-transparent">
+              {filteredPayments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 hover:bg-blue-50/30 transition-all duration-200 group"
+                >
+                  {/* Left: Info */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 border border-emerald-100">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#067647" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-xs font-mono font-black text-[#067647]">{payment.paymentReference}</span>
+                        <StatusBadge status={payment.status} />
+                      </div>
+                      <div className="text-sm font-bold text-[#0B1220] flex items-center gap-2">
+                        <span>{payment.paymentMethod}</span>
+                        {payment.invoice && (
+                          <>
+                            <span className="text-[#667085] font-normal">for</span>
+                            <Link href={`/invoices/${payment.invoice.id}`} className="font-semibold text-[#2563EB] hover:underline">
+                              {payment.invoice.invoiceNumber}
+                            </Link>
+                          </>
                         )}
-                      </td>
-                      <td className="text-xs text-[#667085]">{formatDate(payment.paymentDate)}</td>
-                      <td className="text-xs font-semibold text-[#0B1220]">{payment.paymentMethod}</td>
-                      <td className="text-right font-bold text-[#067647]">+{formatCurrency(payment.amount)}</td>
-                      <td><StatusBadge status={payment.status} /></td>
-                      <td className="font-mono text-xs text-[#667085]">{payment.receiptReference ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-[0.7rem] text-[#98A2B3]">
+                        <span>📅 {formatDate(payment.paymentDate)}</span>
+                        {payment.receiptReference && (
+                          <>
+                            <span>•</span>
+                            <span>Receipt: {payment.receiptReference}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Amount */}
+                  <div className="flex items-center gap-4 shrink-0 md:justify-end">
+                    <div className="text-left md:text-right">
+                      <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Settled</span>
+                      <span className="text-base font-black text-[#067647]">+{formatCurrency(payment.amount)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </>
