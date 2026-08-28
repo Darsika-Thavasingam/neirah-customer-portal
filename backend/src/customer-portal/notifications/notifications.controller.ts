@@ -4,8 +4,15 @@ import {
   Headers,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 
+@ApiTags('Customer Portal - Notifications')
+@ApiHeader({
+  name: 'x-user-id',
+  description: 'User ID of the authenticated customer portal user',
+  required: true,
+})
 @Controller('api/v1/customer-portal/notifications')
 export class NotificationsController {
   constructor(
@@ -13,6 +20,8 @@ export class NotificationsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'List customer system notifications and activity alerts' })
+  @ApiResponse({ status: 200, description: 'Notifications retrieved successfully' })
   async getNotifications(
     @Headers('x-user-id') userId?: string,
   ) {

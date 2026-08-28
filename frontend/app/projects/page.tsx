@@ -287,8 +287,24 @@ export default function MyProjectsPage() {
                           <div className="progress-fill" style={{ width: `${project.progress}%` }} />
                         </div>
                       </div>
-                      <Link href={`/projects/${project.id}`} className="btn btn-primary btn-sm mt-4 w-full justify-center">
-                        Open Project Details →
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className="mt-4 inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-xs font-extrabold text-white bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] shadow-xs hover:shadow-md transition-all group/btn"
+                      >
+                        <span>Open Project Details</span>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="transition-transform duration-200 group-hover/btn:translate-x-1"
+                        >
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
                       </Link>
                     </div>
                   </div>
