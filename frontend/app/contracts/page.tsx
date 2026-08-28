@@ -332,25 +332,26 @@ export default function ContractsPage() {
                         LKR {formatAmount(contract.contractValue)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         onClick={() => handleExportExcel([contract])}
-                        className="px-3 py-2 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
                         title="Extract contract record to Excel"
                       >
                         📊 XLSX
                       </button>
                       <button
-                        onClick={() => setSelectedContract(contract)}
-                        className="btn btn-primary btn-sm font-bold py-2 px-3 rounded-xl shadow-sm"
-                      >
-                        🔍 Inspect
-                      </button>
-                      <button
                         onClick={() => handleDownloadContractPdf(contract)}
-                        className="btn btn-ghost btn-sm text-xs font-bold py-2 px-3 rounded-xl bg-[#F1F5F9]"
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
+                        title="Download contract PDF"
                       >
                         📥 PDF
+                      </button>
+                      <button
+                        onClick={() => setSelectedContract(contract)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-sm transition-all shrink-0 inline-flex items-center gap-1"
+                      >
+                        Inspect Agreement →
                       </button>
                     </div>
                   </div>

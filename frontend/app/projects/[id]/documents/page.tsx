@@ -541,13 +541,13 @@ startxref
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             exportToExcel([doc]);
                           }}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
                           title="Extract document record to Excel"
                         >
                           📊 XLSX
@@ -555,29 +555,22 @@ startxref
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActiveDoc(doc);
+                            handleDownload(doc);
                           }}
-                          className="p-2 rounded-lg text-[#667085] hover:text-[#2563EB] hover:bg-blue-50 transition-colors"
-                          title="Preview"
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
+                          title="Download PDF document"
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
+                          📥 PDF
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDownload(doc);
+                            setActiveDoc(doc);
                           }}
-                          className="p-2 rounded-lg text-[#667085] hover:text-[#067647] hover:bg-emerald-50 transition-colors"
-                          title="Download PDF"
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-sm transition-all shrink-0 inline-flex items-center gap-1"
+                          title="Preview Document"
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
+                          Preview →
                         </button>
                       </div>
                     </div>

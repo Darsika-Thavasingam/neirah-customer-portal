@@ -211,6 +211,22 @@ export default function QuotationsPage() {
     );
   };
 
+  const handleDownloadQuotationPdf = (q: Quotation) => {
+    downloadValidPdfFile(
+      `${q.quotationNumber}_Estimate.pdf`,
+      `NEIRAH CONSTRUCTION OS - COMMERCIAL ESTIMATE ${q.quotationNumber}`,
+      {
+        "Project": q.project?.name || "Project",
+        "Quotation Ref": q.quotationNumber,
+        "Issue Date": formatDate(q.date),
+        "Valid Until": formatDate(q.validUntil),
+        "Subtotal": `LKR ${formatAmount(q.subtotal)}`,
+        "Total Valuation": `LKR ${formatAmount(q.total)}`,
+        "Status": q.status,
+      }
+    );
+  };
+
   if (loading) {
     return (
       <div className="page-shell">
@@ -350,17 +366,24 @@ export default function QuotationsPage() {
                         <span className="meta-label block">Total Valuation</span>
                         <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(quotation.total)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                           onClick={() => handleExportExcel([quotation])}
-                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
                           title="Extract quotation record to Excel"
                         >
                           📊 XLSX
                         </button>
+                        <button
+                          onClick={() => handleDownloadQuotationPdf(quotation)}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
+                          title="Download quotation PDF"
+                        >
+                          📥 PDF
+                        </button>
                         <Link
                           href={`/quotations/${quotation.id}`}
-                          className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-sm transition-all shrink-0 inline-flex items-center gap-1"
                         >
                           View Details →
                         </Link>

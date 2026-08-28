@@ -380,13 +380,13 @@ export default function ProjectPaymentsPage() {
                 <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount</span>
                 <span className="text-base font-black text-[#067647]">{formatAmount(p.amount)}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleExportPaymentsExcel([p]);
                   }}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
                   title="Extract payment record to Excel"
                 >
                   📊 XLSX
@@ -396,7 +396,7 @@ export default function ProjectPaymentsPage() {
                     e.stopPropagation();
                     downloadReceipt(p);
                   }}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
                   title="Download receipt PDF"
                 >
                   📥 PDF
@@ -406,9 +406,9 @@ export default function ProjectPaymentsPage() {
                     e.stopPropagation();
                     setActivePayment(p);
                   }}
-                  className="btn btn-sm text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-sm transition-all shrink-0 inline-flex items-center gap-1"
                 >
-                  View →
+                  View Receipt →
                 </button>
               </div>
             </div>

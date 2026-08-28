@@ -127,6 +127,21 @@ export default function PaymentsPage() {
     );
   };
 
+  const handleDownloadReceiptPdf = (p: Payment) => {
+    downloadValidPdfFile(
+      `${p.paymentReference}_Receipt.pdf`,
+      `NEIRAH CONSTRUCTION OS - PAYMENT RECEIPT ${p.paymentReference}`,
+      {
+        "Payment Ref": p.paymentReference,
+        "Date": formatDate(p.paymentDate),
+        "Remitted Amount": `LKR ${formatCurrency(p.amount)}`,
+        "Method": p.paymentMethod,
+        "Receipt Ref": p.receiptReference || "N/A",
+        "Status": p.status,
+      }
+    );
+  };
+
   if (loading) {
     return (
       <div className="page-shell">
@@ -261,18 +276,27 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Right: Amount & Actions */}
-                  <div className="flex items-center gap-4 shrink-0 md:justify-end">
+                  <div className="flex flex-wrap items-center gap-4 shrink-0 md:justify-end">
                     <div className="text-left md:text-right">
                       <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Settled</span>
                       <span className="text-base font-black text-[#067647]">+{formatCurrency(payment.amount)}</span>
                     </div>
-                    <button
-                      onClick={() => handleExportExcel([payment])}
-                      className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
-                      title="Extract payment record to Excel"
-                    >
-                      📊 XLSX
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handleExportExcel([payment])}
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
+                        title="Extract payment record to Excel"
+                      >
+                        📊 XLSX
+                      </button>
+                      <button
+                        onClick={() => handleDownloadReceiptPdf(payment)}
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
+                        title="Download receipt PDF"
+                      >
+                        📥 PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

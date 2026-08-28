@@ -132,6 +132,24 @@ export default function InvoicesPage() {
     );
   };
 
+  const handleDownloadPdf = (inv: Invoice) => {
+    const amt = getAmount(inv);
+    const paid = getPaid(inv);
+    downloadValidPdfFile(
+      `${inv.invoiceNumber}_Statement.pdf`,
+      `NEIRAH CONSTRUCTION OS - INVOICE ${inv.invoiceNumber}`,
+      {
+        "Project": inv.project?.name || "Project",
+        "Invoice Number": inv.invoiceNumber,
+        "Issue Date": formatDate(inv.invoiceDate),
+        "Due Date": formatDate(inv.dueDate),
+        "Billed Valuation": `LKR ${formatAmount(amt)}`,
+        "Paid Amount": `LKR ${formatAmount(paid)}`,
+        "Status": inv.status,
+      }
+    );
+  };
+
   const stats = useMemo(() => {
     let totalInvoiced = 0;
     let totalPaid = 0;
@@ -349,19 +367,26 @@ export default function InvoicesPage() {
                             <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Due</span>
                             <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(getAmount(invoice))}</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
                             <button
                               onClick={() => handleExportExcel([invoice])}
-                              className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                              className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 inline-flex items-center gap-1"
                               title="Extract invoice record to Excel"
                             >
                               📊 XLSX
                             </button>
+                            <button
+                              onClick={() => handleDownloadPdf(invoice)}
+                              className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0 inline-flex items-center gap-1"
+                              title="Download invoice PDF"
+                            >
+                              📥 PDF
+                            </button>
                             <Link
                               href={`/invoices/${invoice.id}`}
-                              className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-sm transition-all shrink-0 inline-flex items-center gap-1"
                             >
-                              View →
+                              View Claim →
                             </Link>
                           </div>
                         </div>
