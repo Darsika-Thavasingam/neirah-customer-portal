@@ -166,14 +166,15 @@ export default function Header() {
     <>
       {/* ── DESKTOP SIDEBAR ── */}
       <aside className="hidden lg:flex w-64 h-screen sticky top-0 bg-[#0B1220] text-white flex-col justify-between p-6 shrink-0 z-40 relative overflow-hidden group">
-        {/* Background Architectural Watermark Image Overlay (Increased Opacity) */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* High-Visibility Full-Bleed Sidebar Architectural Background Image & Gradient Scrim */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
           <img
             src="/images/project-highrise.png"
             alt=""
-            className="absolute -right-20 -bottom-10 w-96 h-auto object-cover opacity-35 mix-blend-overlay filter blur-[0.5px] transition-all duration-700 group-hover:scale-105 group-hover:opacity-45"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-80 filter brightness-115 contrast-120 saturate-110 transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1220] via-[#0B1220]/85 to-[#0B1220]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1220]/80 via-[#0B1220]/55 to-[#0B1220]/85" />
+          <div className="absolute top-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#2563EB] to-transparent" />
         </div>
 
         <div className="relative z-10">
@@ -282,9 +283,15 @@ export default function Header() {
       </aside>
 
       {/* ── MOBILE TOP BAR & DRAWER ── */}
-      <header className="lg:hidden sticky top-0 z-50 bg-[#0B1220] text-white px-4 py-3 flex items-center justify-between border-b border-white/10">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 p-1">
+      <header className="lg:hidden sticky top-0 z-50 bg-[#0B1220] text-white px-4 py-3 flex items-center justify-between border-b border-white/10 relative overflow-hidden">
+        {/* Mobile Header Background Image */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          <img src="/images/project-highrise.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 filter brightness-110" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0B1220] via-[#0B1220]/80 to-[#0B1220]/60" />
+        </div>
+
+        <Link href="/" className="flex items-center gap-2.5 relative z-10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 p-1 border border-white/10">
             <img
               src="/neirah-logo.png?v=3"
               alt="Neirah"
@@ -297,7 +304,7 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-slate-300 hover:text-white p-1"
+          className="text-slate-300 hover:text-white p-1 relative z-10"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
             {mobileOpen ? (

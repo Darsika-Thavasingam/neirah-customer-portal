@@ -10,6 +10,7 @@ import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
 import { getDemoProjectById } from "../../../lib/demoData";
+import { downloadExcelReport, downloadValidPdfFile } from "../../../lib/excelExporter";
 
 type Quotation = {
   id: string;
@@ -117,17 +118,37 @@ export default function ProjectQuotationsPage() {
   }, [projectId]);
 
   const downloadQuotationPdf = (q: Quotation) => {
-    const textContent = `NEIRAH CONSTRUCTION OS - COMMERCIAL QUOTATION PROPOSAL\n----------------------------------------------------\nQuotation Ref: ${q.quotationNumber}\nIssue Date: ${formatDate(q.issueDate)}\nValid Until: ${formatDate(q.validUntil)}\nTotal BOQ Amount: ${formatAmount(q.total)}\nStatus: ${q.status}\nApproved By: ${q.approvedBy || "Chief Quantity Surveyor"}\nScope Summary: ${q.scopeSummary || "Commercial Package BOQ Estimate"}\n----------------------------------------------------\nCIDA Certified Commercial Valuation Estimate.`;
+    downloadValidPdfFile(
+      `${q.quotationNumber}_Commercial_Proposal.pdf`,
+      `NEIRAH CONSTRUCTION OS - COMMERCIAL PROPOSAL ${q.quotationNumber}`,
+      {
+        "Project": project?.name || "Project",
+        "Quotation Ref": q.quotationNumber,
+        "Issue Date": formatDate(q.issueDate),
+        "Valid Until": formatDate(q.validUntil),
+        "Total Amount": formatAmount(q.total),
+        "Status": q.status,
+        "Approved By": q.approvedBy || "Chief QS",
+        "Scope": q.scopeSummary || "Work Package BOQ",
+      }
+    );
+  };
 
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${q.quotationNumber}_Commercial_Proposal.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportQuotationsExcel = (list: Quotation[] = quotations) => {
+    downloadExcelReport(
+      `${project?.name || "PROJECT"} QUOTATIONS EXTRACTION REPORT`,
+      `${project?.name || "Project"}_Quotations_Export.xls`,
+      [
+        { header: "Quotation Ref", key: "quotationNumber" },
+        { header: "Scope Summary", key: "scopeSummary" },
+        { header: "Issue Date", key: "issueDate" },
+        { header: "Valid Until", key: "validUntil" },
+        { header: "Total Amount (LKR)", key: "total", style: "amount" },
+        { header: "Approved By", key: "approvedBy" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list
+    );
   };
 
   if (loading) {
@@ -154,11 +175,6 @@ export default function ProjectQuotationsPage() {
         subtitle={`Approved commercial proposals and itemized BOQ estimates.`}
         bgImage="/images/project-commercial.png"
         className="mb-0"
-        actions={
-          <span className="rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs font-bold text-white shrink-0">
-            {quotations.length} Active Proposals
-          </span>
-        }
       />
       {project && <ProjectSubNav project={project} />}
 
@@ -210,15 +226,37 @@ export default function ProjectQuotationsPage() {
                   <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block">Proposal Valuation</span>
                   <span className="text-lg font-black text-[#0B1220]">{formatAmount(q.total)}</span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveQuotation(q);
-                  }}
-                  className="btn btn-primary btn-sm text-xs font-bold shadow-md rounded-xl py-2 px-3"
-                >
-                  Inspect Proposal →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportQuotationsExcel([q]);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                    title="Extract quotation record to Excel"
+                  >
+                    📊 XLSX
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadQuotationPdf(q);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0"
+                    title="Download quotation PDF"
+                  >
+                    📥 PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveQuotation(q);
+                    }}
+                    className="btn btn-primary btn-sm text-xs font-bold shadow-md rounded-xl py-2 px-3"
+                  >
+                    Inspect Proposal →
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -267,12 +305,20 @@ export default function ProjectQuotationsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveQuotation(null)}
-                className="btn btn-ghost btn-sm flex-1 text-xs"
+                className="btn btn-ghost btn-sm text-xs"
               >
                 Close
+              </button>
+              <button
+                onClick={() => {
+                  handleExportQuotationsExcel([activeQuotation]);
+                }}
+                className="btn bg-[#067647] hover:bg-[#05603A] text-white btn-sm flex-1 text-xs font-bold"
+              >
+                📊 Extract XLSX
               </button>
               <button
                 onClick={() => {

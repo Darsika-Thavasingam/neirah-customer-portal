@@ -10,6 +10,7 @@ import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
 import { getDemoProjectById } from "../../../lib/demoData";
+import { downloadExcelReport, downloadValidPdfFile } from "../../../lib/excelExporter";
 
 type Invoice = {
   id: string;
@@ -133,17 +134,41 @@ export default function ProjectInvoicesPage() {
   const handleDownloadInvoice = (inv: Invoice) => {
     const total = inv.totalAmount ?? inv.balanceAmount ?? 0;
     const paid = inv.paidAmount ?? 0;
-    const textContent = `NEIRAH CONSTRUCTION OS - INTERIM PROGRESS INVOICE\n----------------------------------------------------\nInvoice Number: ${inv.invoiceNumber}\nIssue Date: ${formatDate(inv.issueDate)}\nDue Date: ${formatDate(inv.dueDate)}\nTotal Billed Amount: ${formatAmount(total)}\nAmount Paid: ${formatAmount(paid)}\nRemaining Balance: ${formatAmount(Number(total) - Number(paid))}\nPayment Status: ${inv.status}\nMilestone Reference: ${inv.milestoneTitle || "Progress Valuation #1"}\n----------------------------------------------------\nOfficial Interim Progress Claim certified by Quantity Surveying Dept.`;
+    downloadValidPdfFile(
+      `${inv.invoiceNumber}_Statement.pdf`,
+      `NEIRAH CONSTRUCTION OS - INVOICE ${inv.invoiceNumber}`,
+      {
+        "Project": project?.name || "Project",
+        "Invoice Number": inv.invoiceNumber,
+        "Issue Date": formatDate(inv.issueDate),
+        "Due Date": formatDate(inv.dueDate),
+        "Milestone": inv.milestoneTitle || "Progress Valuation",
+        "Total Billed": formatAmount(total),
+        "Amount Paid": formatAmount(paid),
+        "Status": inv.status,
+      }
+    );
+  };
 
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${inv.invoiceNumber}_Statement.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportInvoicesExcel = (list: Invoice[] = invoices) => {
+    downloadExcelReport(
+      `${project?.name || "PROJECT"} INVOICES EXTRACTION REPORT`,
+      `${project?.name || "Project"}_Invoices_Export.xls`,
+      [
+        { header: "Invoice Number", key: "invoiceNumber" },
+        { header: "Milestone Reference", key: "milestoneTitle" },
+        { header: "Issue Date", key: "issueDate" },
+        { header: "Due Date", key: "dueDate" },
+        { header: "Total Amount (LKR)", key: "totalAmount", style: "amount" },
+        { header: "Paid Amount (LKR)", key: "paidAmount", style: "amount" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list.map((inv) => ({
+        ...inv,
+        totalAmount: inv.totalAmount ?? inv.balanceAmount ?? 0,
+        paidAmount: inv.paidAmount ?? 0,
+      }))
+    );
   };
 
   if (loading) {
@@ -251,15 +276,37 @@ export default function ProjectInvoicesPage() {
                   <span className="text-lg font-black text-[#0B1220]">{formatAmount(total)}</span>
                   <span className="text-xs font-bold text-[#067647] block mt-0.5">Paid: {formatAmount(paid)}</span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveInvoice(inv);
-                  }}
-                  className="btn btn-primary btn-sm text-xs font-bold shadow-md group-hover:scale-105 transition"
-                >
-                  🔍 Inspect Claim →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportInvoicesExcel([inv]);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                    title="Extract invoice record to Excel"
+                  >
+                    📊 XLSX
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadInvoice(inv);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0"
+                    title="Download invoice PDF"
+                  >
+                    📥 PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveInvoice(inv);
+                    }}
+                    className="btn btn-primary btn-sm text-xs font-bold shadow-md group-hover:scale-105 transition"
+                  >
+                    🔍 Inspect Claim →
+                  </button>
+                </div>
               </div>
             </div>
           );

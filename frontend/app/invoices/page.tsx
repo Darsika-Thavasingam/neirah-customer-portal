@@ -7,6 +7,7 @@ import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
 import EmptyState, { ErrorState } from "../components/EmptyState";
 import { getActiveUserId } from "../lib/auth";
+import { downloadExcelReport, downloadValidPdfFile } from "../lib/excelExporter";
 
 type Invoice = {
   id: string;
@@ -97,41 +98,79 @@ export default function InvoicesPage() {
 
   const getAmount = (invoice: Invoice) => {
     const amount = invoice.totalAmount ?? invoice.balanceAmount ?? 0;
-    const n = Number(amount);
-    return Number.isNaN(n) ? 0 : n;
+    return Number(amount);
   };
 
   const getPaid = (invoice: Invoice) => {
-    const n = Number(invoice.paidAmount ?? 0);
-    return Number.isNaN(n) ? 0 : n;
+    return Number(invoice.paidAmount ?? 0);
+  };
+
+  const handleExportExcel = (list: Invoice[] = filteredInvoices) => {
+    downloadExcelReport(
+      "ALL INVOICES FINANCIAL EXTRACTION REPORT",
+      "Customer_Portal_Invoices_Export.xls",
+      [
+        { header: "Invoice Number", key: "invoiceNumber" },
+        { header: "Project Code", key: "projectCode" },
+        { header: "Project Name", key: "projectName" },
+        { header: "Invoice Date", key: "invoiceDate" },
+        { header: "Due Date", key: "dueDate" },
+        { header: "Total Amount (LKR)", key: "totalAmount", style: "amount" },
+        { header: "Paid Amount (LKR)", key: "paidAmount", style: "amount" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list.map((inv) => ({
+        invoiceNumber: inv.invoiceNumber,
+        projectCode: inv.project?.projectCode || "—",
+        projectName: inv.project?.name || "—",
+        invoiceDate: formatDate(inv.invoiceDate),
+        dueDate: formatDate(inv.dueDate),
+        totalAmount: getAmount(inv),
+        paidAmount: getPaid(inv),
+        status: inv.status,
+      }))
+    );
   };
 
   const stats = useMemo(() => {
-    const totalInvoiced = invoices.reduce((s, i) => s + getAmount(i), 0);
-    const totalPaid = invoices.reduce((s, i) => s + getPaid(i), 0);
-    const totalOutstanding = Math.max(totalInvoiced - totalPaid, 0);
-    const outstandingCount = invoices.filter(
-      (i) => i.status !== "PAID" && getAmount(i) > 0
-    ).length;
-    const paidCount = invoices.filter((i) => i.status === "PAID").length;
-    return { totalInvoiced, totalPaid, totalOutstanding, outstandingCount, paidCount };
+    let totalInvoiced = 0;
+    let totalPaid = 0;
+    let paidCount = 0;
+    let outstandingCount = 0;
+
+    invoices.forEach((inv) => {
+      const amt = getAmount(inv);
+      const paid = getPaid(inv);
+      totalInvoiced += amt;
+      totalPaid += paid;
+      if (inv.status === "PAID") paidCount++;
+      if (inv.status === "UNPAID" || inv.status === "OVERDUE" || inv.status === "PARTIALLY_PAID") {
+        outstandingCount++;
+      }
+    });
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      totalOutstanding: Math.max(0, totalInvoiced - totalPaid),
+      paidCount,
+      outstandingCount,
+    };
   }, [invoices]);
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
         inv.invoiceNumber.toLowerCase().includes(q) ||
-        (inv.project && inv.project.name.toLowerCase().includes(q)) ||
-        (inv.project && inv.project.projectCode.toLowerCase().includes(q));
-
-      if (!matchesSearch) return false;
+        (inv.project?.name || "").toLowerCase().includes(q) ||
+        (inv.project?.projectCode || "").toLowerCase().includes(q);
+      if (!matchSearch) return false;
 
       if (selectedStatus !== "ALL") {
         const norm = inv.status.toUpperCase();
         if (selectedStatus === "PAID" && norm !== "PAID") return false;
-        if (selectedStatus === "UNPAID" && norm === "PAID") return false;
+        if (selectedStatus === "UNPAID" && norm !== "UNPAID" && norm !== "PARTIALLY_PAID") return false;
         if (selectedStatus === "OVERDUE" && norm !== "OVERDUE") return false;
       }
       return true;
@@ -163,7 +202,7 @@ export default function InvoicesPage() {
             href="/payments/outstanding"
             className="btn btn-primary btn-sm shrink-0 shadow-lg py-2 px-3.5 rounded-xl font-bold text-xs"
           >
-            ⚠️ Outstanding Balances ({stats.outstandingCount})
+            ⚠️ Outstanding ({stats.outstandingCount})
           </Link>
         }
       />
@@ -310,12 +349,21 @@ export default function InvoicesPage() {
                             <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Due</span>
                             <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(getAmount(invoice))}</span>
                           </div>
-                          <Link
-                            href={`/invoices/${invoice.id}`}
-                            className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
-                          >
-                            View →
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleExportExcel([invoice])}
+                              className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                              title="Extract invoice record to Excel"
+                            >
+                              📊 XLSX
+                            </button>
+                            <Link
+                              href={`/invoices/${invoice.id}`}
+                              className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                            >
+                              View →
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     );

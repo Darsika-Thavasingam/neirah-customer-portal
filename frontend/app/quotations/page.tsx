@@ -7,6 +7,7 @@ import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
 import EmptyState, { ErrorState } from "../components/EmptyState";
 import { getActiveUserId } from "../lib/auth";
+import { downloadExcelReport, downloadValidPdfFile } from "../lib/excelExporter";
 
 type Quotation = {
   id: string;
@@ -185,6 +186,31 @@ export default function QuotationsPage() {
     });
   }, [quotations, searchQuery, selectedStatus]);
 
+  const handleExportExcel = (list: Quotation[] = filteredQuotations) => {
+    downloadExcelReport(
+      "ALL QUOTATIONS FINANCIAL EXTRACTION REPORT",
+      "Customer_Portal_Quotations_Export.xls",
+      [
+        { header: "Quotation Ref", key: "quotationNumber" },
+        { header: "Project Code", key: "projectCode" },
+        { header: "Project Name", key: "projectName" },
+        { header: "Quoted Date", key: "date" },
+        { header: "Valid Until", key: "validUntil" },
+        { header: "Total Amount (LKR)", key: "total", style: "amount" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list.map((q) => ({
+        quotationNumber: q.quotationNumber,
+        projectCode: q.project?.projectCode || "—",
+        projectName: q.project?.name || "—",
+        date: formatDate(q.date),
+        validUntil: formatDate(q.validUntil),
+        total: Number(q.total || 0),
+        status: q.status,
+      }))
+    );
+  };
+
   if (loading) {
     return (
       <div className="page-shell">
@@ -202,7 +228,6 @@ export default function QuotationsPage() {
         subtitle="Itemized cost estimates, structural bills of quantities, and formal commercial proposals for active engineering developments."
         bgImage="/images/project-commercial.png"
       />
-
       {error && (
         <ErrorState title="Unable to load quotations" message={error} />
       )}
@@ -320,17 +345,26 @@ export default function QuotationsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="text-right">
                         <span className="meta-label block">Total Valuation</span>
                         <span className="text-base font-black text-[#0B1220]">LKR {formatAmount(quotation.total)}</span>
                       </div>
-                      <Link
-                        href={`/quotations/${quotation.id}`}
-                        className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
-                      >
-                        View Details →
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleExportExcel([quotation])}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                          title="Extract quotation record to Excel"
+                        >
+                          📊 XLSX
+                        </button>
+                        <Link
+                          href={`/quotations/${quotation.id}`}
+                          className="btn btn-primary btn-sm rounded-xl py-2 px-3 shadow-md"
+                        >
+                          View Details →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );

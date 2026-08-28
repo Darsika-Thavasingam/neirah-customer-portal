@@ -52,7 +52,8 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"ALL" | "UNREAD" | "READ">("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
   useEffect(() => {
     async function fetch_() {
@@ -65,7 +66,8 @@ export default function NotificationsPage() {
         });
         let list: Notification[] = [];
         if (res.ok) {
-          const data = await res.json();
+          const json = await res.json();
+          const data = json?.data ?? json;
           list = Array.isArray(data) ? data : [];
         } else {
           // Fallback: parse from dashboard
@@ -73,7 +75,8 @@ export default function NotificationsPage() {
             headers: { "x-user-id": uid }, cache: "no-store",
           });
           if (dashRes.ok) {
-            const dash = await dashRes.json();
+            const dashJson = await dashRes.json();
+            const dash = dashJson?.data ?? dashJson;
             list = dash.notifications || [];
           }
         }
@@ -88,11 +91,21 @@ export default function NotificationsPage() {
   }, []);
 
   const unread = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+
   const filtered = useMemo(() => {
-    if (tab === "UNREAD") return notifications.filter(n => !n.isRead);
-    if (tab === "READ") return notifications.filter(n => n.isRead);
-    return notifications;
-  }, [notifications, tab]);
+    return notifications.filter((n) => {
+      if (showUnreadOnly && n.isRead) return false;
+      const q = searchQuery.toLowerCase().trim();
+      if (q && !n.title.toLowerCase().includes(q) && !n.message.toLowerCase().includes(q)) {
+        return false;
+      }
+      return true;
+    });
+  }, [notifications, searchQuery, showUnreadOnly]);
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
 
   if (loading) return (
     <div className="page-shell max-w-3xl">
@@ -105,20 +118,52 @@ export default function NotificationsPage() {
       {/* Hero Banner */}
       <PageHeader
         kicker="REAL-TIME ALERTS"
-        title="Notifications & Alerts"
+        title="Notifications & Site Updates"
         subtitle="Site updates, invoice alerts, and payment confirmations across your construction projects."
         bgImage="/images/project-industrial.png"
         unreadNotifications={unread}
       />
 
-      {/* Tab Filter */}
-      <div className="mb-6 flex items-center gap-1.5 bg-[#F1F5F9] rounded-2xl p-1.5">
-        {(["ALL", "UNREAD", "READ"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${tab === t ? "bg-[#2563EB] text-white shadow-sm" : "text-[#667085] hover:text-[#0B1220]"}`}>
-            {t === "ALL" ? `All (${notifications.length})` : t === "UNREAD" ? `Unread (${unread})` : `Read (${notifications.length - unread})`}
+      {/* Streamlined Functional Toolbar (Replaced bulky ALL/READ/UNREAD tab options) */}
+      <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <input
+            type="text"
+            placeholder="Search updates by keyword..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-input text-xs py-2 pl-3.5 pr-8 rounded-xl bg-slate-100/80 border border-slate-200 focus:bg-white"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#667085] hover:text-[#0B1220]"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border ${
+              showUnreadOnly
+                ? "bg-[#2563EB] text-white border-[#2563EB] shadow-xs"
+                : "bg-white text-[#667085] border-slate-200 hover:text-[#0B1220] hover:border-slate-300"
+            }`}
+          >
+            {showUnreadOnly ? `Unread Only (${unread})` : `Show Unread (${unread})`}
           </button>
-        ))}
+          {unread > 0 && (
+            <button
+              onClick={markAllRead}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#2563EB] bg-[#EAF2FF] hover:bg-blue-100 transition-colors"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <ErrorState title="Unable to load notifications" message={error} />}

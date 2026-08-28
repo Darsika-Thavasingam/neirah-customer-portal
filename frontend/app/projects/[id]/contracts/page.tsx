@@ -10,6 +10,7 @@ import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
 import { getDemoProjectById } from "../../../lib/demoData";
+import { downloadExcelReport, downloadValidPdfFile } from "../../../lib/excelExporter";
 
 type Contract = {
   id: string;
@@ -123,17 +124,39 @@ export default function ProjectContractsPage() {
   }, [projectId]);
 
   const handleDownloadContractPdf = (contract: Contract) => {
-    const textContent = `NEIRAH CONSTRUCTION OS - MASTER LEGAL AGREEMENT\n----------------------------------------------------\nContract Ref: ${contract.contractNumber}\nTitle: ${contract.title}\nTotal Agreed Value: LKR ${formatAmount(contract.contractValue)}\nSigning Date: ${formatDate(contract.signedDate)}\nClient Signatory: ${contract.clientSignatory || "Authorized Client Representative"}\nContractor Signatory: ${contract.contractorSignatory || "Eng. Damith Perera (Managing Director)"}\nRetainage Terms: ${contract.retainageRate || "5% Retention"}\nDefect Liability Period: ${contract.defectsPeriod || "12 Months"}\nStandard: CIDA C1 Construction Conditions of Contract (2026 Rev)\n----------------------------------------------------\nTHIS AGREEMENT IS BINDING UNDER THE LAWS OF SRI LANKA.`;
+    downloadValidPdfFile(
+      `${contract.contractNumber}_Legal_Agreement.pdf`,
+      `NEIRAH CONSTRUCTION OS - LEGAL AGREEMENT ${contract.contractNumber}`,
+      {
+        "Project": project?.name || "Construction Project",
+        "Contract Title": contract.title,
+        "Agreed Amount": formatAmount(contract.contractValue),
+        "Signing Date": formatDate(contract.signedDate),
+        "Client Signatory": contract.clientSignatory || "Authorized Executive",
+        "Contractor": contract.contractorSignatory || "Eng. Damith Perera",
+        "Retainage Rate": contract.retainageRate || "5.0%",
+        "Defects Liability": contract.defectsPeriod || "12 Months",
+      }
+    );
+  };
 
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${contract.contractNumber}_Legal_Agreement.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportContractsExcel = (list: Contract[] = contracts) => {
+    downloadExcelReport(
+      `${project?.name || "PROJECT"} CONTRACTS EXTRACTION REPORT`,
+      `${project?.name || "Project"}_Contracts_Export.xls`,
+      [
+        { header: "Contract Ref", key: "contractNumber" },
+        { header: "Title", key: "title" },
+        { header: "Contract Value (LKR)", key: "contractValue", style: "amount" },
+        { header: "Signed Date", key: "signedDate" },
+        { header: "Status", key: "status", style: "status-paid" },
+        { header: "Client Signatory", key: "clientSignatory" },
+        { header: "Contractor Signatory", key: "contractorSignatory" },
+        { header: "Retainage Rate", key: "retainageRate" },
+        { header: "Defects Liability", key: "defectsPeriod" },
+      ],
+      list
+    );
   };
 
   if (loading) {
@@ -160,11 +183,6 @@ export default function ProjectContractsPage() {
         subtitle={`CIDA C1 binding construction agreements and signatories.`}
         bgImage="/images/project-industrial.png"
         className="mb-0"
-        actions={
-          <span className="rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs font-bold text-emerald-300 shrink-0">
-            {contracts.length} Binding Contracts
-          </span>
-        }
       />
       {project && <ProjectSubNav project={project} />}
 
@@ -216,15 +234,37 @@ export default function ProjectContractsPage() {
                   <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-[#98A2B3] block">Contract Value</span>
                   <span className="text-lg font-black text-[#0B1220]">{formatAmount(c.contractValue)}</span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedContract(c);
-                  }}
-                  className="btn btn-primary btn-sm text-xs font-bold shadow-md rounded-xl py-2 px-3"
-                >
-                  Inspect Agreement →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportContractsExcel([c]);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                    title="Extract contract record to Excel"
+                  >
+                    📊 XLSX
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadContractPdf(c);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0"
+                    title="Download contract PDF"
+                  >
+                    📥 PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedContract(c);
+                    }}
+                    className="btn btn-primary btn-sm text-xs font-bold shadow-md rounded-xl py-2 px-3"
+                  >
+                    Inspect Agreement →
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -298,12 +338,18 @@ export default function ProjectContractsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
               <button
                 onClick={() => setSelectedContract(null)}
-                className="btn btn-ghost btn-sm flex-1 text-xs"
+                className="btn btn-ghost btn-sm text-xs"
               >
                 Close Window
+              </button>
+              <button
+                onClick={() => handleExportContractsExcel([selectedContract])}
+                className="btn bg-[#067647] hover:bg-[#05603A] text-white btn-sm flex-1 text-xs font-bold"
+              >
+                📊 Extract XLSX
               </button>
               <button
                 onClick={() => handleDownloadContractPdf(selectedContract)}

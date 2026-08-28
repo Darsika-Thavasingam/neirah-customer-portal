@@ -10,6 +10,7 @@ import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
 import { getDemoProjectById } from "../../../lib/demoData";
+import { downloadExcelReport, downloadValidPdfFile } from "../../../lib/excelExporter";
 
 type Payment = {
   id: string;
@@ -266,21 +267,38 @@ export default function ProjectPaymentsPage() {
       .reduce((sum, p) => sum + (typeof p.amount === "string" ? parseFloat(p.amount) : Number(p.amount)), 0);
   }, [payments]);
 
-  const totalAll = useMemo(() => {
-    return payments.reduce((sum, p) => sum + (typeof p.amount === "string" ? parseFloat(p.amount) : Number(p.amount)), 0);
-  }, [payments]);
-
   const downloadReceipt = (p: Payment) => {
-    const textContent = `NEIRAH CONSTRUCTION OS - OFFICIAL PAYMENT REMITTANCE RECEIPT\n----------------------------------------------------\nReceipt Ref: ${p.paymentReference}\nPayment Date: ${formatDate(p.paymentDate)}\nRemitted Amount: ${formatAmount(p.amount)}\nMethod: ${p.paymentMethod}\nBank Account: ${p.bankAccount || "Commercial Bank Escrow"}\nVerified By: ${p.verifiedBy || "Chief Accounting Officer"}\nStatus: VERIFIED & CONFIRMED\n----------------------------------------------------\nOfficial electronic receipt generated for project ${project?.name || "Customer Project"}.`;
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${p.paymentReference}_Receipt.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadValidPdfFile(
+      `${p.paymentReference}_Receipt.pdf`,
+      `NEIRAH CONSTRUCTION OS - PAYMENT RECEIPT ${p.paymentReference}`,
+      {
+        "Project": project?.name || "Project",
+        "Payment Ref": p.paymentReference,
+        "Date": formatDate(p.paymentDate),
+        "Remitted Amount": formatAmount(p.amount),
+        "Method": p.paymentMethod,
+        "Bank Account": p.bankAccount || "Commercial Bank Escrow",
+        "Verified By": p.verifiedBy || "Finance Controller",
+        "Status": p.status,
+      }
+    );
+  };
+
+  const handleExportPaymentsExcel = (list: Payment[] = payments) => {
+    downloadExcelReport(
+      `${project?.name || "PROJECT"} PAYMENTS EXTRACTION REPORT`,
+      `${project?.name || "Project"}_Payments_Export.xls`,
+      [
+        { header: "Payment Ref", key: "paymentReference" },
+        { header: "Date", key: "paymentDate" },
+        { header: "Amount (LKR)", key: "amount", style: "amount" },
+        { header: "Payment Method", key: "paymentMethod" },
+        { header: "Bank Account", key: "bankAccount" },
+        { header: "Verified By", key: "verifiedBy" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list
+    );
   };
 
   if (loading) {
@@ -356,21 +374,43 @@ export default function ProjectPaymentsPage() {
               </div>
             </div>
 
-            {/* Right: Amount + Button */}
-            <div className="flex items-center gap-4 shrink-0 md:justify-end">
+            {/* Right: Amount + Buttons */}
+            <div className="flex items-center gap-3 shrink-0 md:justify-end">
               <div className="text-left md:text-right">
                 <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount</span>
                 <span className="text-base font-black text-[#067647]">{formatAmount(p.amount)}</span>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActivePayment(p);
-                }}
-                className="btn btn-sm text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
-              >
-                View →
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportPaymentsExcel([p]);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                  title="Extract payment record to Excel"
+                >
+                  📊 XLSX
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadReceipt(p);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all shrink-0"
+                  title="Download receipt PDF"
+                >
+                  📥 PDF
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePayment(p);
+                  }}
+                  className="btn btn-sm text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
+                >
+                  View →
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -421,9 +461,17 @@ export default function ProjectPaymentsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button onClick={() => setActivePayment(null)} className="btn btn-ghost btn-sm flex-1 text-xs">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setActivePayment(null)} className="btn btn-ghost btn-sm text-xs">
                 Close
+              </button>
+              <button
+                onClick={() => {
+                  handleExportPaymentsExcel([activePayment]);
+                }}
+                className="btn bg-[#067647] hover:bg-[#05603A] text-white btn-sm flex-1 text-xs font-bold"
+              >
+                📊 Extract XLSX
               </button>
               <button
                 onClick={() => {

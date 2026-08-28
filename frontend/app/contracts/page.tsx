@@ -6,6 +6,7 @@ import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
 import EmptyState, { ErrorState } from "../components/EmptyState";
 import { getActiveUserId } from "../lib/auth";
+import { downloadExcelReport, downloadValidPdfFile } from "../lib/excelExporter";
 
 type Contract = {
   id: string;
@@ -149,17 +150,48 @@ export default function ContractsPage() {
   }, [contracts, searchQuery, selectedStatus]);
 
   const handleDownloadContractPdf = (contract: Contract) => {
-    const textContent = `NEIRAH CONSTRUCTION OS - MASTER LEGAL AGREEMENT\n----------------------------------------------------\nContract Ref: ${contract.contractNumber}\nProject: ${contract.project?.name || "Construction Project"}\nTotal Agreed Value: LKR ${formatAmount(contract.contractValue)}\nSigning Date: ${formatDate(contract.contractDate)}\nCommencement Date: ${formatDate(contract.startDate)}\nCompletion Target: ${formatDate(contract.completionDate)}\nClient Signatory: ${contract.clientSignatory || "Authorized Client Executive"}\nContractor Signatory: ${contract.contractorSignatory || "Eng. Damith Perera (Managing Director)"}\nRetainage Terms: ${contract.retainageRate || "5% Retention"}\nDefect Liability Period: ${contract.defectsPeriod || "12 Months"}\nStandard: CIDA C1 Construction Conditions of Contract (2026 Rev)\n----------------------------------------------------\nTHIS AGREEMENT IS BINDING UNDER THE LAWS OF SRI LANKA.`;
+    downloadValidPdfFile(
+      `${contract.contractNumber}_Legal_Agreement.pdf`,
+      `NEIRAH CONSTRUCTION OS - LEGAL AGREEMENT ${contract.contractNumber}`,
+      {
+        "Project": contract.project?.name || "Construction Project",
+        "Contract Ref": contract.contractNumber,
+        "Total Value": `LKR ${formatAmount(contract.contractValue)}`,
+        "Signing Date": formatDate(contract.contractDate),
+        "Commencement Date": formatDate(contract.startDate),
+        "Completion Target": formatDate(contract.completionDate),
+        "Client Signatory": contract.clientSignatory || "Authorized Executive",
+        "Contractor": contract.contractorSignatory || "Eng. Damith Perera",
+        "Retainage Terms": contract.retainageRate || "5.0% Retention",
+      }
+    );
+  };
 
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${contract.contractNumber}_Legal_Agreement.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportExcel = (list: Contract[] = filteredContracts) => {
+    downloadExcelReport(
+      "ALL MASTER CONTRACTS EXTRACTION REPORT",
+      "Customer_Portal_Contracts_Export.xls",
+      [
+        { header: "Contract Ref", key: "contractNumber" },
+        { header: "Project Code", key: "projectCode" },
+        { header: "Project Name", key: "projectName" },
+        { header: "Contract Value (LKR)", key: "contractValue", style: "amount" },
+        { header: "Signing Date", key: "contractDate" },
+        { header: "Commencement Date", key: "startDate" },
+        { header: "Completion Target", key: "completionDate" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list.map((c) => ({
+        contractNumber: c.contractNumber,
+        projectCode: c.project?.projectCode || "—",
+        projectName: c.project?.name || "—",
+        contractValue: c.contractValue,
+        contractDate: formatDate(c.contractDate),
+        startDate: formatDate(c.startDate),
+        completionDate: formatDate(c.completionDate),
+        status: c.status,
+      }))
+    );
   };
 
   if (loading) {
@@ -302,6 +334,13 @@ export default function ContractsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => handleExportExcel([contract])}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                        title="Extract contract record to Excel"
+                      >
+                        📊 XLSX
+                      </button>
+                      <button
                         onClick={() => setSelectedContract(contract)}
                         className="btn btn-primary btn-sm font-bold py-2 px-3 rounded-xl shadow-sm"
                       >
@@ -391,12 +430,18 @@ export default function ContractsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
               <button
                 onClick={() => setSelectedContract(null)}
-                className="btn btn-ghost btn-sm flex-1 text-xs"
+                className="btn btn-ghost btn-sm text-xs"
               >
                 Close Window
+              </button>
+              <button
+                onClick={() => handleExportExcel([selectedContract])}
+                className="btn bg-[#067647] hover:bg-[#05603A] text-white btn-sm flex-1 text-xs font-bold"
+              >
+                📊 Extract XLSX
               </button>
               <button
                 onClick={() => handleDownloadContractPdf(selectedContract)}

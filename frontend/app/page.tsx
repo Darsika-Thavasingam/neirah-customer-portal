@@ -139,7 +139,9 @@ export default function Home() {
         const res = await fetch(`${API}/api/v1/customer-portal/dashboard`, { headers, cache: "no-store" }).catch(() => null);
         if (!mounted) return;
         if (res && res.ok) {
-          setDash(await res.json());
+          const json = await res.json();
+          const dashData = json?.data ?? json;
+          setDash(dashData);
         } else if (res && res.status === 401) {
           window.location.href = "/login";
         } else {

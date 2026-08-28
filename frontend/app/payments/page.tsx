@@ -7,6 +7,7 @@ import PageHeader from "../components/PageHeader";
 import { PageLoading } from "../components/SkeletonLoader";
 import EmptyState, { ErrorState } from "../components/EmptyState";
 import { getActiveUserId } from "../lib/auth";
+import { downloadExcelReport, downloadValidPdfFile } from "../lib/excelExporter";
 
 type Payment = {
   id: string;
@@ -100,6 +101,31 @@ export default function PaymentsPage() {
       );
     });
   }, [payments, searchQuery]);
+
+  const handleExportExcel = (list: Payment[] = filteredPayments) => {
+    downloadExcelReport(
+      "ALL PAYMENTS REMITTANCE EXTRACTION REPORT",
+      "Customer_Portal_Payments_Export.xls",
+      [
+        { header: "Payment Ref", key: "paymentReference" },
+        { header: "Date", key: "paymentDate" },
+        { header: "Method", key: "paymentMethod" },
+        { header: "Invoice Ref", key: "invoiceRef" },
+        { header: "Receipt Ref", key: "receiptReference" },
+        { header: "Amount (LKR)", key: "amount", style: "amount" },
+        { header: "Status", key: "status", style: "status-paid" },
+      ],
+      list.map((p) => ({
+        paymentReference: p.paymentReference,
+        paymentDate: formatDate(p.paymentDate),
+        paymentMethod: p.paymentMethod,
+        invoiceRef: p.invoice?.invoiceNumber || "—",
+        receiptReference: p.receiptReference || "—",
+        amount: Number(p.amount || 0),
+        status: p.status,
+      }))
+    );
+  };
 
   if (loading) {
     return (
@@ -234,12 +260,19 @@ export default function PaymentsPage() {
                     </div>
                   </div>
 
-                  {/* Right: Amount */}
+                  {/* Right: Amount & Actions */}
                   <div className="flex items-center gap-4 shrink-0 md:justify-end">
                     <div className="text-left md:text-right">
                       <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">Amount Settled</span>
                       <span className="text-base font-black text-[#067647]">+{formatCurrency(payment.amount)}</span>
                     </div>
+                    <button
+                      onClick={() => handleExportExcel([payment])}
+                      className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#067647] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0"
+                      title="Extract payment record to Excel"
+                    >
+                      📊 XLSX
+                    </button>
                   </div>
                 </div>
               ))}
