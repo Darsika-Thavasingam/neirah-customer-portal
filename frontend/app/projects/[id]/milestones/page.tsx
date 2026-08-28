@@ -10,6 +10,7 @@ import { PageLoading } from "../../../components/SkeletonLoader";
 import { ErrorState } from "../../../components/EmptyState";
 import { getActiveUserId } from "../../../lib/auth";
 import { getDemoProjectById } from "../../../lib/demoData";
+import GanttTimelineView from "../../../components/GanttTimelineView";
 
 type Milestone = {
   id: string;
@@ -209,6 +210,7 @@ export default function ProjectMilestonesPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeView, setActiveView] = useState<"gantt" | "list">("gantt");
 
   useEffect(() => {
     async function fetchProject() {
@@ -276,19 +278,45 @@ export default function ProjectMilestonesPage() {
       />
       {project && <ProjectSubNav project={project} />}
 
-      {/* KPI Strip */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-xl bg-blue-50 px-4 py-2 text-center border border-blue-100">
-          <span className="text-[0.62rem] font-bold text-blue-600 uppercase block tracking-wider">Total</span>
-          <span className="text-base font-black text-[#0B1220]">{project.milestones.length}</span>
+      {/* KPI Strip & View Mode Switcher */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-blue-50 px-4 py-2 text-center border border-blue-100">
+            <span className="text-[0.62rem] font-bold text-blue-600 uppercase block tracking-wider">Total</span>
+            <span className="text-base font-black text-[#0B1220]">{project.milestones.length}</span>
+          </div>
+          <div className="rounded-xl bg-emerald-50 px-4 py-2 text-center border border-emerald-100">
+            <span className="text-[0.62rem] font-bold text-emerald-600 uppercase block tracking-wider">Done</span>
+            <span className="text-base font-black text-[#067647]">{completedCount}</span>
+          </div>
+          <div className="rounded-xl bg-slate-50 px-4 py-2 text-center border border-slate-200">
+            <span className="text-[0.62rem] font-bold text-[#667085] uppercase block tracking-wider">Progress</span>
+            <span className="text-base font-black text-[#2563EB]">{overallProgress}%</span>
+          </div>
         </div>
-        <div className="rounded-xl bg-emerald-50 px-4 py-2 text-center border border-emerald-100">
-          <span className="text-[0.62rem] font-bold text-emerald-600 uppercase block tracking-wider">Done</span>
-          <span className="text-base font-black text-[#067647]">{completedCount}</span>
-        </div>
-        <div className="rounded-xl bg-slate-50 px-4 py-2 text-center border border-slate-200">
-          <span className="text-[0.62rem] font-bold text-[#667085] uppercase block tracking-wider">Progress</span>
-          <span className="text-base font-black text-[#2563EB]">{overallProgress}%</span>
+
+        {/* View Mode Segmented Control */}
+        <div className="flex items-center gap-1.5 bg-[#F1F5F9] rounded-2xl p-1 shrink-0 self-start sm:self-auto">
+          <button
+            onClick={() => setActiveView("gantt")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
+              activeView === "gantt"
+                ? "bg-[#2563EB] text-white shadow-2xs"
+                : "text-[#667085] hover:text-[#0B1220]"
+            }`}
+          >
+            📊 Interactive Gantt View
+          </button>
+          <button
+            onClick={() => setActiveView("list")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
+              activeView === "list"
+                ? "bg-[#2563EB] text-white shadow-2xs"
+                : "text-[#667085] hover:text-[#0B1220]"
+            }`}
+          >
+            📋 Timeline List View
+          </button>
         </div>
       </div>
 
@@ -300,17 +328,34 @@ export default function ProjectMilestonesPage() {
         </div>
       )}
 
-      {/* Timeline Section — Borderless Edge-to-Edge Layout */}
-      <div className="border-t-2 border-slate-300 pt-6">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="section-heading">Phase Milestones Timeline</h2>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-24 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full bg-[#2563EB] rounded-full" style={{ width: `${completedPct}%` }} />
+      {/* View Content Rendering */}
+      {activeView === "gantt" ? (
+        <div className="border-t-2 border-slate-300 pt-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="section-heading">Interactive Gantt Timeline View</h2>
+              <p className="text-xs text-[#667085]">
+                Visual project schedule timeline with critical path tracking, phase progress gauges, and Excel report export.
+              </p>
             </div>
-            <span className="text-xs font-black text-[#2563EB]">{completedPct}%</span>
           </div>
+          <GanttTimelineView
+            milestones={project.milestones}
+            projectName={project.name}
+            projectCode={project.projectCode}
+          />
         </div>
+      ) : (
+        <div className="border-t-2 border-slate-300 pt-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="section-heading">Phase Milestones Timeline</h2>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-24 bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-full bg-[#2563EB] rounded-full" style={{ width: `${completedPct}%` }} />
+              </div>
+              <span className="text-xs font-black text-[#2563EB]">{completedPct}%</span>
+            </div>
+          </div>
 
         {project.milestones.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-[#667085]">
@@ -395,6 +440,7 @@ export default function ProjectMilestonesPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
