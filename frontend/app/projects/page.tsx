@@ -172,19 +172,35 @@ export default function MyProjectsPage() {
       {!error && (
         <>
           {/* Borderless horizontal stats bar */}
-          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 divide-x divide-slate-100 sm:divide-slate-200">
+          <div className="mb-8 border-y border-slate-200 py-4 grid grid-cols-2 sm:grid-cols-4 gap-y-4">
             {[
               { label: "My Projects", value: String(stats.total), sub: "Assigned contracts", accent: "#2563EB" },
               { label: "Under Construction", value: String(stats.inProgress), sub: "Currently active", accent: "#067647" },
               { label: "Completed", value: String(stats.completed), sub: "Delivered facilities", accent: "#7C3AED" },
               { label: "Avg. Progress", value: `${stats.avgProgress}%`, sub: "Portfolio health", accent: "#F59E0B" },
-            ].map((s, idx) => (
-              <div key={s.label} className={`flex flex-col justify-center ${idx !== 0 ? "pl-4" : ""}`}>
-                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">{s.label}</span>
-                <span className="text-2xl sm:text-3xl font-black tracking-tight my-1 block" style={{ color: s.accent }}>{s.value}</span>
-                <span className="text-[0.68rem] font-semibold text-[#667085]">{s.sub}</span>
-              </div>
-            ))}
+            ].map((s, idx) => {
+              const isMobileCol1 = idx % 2 === 0;
+              const isDesktopCol1 = idx === 0;
+              const isDesktopLastCol = idx === 3;
+
+              const itemClasses = [
+                "flex flex-col justify-center min-w-0",
+                isMobileCol1 ? "pl-0 pr-3 sm:pr-4 border-r border-slate-200" : "pl-3 sm:pl-4 pr-0 border-r-0",
+                isDesktopCol1
+                  ? "sm:pl-0 sm:pr-4 sm:border-r sm:border-slate-200"
+                  : isDesktopLastCol
+                  ? "sm:pl-4 sm:pr-0 sm:border-r-0"
+                  : "sm:pl-4 sm:pr-4 sm:border-r sm:border-slate-200",
+              ].join(" ");
+
+              return (
+                <div key={s.label} className={itemClasses}>
+                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#98A2B3] block">{s.label}</span>
+                  <span className="text-2xl sm:text-3xl font-black tracking-tight my-1 block" style={{ color: s.accent }}>{s.value}</span>
+                  <span className="text-[0.68rem] font-semibold text-[#667085]">{s.sub}</span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Controls Toolbar */}

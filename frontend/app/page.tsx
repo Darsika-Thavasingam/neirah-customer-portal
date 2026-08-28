@@ -199,7 +199,7 @@ export default function Home() {
       />
 
       {/* Borderless Metric Strip with High Visibility Dividers */}
-      <div className="my-6 border-y-2 border-slate-300 py-4 grid grid-cols-2 lg:grid-cols-4 gap-y-5 divide-x-2 divide-slate-300">
+      <div className="my-6 border-y-2 border-slate-300 py-4 grid grid-cols-2 lg:grid-cols-4 gap-y-5">
         {[
           { label: "Total Projects", value: summary.totalProjects ?? projects.length, color: "#0B1220" },
           { label: "Active Sites", value: summary.activeProjects ?? 0, color: "#2563EB" },
@@ -209,14 +209,31 @@ export default function Home() {
           { label: "Unpaid Invoices", value: summary.outstandingInvoices ?? outstandingInvoices.length, color: "#D97706" },
           { label: "Total Outstanding", value: curr(summary.totalOutstanding ?? 0), color: "#2563EB" },
           { label: "Notifications", value: summary.unreadNotifications ?? 0, color: "#667085" },
-        ].map((k, idx) => (
-          <div key={k.label} className={`flex flex-col justify-center min-w-0 ${idx % 4 !== 0 ? "pl-4" : ""} ${idx >= 4 ? "pt-3 sm:pt-0" : ""}`}>
-            <span className="text-[0.65rem] font-bold text-[#667085] uppercase tracking-wider block truncate">{k.label}</span>
-            <span className="text-lg sm:text-xl font-black tracking-tight mt-1 block truncate" style={{ color: k.color }} title={String(k.value)}>
-              {k.value}
-            </span>
-          </div>
-        ))}
+        ].map((k, idx) => {
+          const isMobileCol1 = idx % 2 === 0;
+          const isDesktopCol1 = idx % 4 === 0;
+          const isDesktopLastCol = idx % 4 === 3;
+
+          const itemClasses = [
+            "flex flex-col justify-center min-w-0",
+            isMobileCol1 ? "pl-0 pr-3 sm:pr-4 border-r-2 border-slate-300" : "pl-3 sm:pl-4 pr-0 border-r-0",
+            isDesktopCol1
+              ? "lg:pl-0 lg:pr-4 lg:border-r-2 lg:border-slate-300"
+              : isDesktopLastCol
+              ? "lg:pl-4 lg:pr-0 lg:border-r-0"
+              : "lg:pl-4 lg:pr-4 lg:border-r-2 lg:border-slate-300",
+            idx >= 4 ? "pt-3 sm:pt-0" : "",
+          ].join(" ");
+
+          return (
+            <div key={k.label} className={itemClasses}>
+              <span className="text-[0.65rem] font-bold text-[#667085] uppercase tracking-wider block truncate">{k.label}</span>
+              <span className="text-lg sm:text-xl font-black tracking-tight mt-1 block truncate" style={{ color: k.color }} title={String(k.value)}>
+                {k.value}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Single Light-Theme Soft Blue Analytics Panel */}
