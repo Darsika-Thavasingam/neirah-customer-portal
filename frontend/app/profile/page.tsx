@@ -13,7 +13,7 @@ type ProfileResponse = {
   portalAccess: { id: string; isActive: boolean; lastLogin: string | null };
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const PRESET_AVATARS = [
   { url: "/images/project-commercial.png", title: "Commercial Lead" },
   { url: "/images/project-residential.png", title: "Project Director" },

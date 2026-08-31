@@ -35,7 +35,7 @@ function getMeta(type: string) {
   return TYPE_META[type?.toUpperCase()] || TYPE_META.INFO;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatDateTime(v: string) {
   return new Date(v).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });

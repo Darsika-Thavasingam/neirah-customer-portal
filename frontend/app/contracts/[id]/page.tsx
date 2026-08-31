@@ -33,7 +33,7 @@ type Contract = {
   } | null;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function formatDate(date: string | null) {
   if (!date) return "—";

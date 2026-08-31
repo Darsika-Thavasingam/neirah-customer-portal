@@ -26,7 +26,7 @@ type Invoice = {
 };
 
 const API_BASE = (() => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
   return apiUrl.endsWith("/api/v1")
     ? apiUrl
     : `${apiUrl.replace(/\/$/, "")}/api/v1`;

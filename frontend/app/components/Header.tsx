@@ -16,7 +16,7 @@ if (typeof window !== "undefined" && !(window as any).__fetch_intercepted__) {
           ? input.url
           : "";
     const apiBase =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
     if (url.startsWith(apiBase)) {
       const storedUserId = localStorage.getItem("neirah_customer_user_id");
