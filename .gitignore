@@ -1,3 +1,43 @@
-design/
+# Dependencies
 node_modules/
+**/node_modules/
+.pnpm-store/
+
+# IDEs, Editors & AI Tools
+.vscode/
+.idea/
+.agents/
+.claude/
+.windsurf/
+.gemini/
+*.swp
+*.swo
+
+# Environment & Local Config
 .env
+.env*
+!.env.example
+
+# Next.js / Frontend Builds
+frontend/.next/
+frontend/out/
+dist/
+build/
+*.tsbuildinfo
+
+# NestJS / Backend Builds
+backend/dist/
+backend/dist-seed/
+backend/build/
+
+# Logs & Temporary Files
+*.log
+*.err
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Design Mockups
+design/

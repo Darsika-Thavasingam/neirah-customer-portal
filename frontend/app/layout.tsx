@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import Header from "./components/Header";
+import AuthGuard from "./components/AuthGuard";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,12 +45,13 @@ export default function RootLayout({
       className={`${inter.variable} ${geistMono.variable}`}
     >
       <body className="flex min-h-screen bg-[#F7F9FC] text-[#0B1220] antialiased flex-col lg:flex-row relative">
-        <Header />
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-10">
-          {children}
-        </main>
+        <AuthGuard>
+          <Header />
+          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-10">
+            {children}
+          </main>
+        </AuthGuard>
       </body>
     </html>
   );
 }
-

@@ -5,14 +5,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class CustomerPortalService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Resolves the portal context (customerId + tenantId) for a given userId.
-   * Also updates lastLogin on every access — satisfies "last login where practical".
-   * Throws 401 if no active access record exists.
+   * Throws 401 if no active access record exists or if the format is invalid.
    */
   private async resolvePortalContext(userId: string): Promise<{
     customerId: string;
@@ -20,8 +22,10 @@ export class CustomerPortalService {
     accessId: string;
   }> {
     const cleanId = userId?.trim();
-    if (!cleanId) {
-      throw new UnauthorizedException('Customer portal access key is required');
+    if (!cleanId || !UUID_REGEX.test(cleanId)) {
+      throw new UnauthorizedException(
+        'Invalid or inactive portal access key. Please contact your project manager.',
+      );
     }
 
     const access = await this.prisma.customerPortalAccess.findFirst({
@@ -46,15 +50,13 @@ export class CustomerPortalService {
       );
     }
 
-    // Update lastLogin (non-blocking — fire and forget)
+    // Update lastLogin (non-blocking)
     this.prisma.customerPortalAccess
       .update({
         where: { id: access.id },
         data: { lastLogin: new Date() },
       })
-      .catch(() => {
-        // Intentionally ignored — lastLogin update must never block a request
-      });
+      .catch(() => {});
 
     return {
       customerId: access.customerId,
@@ -65,12 +67,13 @@ export class CustomerPortalService {
 
   /**
    * GET /access/me — Returns current customer profile & access record.
-   * Enforces: active portal access, ownership via userId→customerId link.
    */
   async getCurrentCustomer(userId: string) {
     const cleanId = userId?.trim();
-    if (!cleanId) {
-      throw new UnauthorizedException('Customer portal access key is required');
+    if (!cleanId || !UUID_REGEX.test(cleanId)) {
+      throw new UnauthorizedException(
+        'Invalid or inactive portal access key. Please contact your project manager.',
+      );
     }
 
     const access = await this.prisma.customerPortalAccess.findFirst({
@@ -143,8 +146,6 @@ export class CustomerPortalService {
 
   /**
    * GET /dashboard — Full customer dashboard data.
-   * Tenant isolation: all queries filter by BOTH customerId AND tenantId.
-   * Customer ownership: resolvePortalContext maps userId → customerId/tenantId.
    */
   async getDashboard(userId: string) {
     const { customerId, tenantId } =
@@ -166,7 +167,7 @@ export class CustomerPortalService {
       throw new NotFoundException('Customer record not found');
     }
 
-    // 2. Projects — all fields required by spec
+    // 2. Projects
     const projects = await this.prisma.project.findMany({
       where: { customerId, tenantId },
       orderBy: { updatedAt: 'desc' },
@@ -211,7 +212,7 @@ export class CustomerPortalService {
       },
     });
 
-    // 3. Pending quotations (SENT or DRAFT — customer-visible, not yet actioned)
+    // 3. Pending quotations
     const pendingQuotations = await this.prisma.quotation.findMany({
       where: {
         customerId,
@@ -231,7 +232,7 @@ export class CustomerPortalService {
       },
     });
 
-    // 4. Outstanding invoices (not fully paid)
+    // 4. Outstanding invoices
     const outstandingInvoices = await this.prisma.invoice.findMany({
       where: {
         customerId,

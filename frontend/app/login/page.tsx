@@ -45,9 +45,7 @@ const SLIDES = [
 
 export default function CustomerLoginPage() {
   const router = useRouter();
-  const [accessId, setAccessId] = useState(
-    process.env.NEXT_PUBLIC_USER_ID || "d4e2a1b9-8c7f-4e3a-9b1c-5d6e7f8a9b0c"
-  );
+  const [accessId, setAccessId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(0);
@@ -435,6 +433,7 @@ export default function CustomerLoginPage() {
                 style={{ fontFamily: "monospace", fontSize: "0.8rem" }}
                 autoComplete="off"
                 spellCheck={false}
+                suppressHydrationWarning
               />
               <span style={{ fontSize: "0.68rem", color: "#98A2B3", marginTop: "0.3rem", display: "block" }}>
                 Provided by your Neirah project coordinator

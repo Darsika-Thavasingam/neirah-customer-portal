@@ -13,8 +13,11 @@ export class ProjectsService {
     userId: string,
   ): Promise<{ customerId: string; tenantId: string }> {
     const cleanId = userId?.trim();
-    if (!cleanId) {
-      throw new UnauthorizedException('Customer portal access key is required');
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!cleanId || !uuidRegex.test(cleanId)) {
+      throw new UnauthorizedException(
+        'Invalid or inactive portal access key. Please contact your project manager.',
+      );
     }
 
     const access = await this.prisma.customerPortalAccess.findFirst({
