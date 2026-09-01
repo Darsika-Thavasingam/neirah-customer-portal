@@ -1,4 +1,6 @@
-import 'dotenv/config';
+if (!process.env.DATABASE_URL) {
+  require('dotenv/config');
+}
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
