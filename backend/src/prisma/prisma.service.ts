@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
 
@@ -18,12 +19,14 @@ export class PrismaService
       connStr?.includes('railway') ||
       connStr?.includes('sslmode=');
 
-    super({
-      adapter: new PrismaPg({
-        connectionString: connStr,
-        ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
-      }),
+    const pool = new Pool({
+      connectionString: connStr,
+      ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
     });
+
+    const adapter = new PrismaPg(pool);
+
+    super({ adapter });
   }
 
   async onModuleInit() {
