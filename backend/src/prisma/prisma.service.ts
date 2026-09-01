@@ -9,9 +9,19 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
+    const connStr = process.env.DATABASE_URL;
+    const needsSsl =
+      process.env.NODE_ENV === 'production' ||
+      connStr?.includes('render.com') ||
+      connStr?.includes('supabase') ||
+      connStr?.includes('neon') ||
+      connStr?.includes('railway') ||
+      connStr?.includes('sslmode=');
+
     super({
       adapter: new PrismaPg({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: connStr,
+        ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
       }),
     });
   }
